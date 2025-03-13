@@ -22,9 +22,10 @@ interface PropertyCardProps {
   };
   className?: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
-export const PropertyCard = ({ property, className, style }: PropertyCardProps) => {
+export const PropertyCard = ({ property, className, style, onClick }: PropertyCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -53,11 +54,21 @@ export const PropertyCard = ({ property, className, style }: PropertyCardProps) 
     }
   };
 
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking favorite
+    setIsFavorite(!isFavorite);
+  };
+
   return (
-    <div className={cn(
-      "glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md group animate-scale-in",
-      className
-    )} style={style}>
+    <div 
+      className={cn(
+        "glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md group animate-scale-in",
+        onClick ? "cursor-pointer" : "",
+        className
+      )} 
+      style={style}
+      onClick={onClick}
+    >
       <div className="relative">
         <AspectRatio ratio={4/3} className="bg-muted">
           {/* Image with blur-up loading effect */}
@@ -88,7 +99,7 @@ export const PropertyCard = ({ property, className, style }: PropertyCardProps) 
           size="icon"
           variant="ghost"
           className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white/90 dark:bg-black/50 dark:hover:bg-black/70 text-muted-foreground hover:text-rose-500"
-          onClick={() => setIsFavorite(!isFavorite)}
+          onClick={handleFavorite}
         >
           <Heart className={cn("h-4 w-4", isFavorite && "fill-rose-500 text-rose-500")} />
         </Button>

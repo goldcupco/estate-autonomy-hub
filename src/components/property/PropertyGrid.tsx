@@ -30,9 +30,10 @@ interface Property {
 
 interface PropertyGridProps {
   properties: Property[];
+  onPropertyClick?: (id: string) => void;
 }
 
-export function PropertyGrid({ properties }: PropertyGridProps) {
+export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortOrder, setSortOrder] = useState('newest');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -59,8 +60,66 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
     return 0;
   });
 
+  // Count properties by status
+  const statusCounts = properties.reduce((acc, property) => {
+    acc[property.status] = (acc[property.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Status filter pills */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button 
+          variant={statusFilter === 'all' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('all')}
+          className="rounded-full"
+        >
+          All Properties ({properties.length})
+        </Button>
+        <Button 
+          variant={statusFilter === 'For Sale' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('For Sale')}
+          className="rounded-full"
+        >
+          Active Listings ({statusCounts['For Sale'] || 0})
+        </Button>
+        <Button 
+          variant={statusFilter === 'Pending' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('Pending')}
+          className="rounded-full"
+        >
+          Pending ({statusCounts['Pending'] || 0})
+        </Button>
+        <Button 
+          variant={statusFilter === 'Sold' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('Sold')}
+          className="rounded-full"
+        >
+          Sold ({statusCounts['Sold'] || 0})
+        </Button>
+        <Button 
+          variant={statusFilter === 'Lead' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('Lead')}
+          className="rounded-full"
+        >
+          Leads ({statusCounts['Lead'] || 0})
+        </Button>
+        <Button 
+          variant={statusFilter === 'Negotiating' ? "default" : "outline"} 
+          size="sm"
+          onClick={() => setStatusFilter('Negotiating')}
+          className="rounded-full"
+        >
+          Negotiating ({statusCounts['Negotiating'] || 0})
+        </Button>
+      </div>
+
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -73,7 +132,7 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
         </div>
         
         <div className="flex flex-wrap justify-end gap-2">
-          {/* Status filter */}
+          {/* Status filter dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-1">
@@ -153,8 +212,9 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
             <PropertyCard 
               key={property.id} 
               property={property} 
-              className="opacity-0 animate-fade-in"
+              className="opacity-0 animate-fade-in cursor-pointer"
               style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+              onClick={() => onPropertyClick && onPropertyClick(property.id)}
             />
           ))}
         </div>
@@ -163,8 +223,9 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
           {sortedProperties.map((property, index) => (
             <div 
               key={property.id}
-              className="glass-card rounded-lg overflow-hidden transition-all hover:shadow-md flex flex-col md:flex-row opacity-0 animate-fade-in"
+              className="glass-card rounded-lg overflow-hidden transition-all hover:shadow-md hover:bg-accent/10 flex flex-col md:flex-row opacity-0 animate-fade-in cursor-pointer"
               style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+              onClick={() => onPropertyClick && onPropertyClick(property.id)}
             >
               <div className="w-full md:w-48 h-48 md:h-auto relative flex-shrink-0">
                 <img 
@@ -172,6 +233,17 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
                   alt={property.address}
                   className="w-full h-full object-cover"
                 />
+                <div className="absolute top-2 left-2">
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full inline-block
+                    ${property.status === 'For Sale' ? 'bg-green-100 text-green-800' : 
+                      property.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+                      property.status === 'Sold' ? 'bg-blue-100 text-blue-800' : 
+                      property.status === 'Lead' ? 'bg-purple-100 text-purple-800' : 
+                      'bg-orange-100 text-orange-800'}`
+                  }>
+                    {property.status}
+                  </span>
+                </div>
               </div>
               <div className="flex-grow p-4">
                 <div className="flex justify-between items-start">

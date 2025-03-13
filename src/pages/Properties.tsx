@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
 import { Building, Plus } from 'lucide-react';
 
 // Dummy property data (expanded set)
-const propertiesData = [
+export const propertiesData = [
   {
     id: '1',
     address: '123 Main Street',
@@ -165,6 +166,8 @@ const propertiesData = [
 ];
 
 export function Properties() {
+  const navigate = useNavigate();
+  
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -175,7 +178,10 @@ export function Properties() {
         </Button>
       </div>
       
-      <PropertyGrid properties={propertiesData} />
+      <PropertyGrid 
+        properties={propertiesData} 
+        onPropertyClick={(id) => navigate(`/property/${id}`)}
+      />
     </div>
   );
 }

@@ -158,6 +158,7 @@ export function Dashboard() {
               property={property} 
               className="opacity-0 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+              onClick={() => navigate(`/property/${property.id}`)}
             />
           ))}
         </div>
