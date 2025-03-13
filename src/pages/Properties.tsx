@@ -1,11 +1,13 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
-import { Building, Plus } from 'lucide-react';
+import { Building, Plus, Database, X } from 'lucide-react';
+import { DataUploader } from '@/components/ui/DataUploader';
+import { MLSImporter } from '@/components/property/MLSImporter';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { toast } from 'sonner';
 
-// Dummy property data (expanded set)
 export const propertiesData = [
   {
     id: '1',
@@ -167,15 +169,43 @@ export const propertiesData = [
 
 export function Properties() {
   const navigate = useNavigate();
+  const [showImporter, setShowImporter] = useState(false);
+  
+  const handleImportSuccess = (properties: any[]) => {
+    toast.success(`Successfully imported ${properties.length} properties from MLS`);
+    setShowImporter(false);
+  };
   
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-        <Button className="flex items-center gap-2 animate-scale-in">
-          <Building className="h-4 w-4" />
-          <span>Add Property</span>
-        </Button>
+        <div className="flex gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2 animate-scale-in">
+                <Database className="h-4 w-4" />
+                <span>Import MLS Data</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Import MLS Data</SheetTitle>
+                <SheetDescription>
+                  Connect to an MLS system or upload a CSV file to import property listings.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-6">
+                <MLSImporter onImportSuccess={handleImportSuccess} />
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          <Button className="flex items-center gap-2 animate-scale-in" onClick={() => navigate('/property/new')}>
+            <Building className="h-4 w-4" />
+            <span>Add Property</span>
+          </Button>
+        </div>
       </div>
       
       <PropertyGrid 
