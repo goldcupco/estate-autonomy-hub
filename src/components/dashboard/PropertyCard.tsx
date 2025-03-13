@@ -21,9 +21,10 @@ interface PropertyCardProps {
     imageUrl: string;
   };
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const PropertyCard = ({ property, className }: PropertyCardProps) => {
+export const PropertyCard = ({ property, className, style }: PropertyCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -56,7 +57,7 @@ export const PropertyCard = ({ property, className }: PropertyCardProps) => {
     <div className={cn(
       "glass-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md group animate-scale-in",
       className
-    )}>
+    )} style={style}>
       <div className="relative">
         <AspectRatio ratio={4/3} className="bg-muted">
           {/* Image with blur-up loading effect */}
