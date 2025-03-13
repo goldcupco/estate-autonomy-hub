@@ -1,0 +1,239 @@
+
+import { useState } from 'react';
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  ColumnFiltersState,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'New' | 'Contacted' | 'Qualified' | 'Negotiating' | 'Closed' | 'Lost';
+  source: string;
+  dateAdded: string;
+  lastContact: string;
+}
+
+interface LeadTableProps {
+  data: Lead[];
+}
+
+export function LeadTable({ data }: LeadTableProps) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+
+  // Define columns
+  const columns: ColumnDef<Lead>[] = [
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Name
+            {column.getIsSorted() === "asc" ? (
+              <ChevronUp className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "desc" ? (
+              <ChevronDown className="ml-2 h-4 w-4" />
+            ) : null}
+          </Button>
+        );
+      },
+      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "phone",
+      header: "Phone",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        const getStatusColor = (status: string) => {
+          switch (status) {
+            case 'New': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+            case 'Contacted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            case 'Qualified': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+            case 'Negotiating': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+            case 'Closed': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
+            case 'Lost': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+          }
+        };
+        return (
+          <Badge className={getStatusColor(status)}>
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "source",
+      header: "Source",
+    },
+    {
+      accessorKey: "dateAdded",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Date Added
+            {column.getIsSorted() === "asc" ? (
+              <ChevronUp className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "desc" ? (
+              <ChevronDown className="ml-2 h-4 w-4" />
+            ) : null}
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "lastContact",
+      header: "Last Contact",
+    },
+  ];
+
+  // Create table instance
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
+  });
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex justify-between">
+        <div className="relative w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search leads..."
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="pl-8 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="glass-card rounded-lg border animate-scale-in">
+        <div className="relative overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr 
+                  key={headerGroup.id}
+                  className="border-b bg-secondary/50"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <th 
+                      key={header.id}
+                      className="px-4 py-3 text-left font-medium"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row, i) => (
+                  <tr
+                    key={row.id}
+                    className="border-b hover:bg-muted/50 transition-colors"
+                    style={{ 
+                      animationDelay: `${i * 50}ms`,
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    No results.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between p-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {table.getFilteredRowModel().rows.length} of {data.length} leads
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default LeadTable;
