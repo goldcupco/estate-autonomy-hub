@@ -33,11 +33,15 @@ const Documents = () => {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to="/">Home</BreadcrumbLink>
+                  <Link to="/">
+                    <BreadcrumbLink>Home</BreadcrumbLink>
+                  </Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+                  <Link to="/dashboard">
+                    <BreadcrumbLink>Dashboard</BreadcrumbLink>
+                  </Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
