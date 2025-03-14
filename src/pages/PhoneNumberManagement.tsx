@@ -26,8 +26,15 @@ const PhoneNumberManagement = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   
-  // Redirect non-admin users
-  if (!isAdmin) {
+  // Simplified access check - removed redirect for debugging
+  const isAccessAllowed = isAdmin;
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Show admin-only message if not admin
+  if (!isAccessAllowed) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
@@ -44,10 +51,6 @@ const PhoneNumberManagement = () => {
       </div>
     );
   }
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +104,7 @@ const PhoneNumberManagement = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="phone-numbers">
+            <TabsContent value="phone-numbers" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -121,7 +124,7 @@ const PhoneNumberManagement = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="api-keys">
+            <TabsContent value="api-keys" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
