@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, User, Users } from 'lucide-react';
 
-// Temporary token storage - in production, this should be handled through environment variables
-const MAPBOX_TOKEN_KEY = 'mapbox_token';
+// Using a generic public Mapbox token (this is a demo token with limited usage)
+// In production, this should be replaced with your own token or stored securely
+const GENERIC_MAPBOX_TOKEN = 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNrbzBjNGY4ZjA5MnIydnF1eHhlYnZ1OHAifQ.g_u-0i_SoUmY8YBV3q6CkA';
 
 interface MapSearchProps {
   data: any[];
@@ -20,33 +21,15 @@ interface MapSearchProps {
 export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [isTokenInputVisible, setIsTokenInputVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContact, setSelectedContact] = useState<any>(null);
   
-  // Initialize map when token is available
+  // Initialize map when component mounts
   useEffect(() => {
-    const storedToken = localStorage.getItem(MAPBOX_TOKEN_KEY);
-    if (storedToken) {
-      setMapboxToken(storedToken);
-    } else {
-      setIsTokenInputVisible(true);
-    }
-  }, []);
-  
-  const saveToken = () => {
-    if (mapboxToken.trim()) {
-      localStorage.setItem(MAPBOX_TOKEN_KEY, mapboxToken);
-      setIsTokenInputVisible(false);
-    }
-  };
-  
-  useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current) return;
     
     try {
-      mapboxgl.accessToken = mapboxToken;
+      mapboxgl.accessToken = GENERIC_MAPBOX_TOKEN;
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -93,14 +76,13 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       }
     } catch (error) {
       console.error('Error initializing map:', error);
-      setIsTokenInputVisible(true);
     }
     
     return () => {
       map.current?.remove();
       map.current = null;
     };
-  }, [mapboxToken, data, contactType, onSelect]);
+  }, [data, contactType, onSelect]);
   
   // Filter contacts based on search
   const filteredContacts = data.filter(contact => 
@@ -122,34 +104,6 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       if (onSelect) onSelect(contact);
     }
   };
-
-  if (isTokenInputVisible) {
-    return (
-      <Card className="w-full max-w-md mx-auto mt-8">
-        <CardHeader>
-          <CardTitle>Mapbox Token Required</CardTitle>
-          <CardDescription>
-            Please enter your Mapbox public token to use the map feature.
-            You can find or create your token at <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary underline">mapbox.com</a>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mapbox-token">Mapbox Public Token</Label>
-              <Input
-                id="mapbox-token"
-                value={mapboxToken}
-                onChange={(e) => setMapboxToken(e.target.value)}
-                placeholder="pk.eyJ1Ijoie3lvdXItdX..."
-              />
-            </div>
-            <Button onClick={saveToken} className="w-full">Save Token</Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
