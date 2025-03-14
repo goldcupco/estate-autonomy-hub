@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Clock, User, ArrowLeft, PhoneCall, MessageSquare } from 'lucide-react';
+import { Phone, Clock, User, ArrowLeft, PhoneCall, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -19,10 +19,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  startCallRecording, 
+  endCallRecording, 
+  logSmsMessage,
+  getSmsHistory
+} from '@/utils/communicationUtils';
 
 const Calls = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -31,6 +38,11 @@ const Calls = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [smsRecipient, setSmsRecipient] = useState('');
   const [smsText, setSmsText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [currentCallId, setCurrentCallId] = useState<string | null>(null);
+  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const [callTimerInterval, setCallTimerInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
   // Subscribe to global sidebar state changes
@@ -53,6 +65,83 @@ const Calls = () => {
     }
   }, []);
 
+  // Timer for call duration
+  useEffect(() => {
+    if (isRecording && callStartTime) {
+      const intervalId = window.setInterval(() => {
+        const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
+        setCallDuration(duration);
+      }, 1000);
+      
+      setCallTimerInterval(intervalId);
+      
+      return () => {
+        window.clearInterval(intervalId);
+      };
+    } else if (callTimerInterval) {
+      window.clearInterval(callTimerInterval);
+      setCallTimerInterval(null);
+    }
+  }, [isRecording, callStartTime]);
+
+  const formatCallDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleCallRecording = () => {
+    if (isRecording) {
+      // Stop recording
+      if (currentCallId && callStartTime) {
+        const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
+        try {
+          const callRecord = endCallRecording(currentCallId, duration);
+          
+          toast({
+            title: "Call recorded",
+            description: `Call recording saved (${formatCallDuration(duration)})`,
+          });
+        } catch (error) {
+          console.error('Error ending call recording:', error);
+        }
+      }
+      setIsRecording(false);
+      setCurrentCallId(null);
+      setCallStartTime(null);
+      setCallDuration(0);
+    } else {
+      // Start recording
+      if (!phoneNumber) {
+        toast({
+          title: "Missing information",
+          description: "Please enter a phone number to record.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      try {
+        const callId = startCallRecording(phoneNumber, 'Quick Call');
+        setCurrentCallId(callId);
+        setCallStartTime(new Date());
+        setIsRecording(true);
+        
+        toast({
+          title: "Recording started",
+          description: `Recording call to ${phoneNumber}`,
+        });
+      } catch (error) {
+        console.error('Error starting call recording:', error);
+        toast({
+          title: "Recording failed",
+          description: "Failed to start call recording",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   const handleQuickCall = () => {
     if (!phoneNumber) {
       toast({
@@ -71,8 +160,11 @@ const Calls = () => {
       description: `Calling ${phoneNumber}`,
     });
     
-    setQuickCallDialogOpen(false);
-    setPhoneNumber('');
+    // Don't close the dialog if recording is active
+    if (!isRecording) {
+      setQuickCallDialogOpen(false);
+      setPhoneNumber('');
+    }
   };
   
   const handleQuickSms = () => {
@@ -85,12 +177,27 @@ const Calls = () => {
       return;
     }
     
-    // In a real app, this would integrate with an SMS API
-    // For demo purposes, we'll just show a notification
-    toast({
-      title: "SMS sent",
-      description: `Message sent to ${smsRecipient}`,
-    });
+    // Log the SMS
+    try {
+      const smsRecord = logSmsMessage(
+        smsRecipient, 
+        smsText, 
+        'outgoing',
+        'Quick SMS Recipient'
+      );
+      
+      toast({
+        title: "SMS sent and logged",
+        description: `Message sent to ${smsRecipient}`,
+      });
+    } catch (error) {
+      console.error('Error logging SMS:', error);
+      toast({
+        title: "Error logging SMS",
+        description: "Message sent but could not be logged",
+        variant: "destructive"
+      });
+    }
     
     setQuickSmsDialogOpen(false);
     setSmsRecipient('');
@@ -188,10 +295,18 @@ const Calls = () => {
       </div>
       
       {/* Quick Call Dialog */}
-      <Dialog open={quickCallDialogOpen} onOpenChange={setQuickCallDialogOpen}>
+      <Dialog open={quickCallDialogOpen} onOpenChange={(open) => {
+        // Only allow closing if not recording
+        if (!isRecording || !open) {
+          setQuickCallDialogOpen(open);
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Make a Quick Call</DialogTitle>
+            <DialogDescription>
+              Calls can be recorded for quality and training purposes.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
@@ -205,17 +320,40 @@ const Calls = () => {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="(555) 123-4567"
                 type="tel"
+                disabled={isRecording}
               />
             </div>
+            
+            {isRecording && (
+              <div className="p-3 border rounded-md bg-red-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+                  <span className="font-medium text-red-700">Recording: {formatCallDuration(callDuration)}</span>
+                </div>
+              </div>
+            )}
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setQuickCallDialogOpen(false)}>
-              Cancel
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button 
+              variant={isRecording ? "destructive" : "outline"} 
+              onClick={toggleCallRecording}
+              className="gap-1"
+            >
+              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {isRecording ? "Stop Recording" : "Record Call"}
             </Button>
-            <Button onClick={handleQuickCall}>
-              Call Now
-            </Button>
+            
+            <div className="flex gap-2">
+              {!isRecording && (
+                <Button variant="outline" onClick={() => setQuickCallDialogOpen(false)}>
+                  Cancel
+                </Button>
+              )}
+              <Button onClick={handleQuickCall}>
+                Call Now
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -225,6 +363,9 @@ const Calls = () => {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Send a Quick SMS</DialogTitle>
+            <DialogDescription>
+              SMS messages are logged for future reference.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">

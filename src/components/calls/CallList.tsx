@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
@@ -16,7 +16,10 @@ import {
   Trash2,
   Edit,
   Plus,
-  MessageSquare
+  MessageSquare,
+  Mic,
+  MicOff,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -53,6 +57,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Badge } from '@/components/ui/badge';
+import { 
+  startCallRecording, 
+  endCallRecording, 
+  logSmsMessage,
+  getSmsHistory,
+  SmsRecord
+} from '@/utils/communicationUtils';
 
 export type CallDirection = 'incoming' | 'outgoing' | 'missed';
 export type CallStatus = 'scheduled' | 'completed' | 'cancelled';
@@ -67,6 +79,8 @@ export interface Call {
   time: string;
   duration: number | null;
   notes: string;
+  recordingUrl?: string;
+  isRecorded?: boolean;
 }
 
 const DEMO_CALLS: Call[] = [
@@ -150,6 +164,17 @@ export const CallList = ({}: CallListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [smsText, setSmsText] = useState('');
   const [smsRecipient, setSmsRecipient] = useState<Call | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [currentCallId, setCurrentCallId] = useState<string | null>(null);
+  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const [callTimerInterval, setCallTimerInterval] = useState<number | null>(null);
+  const [smsHistoryDialogOpen, setSmsHistoryDialogOpen] = useState(false);
+  const [smsHistory, setSmsHistory] = useState<SmsRecord[]>([]);
+  const [letterDialogOpen, setLetterDialogOpen] = useState(false);
+  const [letterText, setLetterText] = useState('');
+  const [letterRecipient, setLetterRecipient] = useState<Call | null>(null);
+  const [letterAddress, setLetterAddress] = useState('');
   const { toast } = useToast();
   
   const itemsPerPage = 5;
@@ -166,10 +191,37 @@ export const CallList = ({}: CallListProps) => {
     date: new Date().toISOString().split('T')[0],
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
     duration: null,
-    notes: ''
+    notes: '',
+    isRecorded: false
   };
   
   const [newCall, setNewCall] = useState<Omit<Call, 'id'>>(initialNewCall);
+
+  // Timer for call duration
+  useEffect(() => {
+    if (isRecording && callStartTime) {
+      const intervalId = window.setInterval(() => {
+        const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
+        setCallDuration(duration);
+      }, 1000);
+      
+      setCallTimerInterval(intervalId);
+      
+      return () => {
+        window.clearInterval(intervalId);
+      };
+    } else if (callTimerInterval) {
+      window.clearInterval(callTimerInterval);
+      setCallTimerInterval(null);
+    }
+  }, [isRecording, callStartTime]);
+
+  const formatCallDuration = (seconds: number): string => {
+    if (!seconds) return 'N/A';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
   
   const resetForm = () => {
     setNewCall(initialNewCall);
@@ -185,6 +237,71 @@ export const CallList = ({}: CallListProps) => {
     setEditingCall(call);
     setNewCall(call);
     setDialogOpen(true);
+  };
+
+  const toggleCallRecording = () => {
+    if (isRecording) {
+      // Stop recording
+      if (currentCallId && callStartTime) {
+        const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
+        try {
+          const callRecord = endCallRecording(currentCallId, duration);
+          
+          if (editingCall) {
+            // Update the editing call with recording information
+            setNewCall({
+              ...newCall,
+              isRecorded: true,
+              recordingUrl: callRecord.recordingUrl,
+              notes: newCall.notes + `\nCall recorded (${duration} seconds). Recording: ${callRecord.recordingUrl}`
+            });
+          }
+          
+          toast({
+            title: "Call recorded",
+            description: `Call recording saved (${formatCallDuration(duration)})`,
+          });
+        } catch (error) {
+          console.error('Error ending call recording:', error);
+        }
+      }
+      setIsRecording(false);
+      setCurrentCallId(null);
+      setCallStartTime(null);
+      setCallDuration(0);
+    } else {
+      // Start recording
+      if (!editingCall && !newCall.contactPhone) {
+        toast({
+          title: "Missing information",
+          description: "Please enter a contact phone number to record.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const phoneNumber = editingCall ? editingCall.contactPhone : newCall.contactPhone;
+      const contactName = editingCall ? editingCall.contactName : newCall.contactName;
+      
+      try {
+        const callId = startCallRecording(phoneNumber, contactName);
+        setCurrentCallId(callId);
+        setCallStartTime(new Date());
+        setIsRecording(true);
+        
+        toast({
+          title: "Recording started",
+          description: `Recording call with ${contactName}`,
+        });
+      } catch (error) {
+        console.error('Error starting call recording:', error);
+        toast({
+          title: "Recording failed",
+          description: "Failed to start call recording",
+          variant: "destructive"
+        });
+      }
+    }
   };
   
   const handleMakeCall = (call: Call) => {
@@ -207,7 +324,8 @@ export const CallList = ({}: CallListProps) => {
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
       duration: 0, // This would be updated after call ends in a real app
-      notes: 'Call initiated from call management screen'
+      notes: 'Call initiated from call management screen',
+      isRecorded: false
     };
     
     setCalls(prev => [newOutgoingCall, ...prev]);
@@ -217,6 +335,13 @@ export const CallList = ({}: CallListProps) => {
     setSmsRecipient(call);
     setSmsText('');
     setSmsDialogOpen(true);
+  };
+
+  const handleViewSmsHistory = (call: Call) => {
+    // Get SMS history for this contact
+    const history = getSmsHistory(call.contactPhone);
+    setSmsHistory(history);
+    setSmsHistoryDialogOpen(true);
   };
   
   const handleSendSms = () => {
@@ -229,30 +354,80 @@ export const CallList = ({}: CallListProps) => {
       return;
     }
     
-    // In a real app, this would integrate with an SMS API
+    try {
+      // Log the SMS
+      const smsRecord = logSmsMessage(
+        smsRecipient.contactPhone, 
+        smsText, 
+        'outgoing',
+        smsRecipient.contactName
+      );
+      
+      // Update call notes
+      setCalls(prev => prev.map(call => {
+        if (call.id === smsRecipient.id) {
+          return {
+            ...call,
+            notes: `${call.notes}\n[SMS sent]: ${smsText.substring(0, 50)}${smsText.length > 50 ? '...' : ''}`
+          };
+        }
+        return call;
+      }));
+      
+      toast({
+        title: "SMS sent and logged",
+        description: `Message sent to ${smsRecipient.contactName}`,
+      });
+    } catch (error) {
+      console.error('Error logging SMS:', error);
+      toast({
+        title: "Error logging SMS",
+        description: "Failed to send SMS",
+        variant: "destructive"
+      });
+    }
+    
+    setSmsDialogOpen(false);
+  };
+
+  const openLetterDialog = (call: Call) => {
+    setLetterRecipient(call);
+    setLetterText('');
+    setLetterAddress('');
+    setLetterDialogOpen(true);
+  };
+  
+  const handleSendLetter = () => {
+    if (!letterRecipient || !letterText) {
+      toast({
+        title: "Missing information",
+        description: "Please enter letter content.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // In a real app, this would integrate with a letter/mail service API
     // For demo purposes, we'll just show a notification
-    toast({
-      title: "SMS sent",
-      description: `Message sent to ${smsRecipient.contactName}`,
-    });
+    const trackingNumber = `LTR-${Math.floor(100000 + Math.random() * 900000)}`;
     
-    // Add SMS to call notes
-    const now = new Date();
-    const currentDate = now.toISOString().split('T')[0];
-    const currentTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    
-    // Update the call notes to include the SMS
+    // Update call notes with letter information
     setCalls(prev => prev.map(call => {
-      if (call.id === smsRecipient.id) {
+      if (call.id === letterRecipient.id) {
         return {
           ...call,
-          notes: `${call.notes}\n[SMS sent on ${currentDate} at ${currentTime}]: ${smsText}`
+          notes: `${call.notes}\n[Letter sent]: To ${letterRecipient.contactName}${letterAddress ? ` at ${letterAddress}` : ''}. Tracking #: ${trackingNumber}`
         };
       }
       return call;
     }));
     
-    setSmsDialogOpen(false);
+    toast({
+      title: "Letter queued",
+      description: `Letter to ${letterRecipient.contactName} has been queued for sending. Tracking #: ${trackingNumber}`,
+    });
+    
+    setLetterDialogOpen(false);
   };
   
   const handleSaveCall = () => {
@@ -290,6 +465,10 @@ export const CallList = ({}: CallListProps) => {
     
     setDialogOpen(false);
     resetForm();
+    setIsRecording(false);
+    setCurrentCallId(null);
+    setCallStartTime(null);
+    setCallDuration(0);
   };
   
   const handleDeleteCall = (id: string) => {
@@ -377,6 +556,9 @@ export const CallList = ({}: CallListProps) => {
                       <div className="flex items-center gap-2">
                         {getCallIcon(call.direction)}
                         <span className="capitalize">{call.direction}</span>
+                        {call.isRecorded && (
+                          <Badge variant="outline" className="ml-1 text-red-500 border-red-200">Recorded</Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -408,6 +590,24 @@ export const CallList = ({}: CallListProps) => {
                         >
                           <MessageSquare className="h-4 w-4 text-blue-500" />
                           <span className="sr-only">SMS</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewSmsHistory(call)}
+                          title="View SMS History"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="sr-only">SMS History</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openLetterDialog(call)}
+                          title="Send Letter"
+                        >
+                          <FileText className="h-4 w-4 text-amber-500" />
+                          <span className="sr-only">Letter</span>
                         </Button>
                         <Button
                           variant="ghost"
@@ -475,10 +675,18 @@ export const CallList = ({}: CallListProps) => {
         </div>
       )}
       
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        // Only allow closing if not recording
+        if (!isRecording || !open) {
+          setDialogOpen(open);
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingCall ? 'Edit Call' : 'Add New Call'}</DialogTitle>
+            <DialogDescription>
+              Calls can be recorded for quality and training purposes.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
@@ -493,6 +701,7 @@ export const CallList = ({}: CallListProps) => {
                   onChange={(e) => setNewCall({ ...newCall, contactName: e.target.value })}
                   placeholder="Enter name"
                   required
+                  disabled={isRecording}
                 />
               </div>
               <div className="space-y-2">
@@ -505,9 +714,19 @@ export const CallList = ({}: CallListProps) => {
                   onChange={(e) => setNewCall({ ...newCall, contactPhone: e.target.value })}
                   placeholder="(555) 123-4567"
                   required
+                  disabled={isRecording}
                 />
               </div>
             </div>
+            
+            {isRecording && (
+              <div className="p-3 border rounded-md bg-red-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+                  <span className="font-medium text-red-700">Recording: {formatCallDuration(callDuration)}</span>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -517,6 +736,7 @@ export const CallList = ({}: CallListProps) => {
                 <Select
                   value={newCall.direction}
                   onValueChange={(value) => setNewCall({ ...newCall, direction: value as CallDirection })}
+                  disabled={isRecording}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select direction" />
@@ -535,6 +755,7 @@ export const CallList = ({}: CallListProps) => {
                 <Select
                   value={newCall.status}
                   onValueChange={(value) => setNewCall({ ...newCall, status: value as CallStatus })}
+                  disabled={isRecording}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -559,6 +780,7 @@ export const CallList = ({}: CallListProps) => {
                   value={newCall.date}
                   onChange={(e) => setNewCall({ ...newCall, date: e.target.value })}
                   required
+                  disabled={isRecording}
                 />
               </div>
               <div className="space-y-2">
@@ -571,6 +793,7 @@ export const CallList = ({}: CallListProps) => {
                   value={newCall.time}
                   onChange={(e) => setNewCall({ ...newCall, time: e.target.value })}
                   required
+                  disabled={isRecording}
                 />
               </div>
             </div>
@@ -589,6 +812,7 @@ export const CallList = ({}: CallListProps) => {
                     duration: e.target.value ? parseInt(e.target.value) : null 
                   })}
                   placeholder="Enter call duration in minutes"
+                  disabled={isRecording}
                 />
               </div>
             )}
@@ -607,13 +831,26 @@ export const CallList = ({}: CallListProps) => {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant={isRecording ? "destructive" : "outline"} 
+              onClick={toggleCallRecording}
+              className="gap-1 sm:mr-auto"
+            >
+              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {isRecording ? "Stop Recording" : "Record Call"}
             </Button>
-            <Button onClick={handleSaveCall}>
-              {editingCall ? 'Update' : 'Save'}
-            </Button>
+            
+            <div className="flex gap-2">
+              {!isRecording && (
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+              )}
+              <Button onClick={handleSaveCall} disabled={isRecording}>
+                {editingCall ? 'Update' : 'Save'}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -623,6 +860,9 @@ export const CallList = ({}: CallListProps) => {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Send SMS</DialogTitle>
+            <DialogDescription>
+              SMS messages are logged for future reference.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
@@ -650,12 +890,128 @@ export const CallList = ({}: CallListProps) => {
             </div>
           </div>
           
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button variant="outline" onClick={() => handleViewSmsHistory(smsRecipient!)}>
+              View History
+            </Button>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setSmsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendSms}>
+                Send Message
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* SMS History Dialog */}
+      <Dialog open={smsHistoryDialogOpen} onOpenChange={setSmsHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>SMS History</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 max-h-[400px] overflow-y-auto">
+            {smsHistory.length > 0 ? (
+              <div className="space-y-4">
+                {smsHistory.map((sms) => (
+                  <div 
+                    key={sms.id} 
+                    className={`p-3 rounded-lg ${
+                      sms.direction === 'outgoing' 
+                        ? 'bg-blue-100 ml-8' 
+                        : 'bg-gray-100 mr-8'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <Badge variant={sms.direction === 'outgoing' ? 'default' : 'outline'}>
+                        {sms.direction === 'outgoing' ? 'Sent' : 'Received'}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(sms.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm">{sms.message}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No SMS history found for this contact.
+              </div>
+            )}
+          </div>
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSmsDialogOpen(false)}>
+            <Button onClick={() => setSmsHistoryDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Letter Dialog */}
+      <Dialog open={letterDialogOpen} onOpenChange={setLetterDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Send Letter</DialogTitle>
+            <DialogDescription>
+              Letters are tracked with a tracking number.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {letterRecipient && (
+              <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/50 mb-4">
+                <User className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{letterRecipient.contactName}</p>
+                  <p className="text-sm text-muted-foreground">{letterRecipient.contactPhone}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="letterAddress" className="text-sm font-medium">
+                  Mailing Address
+                </label>
+                <Input
+                  id="letterAddress"
+                  value={letterAddress}
+                  onChange={(e) => setLetterAddress(e.target.value)}
+                  placeholder="Enter recipient's mailing address"
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="letterContent" className="text-sm font-medium">
+                  Letter Content
+                </label>
+                <Textarea
+                  id="letterContent"
+                  value={letterText}
+                  onChange={(e) => setLetterText(e.target.value)}
+                  placeholder="Type your letter content here..."
+                  className="min-h-[200px] mt-2"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLetterDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSendSms}>
-              Send Message
+            <Button 
+              onClick={handleSendLetter}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Send Letter
             </Button>
           </DialogFooter>
         </DialogContent>
