@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Bell, Menu, Search, User, X, UsersRound } from 'lucide-react';
@@ -108,10 +109,19 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
             </Button>
 
             {isAdmin && (
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/access-management">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative group"
+                asChild
+              >
+                <Link to="/access-management" title="Manage User Access">
                   <UsersRound className="h-5 w-5" />
                   <span className="sr-only">Manage Access</span>
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  </span>
                 </Link>
               </Button>
             )}
