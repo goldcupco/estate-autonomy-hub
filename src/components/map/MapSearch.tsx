@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,27 +158,24 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
-            attributionControl={false}
+            center={defaultCenter}
+            zoom={defaultZoom}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             
-            {/* Add attribution control separately */}
             <AttributionControl
               position="bottomright"
               prefix={false}
-              attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
             />
             
-            {/* Controller component to handle map view changes */}
             <MapController 
               center={defaultCenter}
               zoom={defaultZoom}
               contact={selectedContact}
             />
             
-            {/* Add markers for each contact with location - only if map is loaded */}
             {mapLoaded && filteredContacts.map((contact, index) => {
               if (contact.location?.lat && contact.location?.lng) {
                 return (

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -24,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyActivity } from '@/components/property/PropertyActivity';
 import { PropertyImageGallery } from '@/components/property/PropertyImageGallery';
-import { GoogleMapWithStreetView } from '@/components/map/GoogleMapWithStreetView';
+import { PropertyMapView } from '@/components/map/PropertyMapView';
 
 import { propertiesData } from './Properties';
 
@@ -415,7 +416,7 @@ export function PropertyDetails() {
               <Card>
                 <CardContent className="pt-6">
                   {property.coordinates && (
-                    <GoogleMapWithStreetView 
+                    <PropertyMapView 
                       address={`${property.address}, ${property.city}, ${property.state} ${property.zipCode}`}
                       location={property.coordinates}
                       height="500px"
