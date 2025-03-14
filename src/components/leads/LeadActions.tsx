@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { 
   Dialog,
   DialogContent,
@@ -20,19 +20,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Lead } from './LeadTable';
+import { Lead, Note } from './LeadTable';
 import { useToast } from "@/hooks/use-toast";
 import { LeadForm } from './LeadForm';
+import { LeadNotes } from './LeadNotes';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface LeadActionsProps {
   lead: Lead;
   onEdit: (updatedLead: Lead) => void;
   onDelete: (id: string) => void;
+  onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
 }
 
-export function LeadActions({ lead, onEdit, onDelete }: LeadActionsProps) {
+export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleDelete = () => {
@@ -46,17 +55,65 @@ export function LeadActions({ lead, onEdit, onDelete }: LeadActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
+      {/* Notes Dialog */}
+      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsNotesDialogOpen(true)}
+                className="h-8 w-8"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="sr-only">Lead Notes</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View Notes</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Notes for {lead.name}</DialogTitle>
+          </DialogHeader>
+          
+          <LeadNotes 
+            lead={lead} 
+            onAddNote={onAddNote}
+          />
+          
+          <DialogFooter className="mt-6">
+            <DialogClose asChild>
+              <Button variant="outline" type="button">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setIsEditDialogOpen(true)}
-          className="h-8 w-8"
-        >
-          <Pencil className="h-4 w-4" />
-          <span className="sr-only">Edit Lead</span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsEditDialogOpen(true)}
+                className="h-8 w-8"
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit Lead</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Lead</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -85,15 +142,24 @@ export function LeadActions({ lead, onEdit, onDelete }: LeadActionsProps) {
 
       {/* Delete Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setIsDeleteDialogOpen(true)}
-          className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-        >
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Delete Lead</span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete Lead</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete Lead</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         <AlertDialogContent>
           <AlertDialogHeader>

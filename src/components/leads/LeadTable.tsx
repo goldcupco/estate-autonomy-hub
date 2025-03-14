@@ -16,6 +16,13 @@ import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LeadActions } from './LeadActions';
 
+export interface Note {
+  id: string;
+  text: string;
+  type: 'sms' | 'call' | 'letter' | 'contract' | 'other';
+  timestamp: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -25,20 +32,21 @@ export interface Lead {
   source: string;
   dateAdded: string;
   lastContact: string;
+  notes?: Note[];
 }
 
 interface LeadTableProps {
   data: Lead[];
   onEditLead?: (updatedLead: Lead) => void;
   onDeleteLead?: (id: string) => void;
+  onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
 }
 
-export function LeadTable({ data, onEditLead, onDeleteLead }: LeadTableProps) {
+export function LeadTable({ data, onEditLead, onDeleteLead, onAddNote }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
-  // Define columns
   const columns: ColumnDef<Lead>[] = [
     {
       accessorKey: "name",
@@ -122,18 +130,18 @@ export function LeadTable({ data, onEditLead, onDeleteLead }: LeadTableProps) {
       id: 'actions',
       header: '',
       cell: ({ row }) => {
-        return onEditLead && onDeleteLead ? (
+        return onEditLead && onDeleteLead && onAddNote ? (
           <LeadActions 
             lead={row.original} 
             onEdit={onEditLead} 
             onDelete={onDeleteLead}
+            onAddNote={onAddNote}
           />
         ) : null;
       },
     },
   ];
 
-  // Create table instance
   const table = useReactTable({
     data,
     columns,

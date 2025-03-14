@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import LeadTable, { Lead } from '@/components/leads/LeadTable';
+import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
-// Dummy lead data (expanded)
 const initialLeadsData: Lead[] = [
   {
     id: '1',
@@ -16,6 +16,14 @@ const initialLeadsData: Lead[] = [
     source: 'Website Inquiry',
     dateAdded: '2023-06-15',
     lastContact: '2023-06-15',
+    notes: [
+      {
+        id: '101',
+        text: 'Initial contact via website form',
+        type: 'other',
+        timestamp: '2023-06-15T10:30:00Z'
+      }
+    ]
   },
   {
     id: '2',
@@ -26,6 +34,7 @@ const initialLeadsData: Lead[] = [
     source: 'Zillow',
     dateAdded: '2023-06-12',
     lastContact: '2023-06-14',
+    notes: []
   },
   {
     id: '3',
@@ -36,6 +45,7 @@ const initialLeadsData: Lead[] = [
     source: 'Referral',
     dateAdded: '2023-06-10',
     lastContact: '2023-06-13',
+    notes: []
   },
   {
     id: '4',
@@ -46,6 +56,7 @@ const initialLeadsData: Lead[] = [
     source: 'Direct Mail',
     dateAdded: '2023-06-08',
     lastContact: '2023-06-12',
+    notes: []
   },
   {
     id: '5',
@@ -56,6 +67,7 @@ const initialLeadsData: Lead[] = [
     source: 'Cold Call',
     dateAdded: '2023-06-05',
     lastContact: '2023-06-10',
+    notes: []
   },
   {
     id: '6',
@@ -66,6 +78,7 @@ const initialLeadsData: Lead[] = [
     source: 'Facebook Ad',
     dateAdded: '2023-06-15',
     lastContact: '2023-06-15',
+    notes: []
   },
   {
     id: '7',
@@ -76,6 +89,7 @@ const initialLeadsData: Lead[] = [
     source: 'Google Ad',
     dateAdded: '2023-06-14',
     lastContact: '2023-06-14',
+    notes: []
   },
   {
     id: '8',
@@ -86,6 +100,7 @@ const initialLeadsData: Lead[] = [
     source: 'Open House',
     dateAdded: '2023-06-12',
     lastContact: '2023-06-13',
+    notes: []
   },
   {
     id: '9',
@@ -96,6 +111,7 @@ const initialLeadsData: Lead[] = [
     source: 'Referral',
     dateAdded: '2023-06-10',
     lastContact: '2023-06-12',
+    notes: []
   },
   {
     id: '10',
@@ -106,6 +122,7 @@ const initialLeadsData: Lead[] = [
     source: 'Website Inquiry',
     dateAdded: '2023-06-08',
     lastContact: '2023-06-11',
+    notes: []
   },
   {
     id: '11',
@@ -116,6 +133,7 @@ const initialLeadsData: Lead[] = [
     source: 'Zillow',
     dateAdded: '2023-06-05',
     lastContact: '2023-06-09',
+    notes: []
   },
   {
     id: '12',
@@ -126,6 +144,7 @@ const initialLeadsData: Lead[] = [
     source: 'Cold Call',
     dateAdded: '2023-06-15',
     lastContact: '2023-06-15',
+    notes: []
   },
   {
     id: '13',
@@ -136,6 +155,7 @@ const initialLeadsData: Lead[] = [
     source: 'Direct Mail',
     dateAdded: '2023-06-13',
     lastContact: '2023-06-14',
+    notes: []
   },
   {
     id: '14',
@@ -146,6 +166,7 @@ const initialLeadsData: Lead[] = [
     source: 'Facebook Ad',
     dateAdded: '2023-06-11',
     lastContact: '2023-06-13',
+    notes: []
   },
   {
     id: '15',
@@ -156,17 +177,22 @@ const initialLeadsData: Lead[] = [
     source: 'Google Ad',
     dateAdded: '2023-06-09',
     lastContact: '2023-06-12',
+    notes: []
   }
 ];
 
-// Filter leads by status for the tabs
+const leadsWithNotes = initialLeadsData.map(lead => ({
+  ...lead,
+  notes: lead.notes || []
+}));
+
 const filterLeadsByStatus = (leads: Lead[], status: string) => {
   if (status === 'All') return leads;
   return leads.filter(lead => lead.status === status);
 };
 
 export function Leads() {
-  const [leadsData, setLeadsData] = useState<Lead[]>(initialLeadsData);
+  const [leadsData, setLeadsData] = useState<Lead[]>(leadsWithNotes);
   const { toast } = useToast();
 
   const handleEditLead = (updatedLead: Lead) => {
@@ -179,6 +205,32 @@ export function Leads() {
 
   const handleDeleteLead = (id: string) => {
     setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== id));
+  };
+
+  const handleAddNote = (leadId: string, note: Omit<Note, 'id'>) => {
+    const newNote: Note = {
+      ...note,
+      id: uuidv4()
+    };
+
+    setLeadsData(prevLeads =>
+      prevLeads.map(lead => {
+        if (lead.id === leadId) {
+          const updatedLead = {
+            ...lead,
+            lastContact: new Date().toISOString().split('T')[0],
+            notes: [...(lead.notes || []), newNote]
+          };
+          return updatedLead;
+        }
+        return lead;
+      })
+    );
+
+    toast({
+      title: "Note added",
+      description: "Your note has been added to the lead."
+    });
   };
 
   return (
@@ -207,6 +259,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'All')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -215,6 +268,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'New')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -223,6 +277,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'Contacted')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -231,6 +286,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'Qualified')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -239,6 +295,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'Negotiating')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -247,6 +304,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'Closed')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
         
@@ -255,6 +313,7 @@ export function Leads() {
             data={filterLeadsByStatus(leadsData, 'Lost')} 
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
+            onAddNote={handleAddNote}
           />
         </TabsContent>
       </Tabs>
