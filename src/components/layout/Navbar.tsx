@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Bell, Menu, Search, User, X, UsersRound, ShieldCheck } from 'lucide-react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Bell, Menu, Search, User, X, UsersRound, ShieldCheck, Building, FileText, Briefcase, Phone, Users, ListChecks, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,14 +14,27 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { 
+  CommandDialog, 
+  CommandInput, 
+  CommandList, 
+  CommandEmpty, 
+  CommandGroup, 
+  CommandItem,
+  CommandShortcut 
+} from '@/components/ui/command';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCampaigns } from '@/contexts/CampaignContext';
 
 export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const { isAdmin } = useAuth();
+  const { accessibleCampaigns } = useCampaigns();
 
-  // Get page title based on current route
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/') return 'Home';
@@ -31,13 +43,11 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     if (path === '/leads') return 'Leads';
     if (path === '/lists') return 'Lists';
 
-    // Handle nested routes or paths with params
     if (path.startsWith('/property/')) return 'Property Details';
     
     return path.charAt(1).toUpperCase() + path.slice(2);
   };
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -46,9 +56,61 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle sidebar toggle
   const handleToggleSidebar = () => {
     toggleSidebar();
+  };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setCommandOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
+
+  const searchCategories = [
+    {
+      heading: 'Pages',
+      items: [
+        { id: 'dashboard', name: 'Dashboard', icon: <BarChart3 className="mr-2 h-4 w-4" />, href: '/dashboard' },
+        { id: 'properties', name: 'Properties', icon: <Building className="mr-2 h-4 w-4" />, href: '/properties' },
+        { id: 'leads', name: 'Leads', icon: <Users className="mr-2 h-4 w-4" />, href: '/leads' },
+        { id: 'campaigns', name: 'Campaigns', icon: <Briefcase className="mr-2 h-4 w-4" />, href: '/campaigns' },
+        { id: 'lists', name: 'Lists', icon: <ListChecks className="mr-2 h-4 w-4" />, href: '/lists' },
+        { id: 'contacts', name: 'Contacts', icon: <Phone className="mr-2 h-4 w-4" />, href: '/contacts' },
+        { id: 'contracts', name: 'Contracts', icon: <FileText className="mr-2 h-4 w-4" />, href: '/contracts' },
+        { id: 'documents', name: 'Documents', icon: <FileText className="mr-2 h-4 w-4" />, href: '/documents' }
+      ]
+    },
+    {
+      heading: 'Campaigns',
+      items: accessibleCampaigns.map(campaign => ({
+        id: `campaign-${campaign.id}`,
+        name: campaign.name,
+        icon: <Briefcase className="mr-2 h-4 w-4" />,
+        href: `/campaigns?id=${campaign.id}`,
+        description: campaign.description
+      }))
+    }
+  ];
+
+  if (isAdmin) {
+    searchCategories.push({
+      heading: 'Admin',
+      items: [
+        { id: 'user-management', name: 'User Management', icon: <Users className="mr-2 h-4 w-4" />, href: '/user-management' },
+        { id: 'access-management', name: 'Access Management', icon: <ShieldCheck className="mr-2 h-4 w-4" />, href: '/access-management' }
+      ]
+    });
+  }
+
+  const handleSelect = (href: string) => {
+    setCommandOpen(false);
+    navigate(href);
   };
 
   return (
@@ -80,6 +142,8 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
               <Input 
                 placeholder="Search properties, leads, documents..." 
                 className="pl-10 pr-10 py-2 w-full bg-white/90 dark:bg-black/20 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm"
+                onClick={() => setCommandOpen(true)}
+                onFocus={() => setCommandOpen(true)}
               />
               <Search className="absolute left-8 top-2.5 h-4 w-4 text-muted-foreground" />
               <Button 
@@ -99,9 +163,16 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
                 variant="ghost" 
                 size="icon" 
                 className="hidden sm:flex"
-                onClick={() => setSearchVisible(true)}
+                onClick={() => {
+                  setSearchVisible(true);
+                  setTimeout(() => setCommandOpen(true), 100);
+                }}
               >
                 <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+                <kbd className="pointer-events-none absolute right-1.5 top-[9px] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
               </Button>
             )}
 
@@ -174,6 +245,37 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
           </div>
         </div>
       </div>
+
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+        <CommandInput placeholder="Search across the platform..." />
+        <CommandList>
+          <CommandEmpty>
+            <div className="py-6 text-center text-sm">
+              No results found.
+            </div>
+          </CommandEmpty>
+          
+          {searchCategories.map((category) => (
+            <CommandGroup key={category.heading} heading={category.heading}>
+              {category.items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSelect(item.href)}
+                  className="flex items-center"
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                  {item.description && (
+                    <span className="ml-2 text-xs text-muted-foreground truncate max-w-[180px]">
+                      {item.description}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </CommandDialog>
     </header>
   );
 }
