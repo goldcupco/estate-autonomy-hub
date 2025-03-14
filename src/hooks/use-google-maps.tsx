@@ -66,5 +66,5 @@ export const useGoogleMapsApi = () => {
     };
   }, [apiKey]);
   
-  return { isLoaded, loadError };
+  return { isLoaded, loadError, apiKey };
 };

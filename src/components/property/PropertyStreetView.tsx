@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useGoogleMapsApi } from '@/hooks/use-google-maps';
+import { toast } from "sonner";
 
 interface PropertyStreetViewProps {
   latitude: number;
@@ -15,7 +16,7 @@ interface PropertyStreetViewProps {
 const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const { isLoaded: mapsLoaded, loadError } = useGoogleMapsApi();
+  const { isLoaded: mapsLoaded, loadError, apiKey } = useGoogleMapsApi();
   const streetViewRef = useRef<HTMLDivElement>(null);
   
   // A unique ID for this Street View
@@ -66,6 +67,7 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
         } else {
           // No Street View imagery found
           setHasError(true);
+          toast.error("No Street View imagery found at this location");
         }
         setIsLoading(false);
       });
@@ -102,11 +104,18 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
               <AlertTriangle className="h-5 w-5" />
               <AlertTitle>Configuration Error</AlertTitle>
               <AlertDescription>
-                Google Maps API key is missing or invalid. Please set a valid VITE_GOOGLE_MAPS_API_KEY in your environment.
+                {!apiKey ? 
+                  "Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in your environment." : 
+                  "Google Maps API key is invalid. Please check your API key and make sure it has the proper permissions."}
               </AlertDescription>
             </Alert>
             <p className="text-sm text-muted-foreground mt-2">
-              Contact your administrator to configure the API key properly.
+              To fix this issue:
+              <ol className="text-left list-decimal pl-5 mt-2">
+                <li>Create a Google Maps API key with Street View API enabled</li>
+                <li>Add the key to your environment as VITE_GOOGLE_MAPS_API_KEY</li>
+                <li>Restart your application</li>
+              </ol>
             </p>
           </div>
         </CardContent>

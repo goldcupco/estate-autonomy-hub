@@ -4,9 +4,10 @@ import { MapContainer, TileLayer, Marker, Popup, AttributionControl, useMap } fr
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
-import { Map, Eye, AlertTriangle } from 'lucide-react';
+import { Map, Eye, AlertTriangle, Info } from 'lucide-react';
 import { useGoogleMapsApi } from '@/hooks/use-google-maps';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 // Fix for Leaflet default marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -56,8 +57,7 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [streetViewError, setStreetViewError] = useState(false);
   const [mapView, setMapView] = useState(true); // Controls whether map or street view is shown
-  const { isLoaded: googleMapsLoaded, loadError } = useGoogleMapsApi();
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { isLoaded: googleMapsLoaded, loadError, apiKey } = useGoogleMapsApi();
 
   const handleMapLoad = () => {
     setIsLoading(false);
@@ -71,6 +71,9 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   const handleStreetViewError = () => {
     console.error("Street view failed to load");
     setStreetViewError(true);
+    toast.error("Street View imagery could not be loaded");
+    // Automatically switch back to map view
+    setMapView(true);
   };
 
   // If we want to show street view but don't have a Google Maps API key or it failed to load
@@ -80,8 +83,17 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   React.useEffect(() => {
     if (showStreetViewError) {
       setMapView(true);
+      if (!apiKey) {
+        toast.error("Missing Google Maps API key", {
+          description: "Street View requires a valid API key"
+        });
+      } else if (loadError) {
+        toast.error("Invalid Google Maps API key", {
+          description: "Please check your API key configuration"
+        });
+      }
     }
-  }, [showStreetViewError]);
+  }, [showStreetViewError, apiKey, loadError]);
 
   return (
     <div className="space-y-2">
@@ -104,12 +116,16 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
             onClick={() => {
               if (loadError) {
                 // Don't allow switching to street view if API key is invalid
+                toast.error("Street View unavailable", {
+                  description: "Google Maps API key is missing or invalid"
+                });
                 return;
               }
               setMapView(false);
               setStreetViewError(false); // Reset error state when switching
             }}
             disabled={!!loadError}
+            title={loadError ? "Street View unavailable due to API key issues" : ""}
           >
             <Eye className="h-4 w-4" />
             <span>Street View</span>
@@ -121,7 +137,9 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         <Alert className="mb-2">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Street View is unavailable: Google Maps API key is missing or invalid.
+            Street View is unavailable: {!apiKey ? 
+              "Google Maps API key is missing" : 
+              "Google Maps API key is invalid"}.
           </AlertDescription>
         </Alert>
       )}
@@ -155,6 +173,7 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         ) : (
           showStreetViewError || streetViewError ? (
             <div className="flex flex-col items-center justify-center h-full bg-muted rounded-md">
+              <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
               <p className="text-muted-foreground mb-2">
                 {showStreetViewError ? 
                   "Google Maps API key is missing or invalid" : 
