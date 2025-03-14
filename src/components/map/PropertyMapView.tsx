@@ -54,14 +54,19 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [streetViewOpen, setStreetViewOpen] = useState(false);
+  const [streetViewError, setStreetViewError] = useState(false);
 
   const handleMapLoad = () => {
     setIsLoading(false);
   };
 
-  // Create the encoded Google Street View URL with a valid API key
-  // Note: This is using a sample API key that might need to be replaced with a valid one
-  const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=AIzaSyBtv9-R3NrzS4C9d2UjinkkQBmjlNtCKg4&location=${location.lat},${location.lng}&heading=210&pitch=10&fov=90`;
+  // Using a different approach for Google Street View that doesn't require an API key
+  const streetViewUrl = `https://www.google.com/maps/embed?pb=!4v1647032365345!6m8!1m7!1sCAoSLEFGMVFpcE9kRWE4S0FDZVUybTZURDIzQTBmR09OQzBSMEd6OXJFbDRWTmRq!2m2!1d${location.lat}!2d${location.lng}!3f210!4f10!5f0.8`;
+
+  const handleStreetViewError = () => {
+    console.error("Street view failed to load");
+    setStreetViewError(true);
+  };
 
   return (
     <div className="space-y-2">
@@ -71,7 +76,10 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
           variant="outline" 
           size="sm" 
           className="flex items-center gap-1"
-          onClick={() => setStreetViewOpen(true)}
+          onClick={() => {
+            setStreetViewOpen(true);
+            setStreetViewError(false); // Reset error state when opening
+          }}
         >
           <Eye className="h-4 w-4" />
           <span>Street View</span>
@@ -114,15 +122,28 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
             <DialogTitle>Street View - {address}</DialogTitle>
           </DialogHeader>
           <div className="w-full h-full min-h-[500px]">
-            <iframe
-              width="100%"
-              height="100%"
-              style={{ border: 0, minHeight: '500px' }}
-              loading="lazy"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-              src={streetViewUrl}
-            ></iframe>
+            {streetViewError ? (
+              <div className="flex flex-col items-center justify-center h-full bg-muted rounded-md">
+                <p className="text-muted-foreground mb-2">Street view is not available for this location</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStreetViewOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            ) : (
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: '500px' }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={streetViewUrl}
+                onError={handleStreetViewError}
+              ></iframe>
+            )}
           </div>
         </DialogContent>
       </Dialog>
