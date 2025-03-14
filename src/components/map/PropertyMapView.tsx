@@ -27,6 +27,8 @@ const MapViewController = ({ center, zoom }: { center: [number, number], zoom: n
   
   useEffect(() => {
     map.setView(center, zoom);
+    // Enable or disable scroll wheel zoom programmatically
+    map.scrollWheelZoom.disable();
   }, [center, zoom, map]);
   
   return null;
@@ -86,12 +88,10 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
           whenReady={handleMapLoad}
-          scrollWheelZoom={false}
         >
           <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <AttributionControl
             position="bottomright"
