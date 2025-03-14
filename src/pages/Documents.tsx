@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, FolderOpen, ArrowLeft, FileCheck, FileBarChart2 } from 'lucide-react';
+import { FileText, FolderOpen, ArrowLeft, FileCheck, FileBarChart2, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -12,32 +12,39 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const documents = [
   { 
     id: '1', 
     title: 'Purchase Agreement Template', 
     type: 'pdf',
+    path: '/sample-contract.pdf'
   },
   { 
     id: '2', 
     title: 'Lease Contract', 
-    type: 'docx',
+    type: 'pdf',
+    path: '/sample-contract.pdf'
   },
   { 
     id: '3', 
     title: 'Property Disclosure Statement', 
     type: 'pdf',
+    path: '/sample-contract.pdf'
   },
   { 
     id: '4', 
     title: 'Offer Letter Template', 
     type: 'pdf',
+    path: '/sample-contract.pdf'
   },
 ];
 
 const Documents = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{title: string, path: string} | null>(null);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -68,9 +75,11 @@ const Documents = () => {
     }
   };
 
-  const openDocument = (title: string, type: string) => {
-    toast.info(`Opening ${title}.${type}`, {
-      description: "Document viewer functionality coming soon",
+  const openDocument = (title: string, path: string, type: string) => {
+    setSelectedDocument({ title, path });
+    setDocumentViewerOpen(true);
+    toast.info(`Opening ${title}`, {
+      description: "Displaying document in viewer",
     });
   };
 
@@ -126,7 +135,7 @@ const Documents = () => {
                   <div 
                     key={doc.id} 
                     className="flex items-center p-3 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
-                    onClick={() => openDocument(doc.title, doc.type)}
+                    onClick={() => openDocument(doc.title, doc.path, doc.type)}
                   >
                     <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
                       {getDocumentIcon(doc.type)}
@@ -200,7 +209,7 @@ const Documents = () => {
                 <div 
                   key={doc.id} 
                   className="flex items-center justify-between p-4 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
-                  onClick={() => openDocument(doc.title, doc.type)}
+                  onClick={() => openDocument(doc.title, doc.path, doc.type)}
                 >
                   <div className="flex items-center">
                     <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
@@ -213,7 +222,7 @@ const Documents = () => {
                   </div>
                   <Button variant="ghost" size="sm" onClick={(e) => {
                     e.stopPropagation();
-                    openDocument(doc.title, doc.type);
+                    openDocument(doc.title, doc.path, doc.type);
                   }}>
                     Open
                   </Button>
@@ -227,6 +236,41 @@ const Documents = () => {
               </Button>
             </div>
           </div>
+
+          <Dialog open={documentViewerOpen} onOpenChange={setDocumentViewerOpen}>
+            <DialogContent className="sm:max-w-3xl max-h-[90vh]">
+              <DialogHeader className="flex flex-row items-center justify-between">
+                <DialogTitle>{selectedDocument?.title}</DialogTitle>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => window.open(selectedDocument?.path, '_blank')}
+                    title="Download"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setDocumentViewerOpen(false)}
+                    title="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </DialogHeader>
+              <div className="mt-4 overflow-auto" style={{ height: 'calc(90vh - 120px)' }}>
+                {selectedDocument && (
+                  <iframe 
+                    src={selectedDocument.path}
+                    className="w-full h-full border-0"
+                    title={selectedDocument.title}
+                  />
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </div>
