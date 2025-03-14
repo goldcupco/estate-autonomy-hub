@@ -12,12 +12,14 @@ import {
   FileText,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SidebarProps = {
   isOpen: boolean;
@@ -53,6 +55,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(globalSidebarState);
+  const { currentUser, isAdmin } = useAuth();
   
   // On first mount, check localStorage for saved state
   useEffect(() => {
@@ -88,6 +91,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       onClose();
     }
   }, [location.pathname, onClose]);
+
+  // Check if user should see the Campaigns link
+  const shouldShowCampaigns = isAdmin || currentUser?.role === 'campaigner';
 
   return (
     <>
@@ -169,6 +175,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 active={location.pathname === '/lists'} 
                 collapsed={!sidebarOpen}
               />
+              {shouldShowCampaigns && (
+                <NavItem 
+                  to="/campaigns" 
+                  icon={Target} 
+                  label="Campaigns" 
+                  active={location.pathname === '/campaigns'} 
+                  collapsed={!sidebarOpen}
+                />
+              )}
               <NavItem 
                 to="/calls" 
                 icon={Phone} 
