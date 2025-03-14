@@ -32,21 +32,30 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
 
   // Use a valid API key - for development, you can use this restricted key
   // In production, replace with your own key with proper restrictions
-  const apiKey = 'AIzaSyBhkI0X1WScJL0AF-KGwKJiEWL4wHxQqf8';
+  const apiKey = 'AIzaSyDFLa5pU6KqcaDQXLGDxGiZT9qcfgpCOOs';
 
   // Load the Google Maps JavaScript API
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: apiKey
+    googleMapsApiKey: apiKey,
+    // Add the libraries needed
+    libraries: ['places']
   });
 
   const onLoad = (mapInstance: google.maps.Map) => {
+    console.log("Map loaded successfully");
     setMap(mapInstance);
     setIsLoading(false);
   };
 
   const onUnmount = () => {
     setMap(null);
+  };
+
+  // Handle errors that might occur when loading the map
+  const onError = () => {
+    console.error("Error loading Google Maps");
+    setIsLoading(false);
   };
 
   return (
@@ -74,19 +83,20 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
-              streetViewControl: true,
+              streetViewControl: false, // We'll handle our own Street View toggle
               mapTypeControl: false,
               fullscreenControl: true,
               zoomControl: true,
             }}
+            onError={onError}
           >
             {!showStreetView && <Marker position={location} title={address} />}
             
             {showStreetView && (
               <StreetViewPanorama
+                position={location}
+                visible={true}
                 options={{
-                  position: location,
-                  visible: true,
                   enableCloseButton: false,
                   addressControl: true,
                   fullscreenControl: true,

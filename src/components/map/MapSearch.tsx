@@ -7,7 +7,7 @@ import { Search, MapPin, User, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, AttributionControl } from 'react-leaflet';
 import L from 'leaflet';
 
 // Fix for Leaflet default marker icon issue
@@ -159,17 +159,18 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
+            attributionControl={false}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              // The fix: Use attributionControl prop as an object in TileLayer
-              attributionControl={false}
             />
             
             {/* Add attribution control separately */}
-            <div className="leaflet-attribution-control" style={{ position: 'absolute', bottom: '0', right: '0', zIndex: 1000, fontSize: '10px', backgroundColor: 'rgba(255, 255, 255, 0.7)', padding: '0 5px' }}>
-              &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
-            </div>
+            <AttributionControl
+              position="bottomright"
+              prefix={false}
+              attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+            />
             
             {/* Controller component to handle map view changes */}
             <MapController 
