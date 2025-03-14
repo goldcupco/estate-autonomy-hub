@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -12,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import Leads from './Leads';
 
 const LeadsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -72,24 +73,9 @@ const LeadsPage = () => {
             </Link>
           </div>
           
+          {/* Replace the empty placeholder with the actual Leads component */}
           <div className="glass-card rounded-xl p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Your Leads</h2>
-              <div className="p-2 bg-primary/10 text-primary rounded-full">
-                <Users className="h-5 w-5" />
-              </div>
-            </div>
-            
-            <p className="text-muted-foreground mb-6">
-              Track and manage your potential clients and leads in one place.
-            </p>
-            
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Lead management functionality will be implemented soon.</p>
-              <Link to="/dashboard" className="mt-4 inline-block">
-                <Button>Return to Dashboard</Button>
-              </Link>
-            </div>
+            <Leads />
           </div>
         </main>
       </div>
