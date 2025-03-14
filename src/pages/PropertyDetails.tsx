@@ -26,62 +26,58 @@ import { PropertyActivity } from '@/components/property/PropertyActivity';
 import { PropertyImageGallery } from '@/components/property/PropertyImageGallery';
 import { GoogleMapWithStreetView } from '@/components/map/GoogleMapWithStreetView';
 
-// Import the dummy property data from Properties.tsx
 import { propertiesData } from './Properties';
 
-// Extend the properties data with coordinates for Google Maps
 const propertiesWithCoordinates = propertiesData.map(property => {
-  // Default coordinates (these would normally come from your database)
-  // Using different coordinates for each property to simulate real data
   let coordinates;
   switch(property.id) {
     case '1':
-      coordinates = { lat: 30.267153, lng: -97.743057 }; // Austin
+      coordinates = { lat: 30.267153, lng: -97.743057 };
       break;
     case '2':
-      coordinates = { lat: 39.742043, lng: -104.991531 }; // Denver
+      coordinates = { lat: 39.742043, lng: -104.991531 };
       break;
     case '3':
-      coordinates = { lat: 25.761681, lng: -80.191788 }; // Miami
+      coordinates = { lat: 25.761681, lng: -80.191788 };
       break;
     case '4':
-      coordinates = { lat: 47.606209, lng: -122.332071 }; // Seattle
+      coordinates = { lat: 47.606209, lng: -122.332071 };
       break;
     case '5':
-      coordinates = { lat: 41.878113, lng: -87.629799 }; // Chicago
+      coordinates = { lat: 41.878113, lng: -87.629799 };
       break;
     case '6':
-      coordinates = { lat: 45.523064, lng: -122.676483 }; // Portland
+      coordinates = { lat: 45.523064, lng: -122.676483 };
       break;
     case '7':
-      coordinates = { lat: 36.162664, lng: -86.781602 }; // Nashville
+      coordinates = { lat: 36.162664, lng: -86.781602 };
       break;
     case '8':
-      coordinates = { lat: 32.715736, lng: -117.161087 }; // San Diego
+      coordinates = { lat: 32.715736, lng: -117.161087 };
       break;
     case '9':
-      coordinates = { lat: 42.360082, lng: -71.058880 }; // Boston
+      coordinates = { lat: 42.360082, lng: -71.058880 };
       break;
     case '10':
-      coordinates = { lat: 33.748997, lng: -84.387985 }; // Atlanta
+      coordinates = { lat: 33.748997, lng: -84.387985 };
       break;
     case '11':
-      coordinates = { lat: 33.448376, lng: -112.074036 }; // Phoenix
+      coordinates = { lat: 33.448376, lng: -112.074036 };
       break;
     case '12':
-      coordinates = { lat: 39.952583, lng: -75.165222 }; // Philadelphia
+      coordinates = { lat: 39.952583, lng: -75.165222 };
       break;
     case '13':
-      coordinates = { lat: 45.676998, lng: -111.042934 }; // Bozeman
+      coordinates = { lat: 45.676998, lng: -111.042934 };
       break;
     case '14':
-      coordinates = { lat: 34.869740, lng: -111.760990 }; // Sedona
+      coordinates = { lat: 34.869740, lng: -111.760990 };
       break;
     case '15':
-      coordinates = { lat: 39.191097, lng: -106.817535 }; // Aspen
+      coordinates = { lat: 39.191097, lng: -106.817535 };
       break;
     default:
-      coordinates = { lat: 34.0522, lng: -118.2437 }; // Los Angeles (default)
+      coordinates = { lat: 34.0522, lng: -118.2437 };
   }
   
   return {
@@ -99,7 +95,6 @@ export function PropertyDetails() {
   const [callLogOpen, setCallLogOpen] = useState(false);
   const [contractOpen, setContractOpen] = useState(false);
 
-  // Find the property by ID from our extended data
   const property = propertiesWithCoordinates.find(p => p.id === id);
 
   if (!property) {
@@ -116,14 +111,12 @@ export function PropertyDetails() {
     );
   }
 
-  // Format price to USD
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.price);
 
-  // Get status badge styles
   const getStatusStyles = (status: string) => {
     switch(status) {
       case 'For Sale':
@@ -141,7 +134,6 @@ export function PropertyDetails() {
     }
   };
 
-  // Handler for SMS button click
   const handleSendSMS = (message: string, recipient: string) => {
     toast({
       title: "SMS Sent",
@@ -150,7 +142,6 @@ export function PropertyDetails() {
     setSmsOpen(false);
   };
 
-  // Handler for Email button click
   const handleSendEmail = (subject: string, message: string, recipient: string) => {
     toast({
       title: "Email Sent",
@@ -159,7 +150,6 @@ export function PropertyDetails() {
     setEmailOpen(false);
   };
 
-  // Handler for Call Log button click
   const handleLogCall = (notes: string, duration: string) => {
     toast({
       title: "Call Logged",
@@ -168,7 +158,6 @@ export function PropertyDetails() {
     setCallLogOpen(false);
   };
 
-  // Handler for Send Contract button click
   const handleSendContract = (contractType: string, recipient: string) => {
     toast({
       title: "Contract Sent",
@@ -179,7 +168,6 @@ export function PropertyDetails() {
 
   return (
     <div className="container mx-auto py-8 animate-fade-in">
-      {/* Back button and title */}
       <div className="flex flex-wrap items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="outline" size="icon" onClick={() => navigate('/properties')} className="mr-4">
@@ -192,7 +180,6 @@ export function PropertyDetails() {
         </Badge>
       </div>
 
-      {/* Quick action buttons */}
       <div className="flex flex-wrap gap-3 mb-8">
         <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
           <DialogTrigger asChild>
@@ -346,16 +333,13 @@ export function PropertyDetails() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Property details column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Property images */}
           <Card>
             <CardContent className="p-0 overflow-hidden rounded-md">
               <PropertyImageGallery property={property} />
             </CardContent>
           </Card>
 
-          {/* Property tabs */}
           <Tabs defaultValue="details">
             <TabsList className="grid grid-cols-4 w-full">
               <TabsTrigger value="details">Details</TabsTrigger>
@@ -364,7 +348,6 @@ export function PropertyDetails() {
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             
-            {/* Details tab */}
             <TabsContent value="details" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
@@ -428,7 +411,6 @@ export function PropertyDetails() {
               </Card>
             </TabsContent>
             
-            {/* Maps tab */}
             <TabsContent value="maps">
               <Card>
                 <CardContent className="pt-6">
@@ -443,7 +425,6 @@ export function PropertyDetails() {
               </Card>
             </TabsContent>
             
-            {/* Activity tab */}
             <TabsContent value="activity">
               <Card>
                 <CardContent className="pt-6">
@@ -452,7 +433,6 @@ export function PropertyDetails() {
               </Card>
             </TabsContent>
             
-            {/* Documents tab */}
             <TabsContent value="documents">
               <Card>
                 <CardContent className="pt-6">
@@ -498,9 +478,7 @@ export function PropertyDetails() {
           </Tabs>
         </div>
         
-        {/* Activity feed column */}
         <div className="space-y-6">
-          {/* Client info card */}
           <Card>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-semibold">Client Information</h3>
@@ -520,7 +498,6 @@ export function PropertyDetails() {
             </CardContent>
           </Card>
           
-          {/* Recent activity feed */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-semibold mb-4">Recent Activity</h3>

@@ -30,10 +30,14 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
   const [isLoading, setIsLoading] = useState(true);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
+  // Use a valid API key - for development, you can use this restricted key
+  // In production, replace with your own key with proper restrictions
+  const apiKey = 'AIzaSyBhkI0X1WScJL0AF-KGwKJiEWL4wHxQqf8';
+
   // Load the Google Maps JavaScript API
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC5v9LF69t5YFrCdfvny_IrJVYLgkFj9Pc' // Fallback to a test key (will show development watermark)
+    googleMapsApiKey: apiKey
   });
 
   const onLoad = (mapInstance: google.maps.Map) => {
