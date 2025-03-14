@@ -5,6 +5,7 @@ import { Phone, Clock, User, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import CallList from '@/components/calls/CallList';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -111,16 +112,7 @@ const Calls = () => {
           </div>
           
           <div className="glass-card rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-4">Upcoming Calls</h2>
-            <p className="text-muted-foreground mb-4">
-              Schedule and manage your calls with clients and prospects.
-            </p>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Call management functionality will be implemented soon.</p>
-              <Link to="/dashboard" className="mt-4 inline-block">
-                <Button>Return to Dashboard</Button>
-              </Link>
-            </div>
+            <CallList />
           </div>
         </main>
       </div>
