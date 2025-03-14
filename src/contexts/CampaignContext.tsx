@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { Campaign, mockCampaigns } from '../models/Campaign';
 import { useAuth } from './AuthContext';
@@ -14,6 +13,7 @@ interface CampaignContextType {
   assignUserToCampaign: (campaignId: string, userId: string) => void;
   removeUserFromCampaign: (campaignId: string, userId: string) => void;
   accessibleCampaigns: Campaign[];
+  getUserCampaigns: (userId: string) => Campaign[];
 }
 
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined);
@@ -85,7 +85,12 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     removeCampaignFromUser(userId, campaignId);
   };
   
-  // Filter campaigns based on user access
+  const getUserCampaigns = (userId: string) => {
+    return campaigns.filter(campaign => 
+      campaign.createdBy === userId || campaign.assignedUsers.includes(userId)
+    );
+  };
+  
   const accessibleCampaigns = isAdmin 
     ? campaigns 
     : currentUser 
@@ -106,7 +111,8 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       removeLeadFromCampaign,
       assignUserToCampaign,
       removeUserFromCampaign,
-      accessibleCampaigns
+      accessibleCampaigns,
+      getUserCampaigns
     }}>
       {children}
     </CampaignContext.Provider>

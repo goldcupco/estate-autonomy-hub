@@ -16,6 +16,7 @@ export interface Campaign {
     responses: number;
     conversions: number;
   };
+  accessRestricted?: boolean; // If true, only assigned users can access
 }
 
 // Mock data for campaigns
@@ -35,7 +36,8 @@ export const mockCampaigns: Campaign[] = [
       contacts: 342,
       responses: 87,
       conversions: 14
-    }
+    },
+    accessRestricted: true
   },
   {
     id: '2',
@@ -52,7 +54,8 @@ export const mockCampaigns: Campaign[] = [
       contacts: 178,
       responses: 63,
       conversions: 9
-    }
+    },
+    accessRestricted: false
   },
   {
     id: '3',
@@ -69,7 +72,8 @@ export const mockCampaigns: Campaign[] = [
       contacts: 98,
       responses: 29,
       conversions: 4
-    }
+    },
+    accessRestricted: true
   },
   {
     id: '4',
@@ -86,6 +90,7 @@ export const mockCampaigns: Campaign[] = [
       contacts: 124,
       responses: 41,
       conversions: 7
-    }
+    },
+    accessRestricted: false
   },
 ];

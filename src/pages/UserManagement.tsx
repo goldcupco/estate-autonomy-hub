@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User, UserPlus, Edit, Trash2, ChevronLeft } from 'lucide-react';
+import { Shield, User, UserPlus, Edit, Trash2, ChevronLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useCampaigns } from '@/contexts/CampaignContext';
 
 const UserManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -22,9 +23,12 @@ const UserManagement = () => {
     role: 'campaigner' as UserRole,
   });
   const [userBeingEdited, setUserBeingEdited] = useState<string | null>(null);
+  const [showCampaignAccessDialog, setShowCampaignAccessDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { users, addUser, updateUser, deleteUser, isAdmin } = useAuth();
+  const { campaigns, assignUserToCampaign, removeUserFromCampaign, getUserCampaigns } = useCampaigns();
   const navigate = useNavigate();
   
   const handleToggleSidebar = () => {
@@ -99,6 +103,27 @@ const UserManagement = () => {
       name: user.name,
       email: user.email,
       role: user.role
+    });
+  };
+  
+  const openCampaignAccessDialog = (userId: string) => {
+    setSelectedUser(userId);
+    setShowCampaignAccessDialog(true);
+  };
+  
+  const handleAssignCampaign = (userId: string, campaignId: string) => {
+    assignUserToCampaign(campaignId, userId);
+    toast({
+      title: "Success",
+      description: "Campaign assigned to user"
+    });
+  };
+  
+  const handleRemoveCampaign = (userId: string, campaignId: string) => {
+    removeUserFromCampaign(campaignId, userId);
+    toast({
+      title: "Success",
+      description: "Campaign access revoked from user"
     });
   };
   
@@ -265,6 +290,14 @@ const UserManagement = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="mr-2"
+                            onClick={() => openCampaignAccessDialog(user.id)}
+                          >
+                            Manage Access
+                          </Button>
                           <Badge variant="outline" className="mr-2">
                             {user.campaigns.length} Campaigns
                           </Badge>
@@ -289,6 +322,62 @@ const UserManagement = () => {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Dialog for managing campaign access */}
+          <Dialog open={showCampaignAccessDialog} onOpenChange={setShowCampaignAccessDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Manage Campaign Access</DialogTitle>
+                <DialogDescription>
+                  Grant or revoke campaign access for this user
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="py-4">
+                <h3 className="text-sm font-medium mb-2">Available Campaigns</h3>
+                <div className="border rounded-md divide-y max-h-[50vh] overflow-y-auto">
+                  {campaigns.map(campaign => {
+                    const selectedUserObj = selectedUser 
+                      ? users.find(u => u.id === selectedUser) 
+                      : null;
+                    const hasAccess = selectedUserObj?.campaigns.includes(campaign.id);
+                    
+                    return (
+                      <div key={campaign.id} className="flex items-center justify-between p-3">
+                        <div>
+                          <p className="font-medium">{campaign.name}</p>
+                          <p className="text-sm text-muted-foreground">{campaign.type} campaign</p>
+                        </div>
+                        {hasAccess ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => selectedUser && handleRemoveCampaign(selectedUser, campaign.id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-1 text-red-500" />
+                            Revoke Access
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => selectedUser && handleAssignCampaign(selectedUser, campaign.id)}
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+                            Grant Access
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button onClick={() => setShowCampaignAccessDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </div>
