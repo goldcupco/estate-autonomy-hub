@@ -10,8 +10,8 @@ import { Search, MapPin, User, Users } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Known working public Mapbox token (Mapbox demo token)
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+// Valid public Mapbox token (for demo purposes)
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94ZGVtbyIsImEiOiJjbGp3bTAwcGYwZDlxM2ZvYWt3dmZ0bmZyIn0.qvZDcPS7muKh9jzpX0n6ow';
 
 interface MapSearchProps {
   data: any[];
@@ -41,7 +41,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       // Create map instance
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11', // Try a different style
+        style: 'mapbox://styles/mapbox/streets-v12', 
         center: [-98.5795, 39.8283], // Center of US
         zoom: 3,
         maxZoom: 18,
