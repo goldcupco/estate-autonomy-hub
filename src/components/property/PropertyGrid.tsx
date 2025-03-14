@@ -26,6 +26,7 @@ interface Property {
   sqft: number;
   status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
   imageUrl: string;
+  propertyType?: 'House' | 'Land' | 'Condo' | 'Apartment' | 'Commercial';
 }
 
 interface PropertyGridProps {
@@ -37,6 +38,7 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortOrder, setSortOrder] = useState('newest');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter properties based on search and filters
@@ -47,8 +49,9 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
       property.state.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
+    const matchesPropertyType = propertyTypeFilter === 'all' || property.propertyType === propertyTypeFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPropertyType;
   });
 
   // Sort properties
@@ -63,6 +66,13 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
   // Count properties by status
   const statusCounts = properties.reduce((acc, property) => {
     acc[property.status] = (acc[property.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Count properties by type
+  const typeCounts = properties.reduce((acc, property) => {
+    const type = property.propertyType || 'House';
+    acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -155,6 +165,21 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                 <DropdownMenuRadioItem value="Lead">Lead</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="Negotiating">Negotiating</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Property Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup 
+                value={propertyTypeFilter} 
+                onValueChange={setPropertyTypeFilter}
+              >
+                <DropdownMenuRadioItem value="all">All Types</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="House">Houses ({typeCounts['House'] || 0})</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Land">Land ({typeCounts['Land'] || 0})</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Condo">Condos ({typeCounts['Condo'] || 0})</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Apartment">Apartments ({typeCounts['Apartment'] || 0})</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Commercial">Commercial ({typeCounts['Commercial'] || 0})</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -244,6 +269,13 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                     {property.status}
                   </span>
                 </div>
+                {property.propertyType && (
+                  <div className="absolute top-8 left-2">
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full inline-block bg-gray-100 text-gray-800">
+                      {property.propertyType}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex-grow p-4">
                 <div className="flex justify-between items-start">
@@ -262,15 +294,24 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                   </div>
                 </div>
                 <div className="flex gap-4 mt-3">
+                  {property.propertyType !== 'Land' ? (
+                    <>
+                      <div className="text-sm">
+                        <span className="font-medium">{property.bedrooms}</span> Beds
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium">{property.bathrooms}</span> Baths
+                      </div>
+                    </>
+                  ) : null}
                   <div className="text-sm">
-                    <span className="font-medium">{property.bedrooms}</span> Beds
+                    <span className="font-medium">{property.sqft.toLocaleString()}</span> {property.propertyType === 'Land' ? 'Acres' : 'Sq Ft'}
                   </div>
-                  <div className="text-sm">
-                    <span className="font-medium">{property.bathrooms}</span> Baths
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">{property.sqft.toLocaleString()}</span> Sq Ft
-                  </div>
+                  {property.propertyType && (
+                    <div className="text-sm">
+                      <span className="font-medium">{property.propertyType}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

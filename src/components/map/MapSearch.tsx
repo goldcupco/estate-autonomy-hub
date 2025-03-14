@@ -121,6 +121,11 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
                       <span>{contact.address}</span>
                     </div>
                   )}
+                  {contact.propertyType && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <span className="px-1.5 py-0.5 text-xs rounded-full bg-muted">{contact.propertyType}</span>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
@@ -154,7 +159,6 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
-            preferCanvas={true} // Use canvas for better performance
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -185,6 +189,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
                         {contact.address || ''}<br />
                         {contact.email || ''}<br />
                         {contact.phone || ''}
+                        {contact.propertyType && <><br /><strong>Type:</strong> {contact.propertyType}</>}
                       </div>
                     </Popup>
                   </Marker>

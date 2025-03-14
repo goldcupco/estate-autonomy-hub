@@ -24,6 +24,7 @@ export const propertiesData = [
     sqft: 1800,
     status: 'For Sale' as const,
     imageUrl: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+    propertyType: 'House' as const,
   },
   {
     id: '2',
@@ -37,6 +38,7 @@ export const propertiesData = [
     sqft: 2400,
     status: 'Pending' as const,
     imageUrl: 'https://images.unsplash.com/photo-1598228723793-52759bba239c',
+    propertyType: 'House' as const,
   },
   {
     id: '3',
@@ -50,6 +52,7 @@ export const propertiesData = [
     sqft: 1500,
     status: 'Sold' as const,
     imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
+    propertyType: 'House' as const,
   },
   {
     id: '4',
@@ -63,6 +66,7 @@ export const propertiesData = [
     sqft: 2800,
     status: 'Lead' as const,
     imageUrl: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde',
+    propertyType: 'House' as const,
   },
   {
     id: '5',
@@ -76,6 +80,7 @@ export const propertiesData = [
     sqft: 2100,
     status: 'For Sale' as const,
     imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750',
+    propertyType: 'House' as const,
   },
   {
     id: '6',
@@ -89,6 +94,7 @@ export const propertiesData = [
     sqft: 1950,
     status: 'For Sale' as const,
     imageUrl: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be',
+    propertyType: 'House' as const,
   },
   {
     id: '7',
@@ -102,6 +108,7 @@ export const propertiesData = [
     sqft: 1750,
     status: 'Negotiating' as const,
     imageUrl: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83',
+    propertyType: 'House' as const,
   },
   {
     id: '8',
@@ -115,6 +122,7 @@ export const propertiesData = [
     sqft: 2600,
     status: 'Pending' as const,
     imageUrl: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5',
+    propertyType: 'House' as const,
   },
   {
     id: '9',
@@ -128,6 +136,7 @@ export const propertiesData = [
     sqft: 2200,
     status: 'For Sale' as const,
     imageUrl: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6',
+    propertyType: 'House' as const,
   },
   {
     id: '10',
@@ -141,6 +150,7 @@ export const propertiesData = [
     sqft: 1850,
     status: 'Sold' as const,
     imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6',
+    propertyType: 'House' as const,
   },
   {
     id: '11',
@@ -154,6 +164,7 @@ export const propertiesData = [
     sqft: 2300,
     status: 'For Sale' as const,
     imageUrl: 'https://images.unsplash.com/photo-1576941089067-2de3c901e126',
+    propertyType: 'House' as const,
   },
   {
     id: '12',
@@ -167,6 +178,49 @@ export const propertiesData = [
     sqft: 2100,
     status: 'Lead' as const,
     imageUrl: 'https://images.unsplash.com/photo-1575517111839-3a3843ee7f5d',
+    propertyType: 'House' as const,
+  },
+  {
+    id: '13',
+    address: 'Hillside Acres Lot 7',
+    city: 'Bozeman',
+    state: 'MT',
+    zipCode: '59715',
+    price: 320000,
+    bedrooms: 0,
+    bathrooms: 0,
+    sqft: 5,  // 5 acres
+    status: 'For Sale' as const,
+    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef',
+    propertyType: 'Land' as const,
+  },
+  {
+    id: '14',
+    address: 'Riverside Plot B2',
+    city: 'Sedona',
+    state: 'AZ',
+    zipCode: '86336',
+    price: 275000,
+    bedrooms: 0,
+    bathrooms: 0,
+    sqft: 2.5,  // 2.5 acres
+    status: 'For Sale' as const,
+    imageUrl: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e',
+    propertyType: 'Land' as const,
+  },
+  {
+    id: '15',
+    address: 'Mountain View Lot 12',
+    city: 'Aspen',
+    state: 'CO',
+    zipCode: '81611',
+    price: 1200000,
+    bedrooms: 0,
+    bathrooms: 0,
+    sqft: 10,  // 10 acres
+    status: 'Pending' as const,
+    imageUrl: 'https://images.unsplash.com/photo-1449452198679-05c7fd30f416',
+    propertyType: 'Land' as const,
   }
 ];
 

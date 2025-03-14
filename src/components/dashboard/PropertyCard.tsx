@@ -19,6 +19,7 @@ interface PropertyCardProps {
     sqft: number;
     status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
     imageUrl: string;
+    propertyType?: 'House' | 'Land' | 'Condo' | 'Apartment' | 'Commercial';
   };
   className?: string;
   style?: React.CSSProperties;
@@ -51,6 +52,22 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+    }
+  };
+
+  // Property type badge styles
+  const getPropertyTypeStyles = (type?: string) => {
+    switch(type) {
+      case 'Land':
+        return 'bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300';
+      case 'Condo':
+        return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300';
+      case 'Apartment':
+        return 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300';
+      case 'Commercial':
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+      default: // House or undefined
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
     }
   };
 
@@ -94,6 +111,16 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           {property.status}
         </Badge>
         
+        {/* Property type badge */}
+        {property.propertyType && (
+          <Badge className={cn(
+            "absolute top-9 left-3 px-2 py-1 text-xs font-medium",
+            getPropertyTypeStyles(property.propertyType)
+          )}>
+            {property.propertyType}
+          </Badge>
+        )}
+        
         {/* Favorite button */}
         <Button
           size="icon"
@@ -126,22 +153,32 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
         </div>
         
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md">
-            <span className="font-medium">{property.bedrooms}</span>
-            <span className="text-xs text-muted-foreground">Beds</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md">
-            <span className="font-medium">{property.bathrooms}</span>
-            <span className="text-xs text-muted-foreground">Baths</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md">
+          {property.propertyType !== 'Land' ? (
+            <>
+              <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md">
+                <span className="font-medium">{property.bedrooms}</span>
+                <span className="text-xs text-muted-foreground">Beds</span>
+              </div>
+              <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md">
+                <span className="font-medium">{property.bathrooms}</span>
+                <span className="text-xs text-muted-foreground">Baths</span>
+              </div>
+            </>
+          ) : null}
+          <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md col-span-1">
             <span className="font-medium">{property.sqft.toLocaleString()}</span>
-            <span className="text-xs text-muted-foreground">Sq Ft</span>
+            <span className="text-xs text-muted-foreground">{property.propertyType === 'Land' ? 'Acres' : 'Sq Ft'}</span>
           </div>
+          {property.propertyType === 'Land' && (
+            <div className="flex flex-col items-center p-2 bg-secondary/50 rounded-md col-span-2">
+              <span className="font-medium">Land</span>
+              <span className="text-xs text-muted-foreground">Property</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default PropertyCard;
