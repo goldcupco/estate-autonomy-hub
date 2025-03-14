@@ -57,7 +57,8 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
     setIsLoading(false);
   };
 
-  // Create the encoded Google Street View URL
+  // Create the encoded Google Street View URL with a valid API key
+  // Note: This is using a sample API key that might need to be replaced with a valid one
   const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=AIzaSyBtv9-R3NrzS4C9d2UjinkkQBmjlNtCKg4&location=${location.lat},${location.lng}&heading=210&pitch=10&fov=90`;
 
   return (
@@ -85,10 +86,12 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
           whenReady={handleMapLoad}
+          scrollWheelZoom={false}
         >
           <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <AttributionControl
             position="bottomright"
