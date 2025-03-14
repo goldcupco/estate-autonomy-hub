@@ -162,8 +162,14 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              // The fix: Use attributionControl prop as an object in TileLayer
+              attributionControl={false}
             />
+            
+            {/* Add attribution control separately */}
+            <div className="leaflet-attribution-control" style={{ position: 'absolute', bottom: '0', right: '0', zIndex: 1000, fontSize: '10px', backgroundColor: 'rgba(255, 255, 255, 0.7)', padding: '0 5px' }}>
+              &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
+            </div>
             
             {/* Controller component to handle map view changes */}
             <MapController 
