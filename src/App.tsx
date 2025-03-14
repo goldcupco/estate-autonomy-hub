@@ -11,6 +11,7 @@ import Contracts from "./pages/Contracts";
 import Dashboard from "./pages/Dashboard";
 import PropertyDetails from "./pages/PropertyDetails";
 import Lists from "./pages/Lists";
+import Contacts from "./pages/Contacts";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/properties" element={<Properties />} />
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/contracts" element={<Contracts />} />
+          <Route path="/contacts" element={<Contacts />} />
           <Route path="/leads" element={<NotFound />} />
           <Route path="/lists" element={<Lists />} />
           <Route path="/calls" element={<NotFound />} />
