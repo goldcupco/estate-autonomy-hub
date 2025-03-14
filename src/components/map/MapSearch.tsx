@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, User, Users } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// Using a valid public Mapbox token for demos
-// In production, this should be replaced with your own token or stored securely
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+// Public Mapbox token for demo purposes
+// In production, use your own token from your Mapbox account
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 interface MapSearchProps {
   data: any[];
@@ -24,6 +25,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   
   // Initialize map when component mounts
   useEffect(() => {
@@ -34,7 +36,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
+        style: 'mapbox://styles/mapbox/streets-v12',
         center: [-98.5795, 39.8283], // Center of US
         zoom: 3
       });
@@ -45,11 +47,17 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       // Add error handling for map loading
       map.current.on('error', (e) => {
         console.error('Map error:', e);
-        setMapError('Error loading map. Please check console for details.');
+        setMapError('Error loading map. Please check your internet connection or try again later.');
+      });
+      
+      // When the map style is loaded
+      map.current.on('style.load', () => {
+        setMapLoaded(true);
       });
       
       // Add markers for contact data
       map.current.on('load', () => {
+        setMapLoaded(true);
         if (data && data.length > 0 && map.current) {
           data.forEach(contact => {
             if (contact.location?.lat && contact.location?.lng) {
@@ -62,6 +70,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
               el.style.height = '20px';
               el.style.borderRadius = '50%';
               el.style.cursor = 'pointer';
+              el.style.border = '2px solid white';
+              el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
               
               const marker = new mapboxgl.Marker(el)
                 .setLngLat([contact.location.lng, contact.location.lat])
@@ -86,7 +96,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       });
     } catch (error) {
       console.error('Error initializing map:', error);
-      setMapError('Error initializing map. Please check console for details.');
+      setMapError('Error initializing map. Please check your internet connection or try again later.');
     }
     
     return () => {
@@ -167,13 +177,20 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       </Card>
       
       <div className="md:col-span-2 h-[calc(100vh-200px)] rounded-lg overflow-hidden border relative">
-        {mapError && (
+        {!mapLoaded && !mapError && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            <Card className="w-5/6">
-              <CardHeader>
-                <CardTitle>Map Error</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading map...</p>
+            </div>
+          </div>
+        )}
+        
+        {mapError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 p-4">
+            <Alert variant="destructive" className="w-full max-w-md">
+              <AlertTitle>Map Error</AlertTitle>
+              <AlertDescription>
                 <p>{mapError}</p>
                 <Button 
                   className="mt-4"
@@ -181,8 +198,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
                 >
                   Reload Page
                 </Button>
-              </CardContent>
-            </Card>
+              </AlertDescription>
+            </Alert>
           </div>
         )}
         <div ref={mapContainer} className="w-full h-full" />
