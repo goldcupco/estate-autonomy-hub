@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, RefreshCw, ExternalLink } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MapPin, RefreshCw, ExternalLink, Map } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface PropertyStreetViewProps {
   latitude: number;
@@ -14,15 +14,22 @@ interface PropertyStreetViewProps {
 const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [mapProvider, setMapProvider] = useState<'openstreetmap' | 'geoapify'>('openstreetmap');
   
-  // Generate OpenStreetMap static map URL
+  // Primary map provider: OpenStreetMap static map URL
   const zoom = 18;
   const mapWidth = 800;
   const mapHeight = 400;
   const staticMapUrl = `https://static-maps.openstreetmap.fr/staticmap?center=${latitude},${longitude}&zoom=${zoom}&size=${mapWidth}x${mapHeight}&markers=${latitude},${longitude}&format=png`;
   
+  // Backup map provider: Geoapify
+  const geoapifyUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${mapWidth}&height=${mapHeight}&center=lonlat:${longitude},${latitude}&zoom=${zoom}&marker=lonlat:${longitude},${latitude};color:%23ff0000;size:medium&format=png`;
+  
   // Direct link to view the location on OpenStreetMap
   const osmUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=${zoom}`;
+
+  // Use the current map provider's URL
+  const currentMapUrl = mapProvider === 'openstreetmap' ? staticMapUrl : geoapifyUrl;
 
   const handleImageLoad = () => {
     setIsLoading(false);
@@ -30,12 +37,22 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
   };
 
   const handleImageError = () => {
-    setIsLoading(false);
-    setHasError(true);
-    console.error('Failed to load the map image');
+    if (mapProvider === 'openstreetmap') {
+      // If OpenStreetMap fails, try Geoapify
+      console.log('OpenStreetMap failed, trying Geoapify...');
+      setMapProvider('geoapify');
+      setIsLoading(true);
+    } else {
+      // If both providers fail, show error
+      setIsLoading(false);
+      setHasError(true);
+      console.error('Failed to load the map image from both providers');
+    }
   };
 
   const reloadStaticMap = () => {
+    // Reset to primary provider first
+    setMapProvider('openstreetmap');
     setIsLoading(true);
     setHasError(false);
     // Force reload by appending a timestamp
@@ -50,21 +67,37 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
       <Card className="h-[400px] relative overflow-hidden">
         <CardContent className="p-0 h-full flex items-center justify-center">
           <div className="text-center p-6">
-            <Alert>
-              <MapPin className="h-5 w-5 mr-2" />
+            <Alert variant="destructive">
+              <MapPin className="h-5 w-5" />
+              <AlertTitle>Map Loading Error</AlertTitle>
               <AlertDescription>
-                Static map image could not be loaded for this location.
+                We couldn't load a street view or map image for this location.
                 {address && <div className="mt-2 text-sm opacity-70">{address}</div>}
               </AlertDescription>
             </Alert>
-            <Button 
-              onClick={reloadStaticMap} 
-              className="mt-4" 
-              variant="outline"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
+            <div className="mt-4 flex flex-col md:flex-row gap-2 justify-center">
+              <Button 
+                onClick={reloadStaticMap} 
+                variant="outline"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+              <Button 
+                variant="outline" 
+                asChild
+              >
+                <a 
+                  href={osmUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center"
+                >
+                  <Map className="h-4 w-4 mr-2" />
+                  View on OpenStreetMap
+                </a>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -77,7 +110,7 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
         <div className="w-full h-full relative">
           <img 
             id="static-map-img"
-            src={staticMapUrl}
+            src={currentMapUrl}
             alt={`Map view of ${address || 'property location'}`}
             className="w-full h-full object-cover"
             onLoad={handleImageLoad}
@@ -93,7 +126,12 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
             </div>
           )}
           
-          <div className="absolute bottom-2 right-2">
+          <div className="absolute bottom-2 right-2 flex gap-2">
+            {mapProvider === 'geoapify' && (
+              <span className="text-xs bg-background/80 px-2 py-1 rounded">
+                Using fallback map
+              </span>
+            )}
             <a 
               href={osmUrl} 
               target="_blank" 
