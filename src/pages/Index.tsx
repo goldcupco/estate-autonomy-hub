@@ -1,24 +1,40 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Building, FileText, BarChart3 } from 'lucide-react';
-import Sidebar from '@/components/layout/Sidebar';
+import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // Subscribe to global sidebar state changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setSidebarOpen(e.detail);
+    };
+    
+    window.addEventListener('sidebarStateChange' as any, handler);
+    return () => {
+      window.removeEventListener('sidebarStateChange' as any, handler);
+    };
+  }, []);
+
+  // On mount, initialize sidebar state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      setSidebarOpen(savedState === 'true');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
-        <Navbar toggleSidebar={toggleSidebar} />
+        <Navbar toggleSidebar={() => toggleSidebar()} />
         
         <main className="container mx-auto px-4 pt-24 pb-12">
           <div className="space-y-8 animate-fade-in">

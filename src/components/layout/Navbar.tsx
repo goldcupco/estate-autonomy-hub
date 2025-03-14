@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Bell, Menu, Search, User, X } from 'lucide-react';
@@ -46,8 +45,7 @@ export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: ()
 
   // Handle sidebar toggle
   const handleToggleSidebar = () => {
-    // Call both the prop toggle and the global toggle
-    propToggleSidebar();
+    // Global toggle is enough - it will update all sidebars through the event system
     toggleSidebar();
   };
 
