@@ -1,11 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import PropertyCard from '@/components/dashboard/PropertyCard';
 import LeadTable, { Lead } from '@/components/leads/LeadTable';
+import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Navbar from '@/components/layout/Navbar';
 
 // Dummy property data
 const recentProperties = [
@@ -119,61 +121,92 @@ const recentLeads: Lead[] = [
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Subscribe to global sidebar state changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setSidebarOpen(e.detail);
+    };
+    
+    window.addEventListener('sidebarStateChange' as any, handler);
+    return () => {
+      window.removeEventListener('sidebarStateChange' as any, handler);
+    };
+  }, []);
+
+  // On mount, initialize sidebar state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      setSidebarOpen(savedState === 'true');
+    }
+  }, []);
 
   return (
-    <div className="space-y-8 py-8 animate-fade-in">
-      {/* Quick action buttons */}
-      <div className="flex flex-wrap gap-4">
-        <Button className="flex items-center gap-2 animate-scale-in">
-          <Building className="h-4 w-4" />
-          Add Property
-        </Button>
-        <Button className="flex items-center gap-2 animate-scale-in animate-delay-100" variant="outline">
-          <UserPlus className="h-4 w-4" />
-          Add Lead
-        </Button>
-        <Button className="flex items-center gap-2 animate-scale-in animate-delay-200" variant="outline">
-          <Truck className="h-4 w-4" />
-          Schedule Call
-        </Button>
+    <div className="min-h-screen bg-background">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
+        <Navbar toggleSidebar={() => toggleSidebar()} />
+        
+        <main className="container mx-auto px-4 pt-24 pb-12">
+          <div className="space-y-8 py-8 animate-fade-in">
+            {/* Quick action buttons */}
+            <div className="flex flex-wrap gap-4">
+              <Button className="flex items-center gap-2 animate-scale-in">
+                <Building className="h-4 w-4" />
+                Add Property
+              </Button>
+              <Button className="flex items-center gap-2 animate-scale-in animate-delay-100" variant="outline">
+                <UserPlus className="h-4 w-4" />
+                Add Lead
+              </Button>
+              <Button className="flex items-center gap-2 animate-scale-in animate-delay-200" variant="outline">
+                <Truck className="h-4 w-4" />
+                Schedule Call
+              </Button>
+            </div>
+            
+            {/* Metrics */}
+            <section>
+              <DashboardMetrics />
+            </section>
+            
+            {/* Recent Properties */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold tracking-tight">Recent Properties</h2>
+                <Button variant="link" onClick={() => navigate('/properties')} className="text-primary">
+                  View All
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {recentProperties.map((property, index) => (
+                  <PropertyCard 
+                    key={property.id} 
+                    property={property} 
+                    className="opacity-0 animate-fade-in"
+                    style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                    onClick={() => navigate(`/property/${property.id}`)}
+                  />
+                ))}
+              </div>
+            </section>
+            
+            {/* Recent Leads */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold tracking-tight">Recent Leads</h2>
+                <Button variant="link" onClick={() => navigate('/leads')} className="text-primary">
+                  View All
+                </Button>
+              </div>
+              <LeadTable data={recentLeads} />
+            </section>
+          </div>
+        </main>
       </div>
-      
-      {/* Metrics */}
-      <section>
-        <DashboardMetrics />
-      </section>
-      
-      {/* Recent Properties */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Recent Properties</h2>
-          <Button variant="link" onClick={() => navigate('/properties')} className="text-primary">
-            View All
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {recentProperties.map((property, index) => (
-            <PropertyCard 
-              key={property.id} 
-              property={property} 
-              className="opacity-0 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
-              onClick={() => navigate(`/property/${property.id}`)}
-            />
-          ))}
-        </div>
-      </section>
-      
-      {/* Recent Leads */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Recent Leads</h2>
-          <Button variant="link" onClick={() => navigate('/leads')} className="text-primary">
-            View All
-          </Button>
-        </div>
-        <LeadTable data={recentLeads} />
-      </section>
     </div>
   );
 }

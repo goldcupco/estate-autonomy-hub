@@ -1,9 +1,8 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, FolderOpen, ArrowLeft, FileCheck, FileBarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Sidebar from '@/components/layout/Sidebar';
+import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import {
   Breadcrumb,
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
 
-// Sample document data with more realistic paths
 const documents = [
   { 
     id: '1', 
@@ -42,9 +40,23 @@ const documents = [
 const Documents = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setSidebarOpen(e.detail);
+    };
+    
+    window.addEventListener('sidebarStateChange' as any, handler);
+    return () => {
+      window.removeEventListener('sidebarStateChange' as any, handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      setSidebarOpen(savedState === 'true');
+    }
+  }, []);
 
   const getDocumentIcon = (type: string) => {
     switch (type) {
@@ -58,7 +70,6 @@ const Documents = () => {
   };
 
   const openDocument = (title: string, type: string) => {
-    // Instead of opening a URL, we'll show a toast notification
     toast.info(`Opening ${title}.${type}`, {
       description: "Document viewer functionality coming soon",
     });
@@ -69,7 +80,7 @@ const Documents = () => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
-        <Navbar toggleSidebar={toggleSidebar} />
+        <Navbar toggleSidebar={() => toggleSidebar()} />
         
         <main className="container mx-auto px-4 pt-24 pb-12">
           <div className="mb-6">
@@ -105,7 +116,6 @@ const Documents = () => {
           </div>
           
           <div className="grid gap-6 md:grid-cols-2 mb-8">
-            {/* Recent Documents Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Recent Documents</h2>
@@ -138,7 +148,6 @@ const Documents = () => {
               </Button>
             </div>
             
-            {/* Document Categories Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Categories</h2>
