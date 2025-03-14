@@ -28,15 +28,21 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
 }) => {
   const [showStreetView, setShowStreetView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
 
   // Load the Google Maps JavaScript API
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: 'YOUR_API_KEY_HERE' // This should be replaced with a real API key
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC5v9LF69t5YFrCdfvny_IrJVYLgkFj9Pc' // Fallback to a test key (will show development watermark)
   });
 
-  const onLoad = () => {
+  const onLoad = (mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
     setIsLoading(false);
+  };
+
+  const onUnmount = () => {
+    setMap(null);
   };
 
   return (
@@ -62,6 +68,7 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
             center={location}
             zoom={zoom}
             onLoad={onLoad}
+            onUnmount={onUnmount}
             options={{
               streetViewControl: true,
               mapTypeControl: false,
@@ -73,9 +80,9 @@ export const GoogleMapWithStreetView: React.FC<GoogleMapWithStreetViewProps> = (
             
             {showStreetView && (
               <StreetViewPanorama
-                position={location}
-                visible={showStreetView}
                 options={{
+                  position: location,
+                  visible: true,
                   enableCloseButton: false,
                   addressControl: true,
                   fullscreenControl: true,
