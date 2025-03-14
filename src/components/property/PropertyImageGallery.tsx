@@ -14,12 +14,12 @@ interface PropertyImageGalleryProps {
   property: Property;
 }
 
-// Mock additional images for the property
+// Mock additional images for the property with complete URLs
 const ADDITIONAL_IMAGES = [
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
-  "https://images.unsplash.com/photo-1600607687644-c7f34b5f0e70",
-  "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b"
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600607687644-c7f34b5f0e70?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=80"
 ];
 
 export function PropertyImageGallery({ property }: PropertyImageGalleryProps) {
