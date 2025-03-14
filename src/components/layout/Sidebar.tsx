@@ -10,7 +10,9 @@ import {
   Phone, 
   Settings, 
   FileText,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,9 +24,40 @@ type SidebarProps = {
   onClose: () => void;
 };
 
+// Create a global state for sidebar visibility
+let globalSidebarState = true;
+const sidebarStateListeners: ((isOpen: boolean) => void)[] = [];
+
+// Function to update all sidebar instances
+const updateGlobalSidebarState = (isOpen: boolean) => {
+  globalSidebarState = isOpen;
+  sidebarStateListeners.forEach(listener => listener(isOpen));
+};
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(globalSidebarState);
+  
+  // Subscribe to global sidebar state changes
+  useEffect(() => {
+    const listener = (newState: boolean) => {
+      setSidebarOpen(newState);
+    };
+    
+    sidebarStateListeners.push(listener);
+    return () => {
+      const index = sidebarStateListeners.indexOf(listener);
+      if (index > -1) {
+        sidebarStateListeners.splice(index, 1);
+      }
+    };
+  }, []);
+
+  // Sync local state with prop
+  useEffect(() => {
+    setSidebarOpen(isOpen);
+  }, [isOpen]);
 
   // Handle initial mount animation
   useEffect(() => {
@@ -38,10 +71,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }, [location.pathname, onClose]);
 
+  const toggleSidebar = () => {
+    const newState = !sidebarOpen;
+    setSidebarOpen(newState);
+    updateGlobalSidebarState(newState);
+  };
+
   return (
     <>
       {/* Mobile overlay */}
-      {isOpen && (
+      {sidebarOpen && (
         <div 
           className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in"
           onClick={onClose}
@@ -51,8 +90,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card shadow-sm transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 border-r border-border bg-card shadow-sm transition-all duration-300 ease-in-out",
+          sidebarOpen ? "w-64" : "w-16",
           mounted ? "transform-gpu" : ""
         )}
       >
@@ -60,10 +99,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
             <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-              <div className="h-6 w-6 rounded-md bg-primary text-white flex items-center justify-center">
+              <div className="h-6 w-6 rounded-md bg-primary text-white flex items-center justify-center shrink-0">
                 RE
               </div>
-              <span className="animate-fade-in">RealEstate Pro</span>
+              <span className={cn("transition-opacity duration-300", 
+                sidebarOpen ? "opacity-100" : "opacity-0 hidden md:block"
+              )}>RealEstate Pro</span>
             </Link>
             <Button 
               variant="ghost" 
@@ -72,6 +113,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={onClose}
             >
               <X className="h-4 w-4" />
+            </Button>
+            
+            {/* Collapse toggle button - only visible on larger screens */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="ml-auto hidden md:flex"
+            >
+              {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>
           
@@ -83,36 +134,42 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 icon={BarChart3} 
                 label="Dashboard" 
                 active={location.pathname === '/dashboard'} 
+                collapsed={!sidebarOpen}
               />
               <NavItem 
                 to="/properties" 
                 icon={Building} 
                 label="Properties" 
                 active={location.pathname === '/properties'} 
+                collapsed={!sidebarOpen}
               />
               <NavItem 
                 to="/leads" 
                 icon={Users} 
                 label="Leads" 
                 active={location.pathname === '/leads'} 
+                collapsed={!sidebarOpen}
               />
               <NavItem 
                 to="/lists" 
                 icon={ClipboardList} 
                 label="Lists" 
                 active={location.pathname === '/lists'} 
+                collapsed={!sidebarOpen}
               />
               <NavItem 
                 to="/calls" 
                 icon={Phone} 
                 label="Calls" 
                 active={location.pathname === '/calls'} 
+                collapsed={!sidebarOpen}
               />
               <NavItem 
                 to="/documents" 
                 icon={FileText} 
                 label="Documents" 
                 active={location.pathname === '/documents'} 
+                collapsed={!sidebarOpen}
               />
             </nav>
           </ScrollArea>
@@ -124,6 +181,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               icon={Settings} 
               label="Settings" 
               active={location.pathname === '/settings'} 
+              collapsed={!sidebarOpen}
             />
           </div>
         </div>
@@ -132,15 +190,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   );
 }
 
-// Navigation item component
+// Navigation item component with collapsible support
 type NavItemProps = {
   to: string;
   icon: React.ElementType;
   label: string;
   active?: boolean;
+  collapsed?: boolean;
 };
 
-function NavItem({ to, icon: Icon, label, active }: NavItemProps) {
+function NavItem({ to, icon: Icon, label, active, collapsed }: NavItemProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -154,16 +213,21 @@ function NavItem({ to, icon: Icon, label, active }: NavItemProps) {
                 : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
             )}
           >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
+            <Icon className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>{label}</span>}
           </Link>
         </TooltipTrigger>
-        <TooltipContent side="right" className="md:hidden">
+        <TooltipContent side="right" className={cn(collapsed ? "block" : "hidden")}>
           {label}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+
+// Export the toggle function for external use
+export const toggleSidebar = () => {
+  updateGlobalSidebarState(!globalSidebarState);
+};
 
 export default Sidebar;

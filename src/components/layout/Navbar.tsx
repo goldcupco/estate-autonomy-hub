@@ -13,8 +13,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { toggleSidebar } from './Sidebar';
 
-export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
+export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: () => void }) {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
@@ -39,6 +40,13 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle sidebar toggle
+  const handleToggleSidebar = () => {
+    // Call both the prop toggle and the global toggle
+    propToggleSidebar();
+    toggleSidebar();
+  };
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
@@ -51,8 +59,8 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={toggleSidebar}
-              className="md:hidden"
+              onClick={handleToggleSidebar}
+              className="md:flex"
             >
               <Menu className="h-5 w-5" />
             </Button>

@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Sidebar from '@/components/layout/Sidebar';
+import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import {
   Breadcrumb,
@@ -17,16 +17,24 @@ import {
 const LeadsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // Subscribe to global sidebar state
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setSidebarOpen(e.detail);
+    };
+    
+    window.addEventListener('sidebarStateChange' as any, handler);
+    return () => {
+      window.removeEventListener('sidebarStateChange' as any, handler);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
-        <Navbar toggleSidebar={toggleSidebar} />
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+        <Navbar toggleSidebar={() => toggleSidebar()} />
         
         <main className="container mx-auto px-4 pt-24 pb-12">
           <div className="mb-6">
