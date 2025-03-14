@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,8 @@ import { DataUploader } from '@/components/ui/DataUploader';
 import { MLSImporter } from '@/components/property/MLSImporter';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Navbar from '@/components/layout/Navbar';
 
 export const propertiesData = [
   {
@@ -170,6 +173,27 @@ export const propertiesData = [
 export function Properties() {
   const navigate = useNavigate();
   const [showImporter, setShowImporter] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Subscribe to global sidebar state changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setSidebarOpen(e.detail);
+    };
+    
+    window.addEventListener('sidebarStateChange' as any, handler);
+    return () => {
+      window.removeEventListener('sidebarStateChange' as any, handler);
+    };
+  }, []);
+
+  // On mount, initialize sidebar state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      setSidebarOpen(savedState === 'true');
+    }
+  }, []);
   
   const handleImportSuccess = (properties: any[]) => {
     toast.success(`Successfully imported ${properties.length} properties from MLS`);
@@ -177,41 +201,51 @@ export function Properties() {
   };
   
   return (
-    <div className="space-y-6 py-8 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-        <div className="flex gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2 animate-scale-in">
-                <Database className="h-4 w-4" />
-                <span>Import MLS Data</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-md">
-              <SheetHeader>
-                <SheetTitle>Import MLS Data</SheetTitle>
-                <SheetDescription>
-                  Connect to an MLS system or upload a CSV file to import property listings.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6 space-y-6">
-                <MLSImporter onImportSuccess={handleImportSuccess} />
-              </div>
-            </SheetContent>
-          </Sheet>
-          
-          <Button className="flex items-center gap-2 animate-scale-in" onClick={() => navigate('/property/new')}>
-            <Building className="h-4 w-4" />
-            <span>Add Property</span>
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <PropertyGrid 
-        properties={propertiesData} 
-        onPropertyClick={(id) => navigate(`/property/${id}`)}
-      />
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
+        <Navbar toggleSidebar={() => toggleSidebar()} />
+        
+        <main className="container mx-auto px-4 pt-24 pb-12">
+          <div className="space-y-6 py-8 animate-fade-in">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
+              <div className="flex gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 animate-scale-in">
+                      <Database className="h-4 w-4" />
+                      <span>Import MLS Data</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="sm:max-w-md">
+                    <SheetHeader>
+                      <SheetTitle>Import MLS Data</SheetTitle>
+                      <SheetDescription>
+                        Connect to an MLS system or upload a CSV file to import property listings.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 space-y-6">
+                      <MLSImporter onImportSuccess={handleImportSuccess} />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                
+                <Button className="flex items-center gap-2 animate-scale-in" onClick={() => navigate('/property/new')}>
+                  <Building className="h-4 w-4" />
+                  <span>Add Property</span>
+                </Button>
+              </div>
+            </div>
+            
+            <PropertyGrid 
+              properties={propertiesData} 
+              onPropertyClick={(id) => navigate(`/property/${id}`)}
+            />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
