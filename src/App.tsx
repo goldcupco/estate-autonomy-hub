@@ -143,6 +143,14 @@ const AppRoutes = () => {
         } 
       />
       <Route 
+        path="/campaigns" 
+        element={
+          <ProtectedRoute>
+            <Campaigns />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/seller-map" 
         element={
           <ProtectedRoute>
