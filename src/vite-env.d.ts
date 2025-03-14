@@ -30,6 +30,7 @@ declare module 'react-leaflet' {
   export interface MarkerProps {
     position: [number, number];
     eventHandlers?: any;
+    children?: React.ReactNode; // Add children property to MarkerProps
   }
 
   export interface PopupProps {
