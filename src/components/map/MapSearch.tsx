@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -35,13 +35,19 @@ const MapController = ({ center, zoom, contact }: { center: [number, number], zo
   const map = useMap();
   
   useEffect(() => {
+    // Only fly to new location if contact has changed
     if (contact && contact.location) {
       map.flyTo([contact.location.lat, contact.location.lng], 14, {
         animate: true,
-        duration: 1
+        duration: 0.5 // Reduced animation time for better performance
       });
     }
   }, [contact, map]);
+  
+  // Set initial view on first load
+  useEffect(() => {
+    map.setView(center, zoom, { animate: false });
+  }, []);
   
   return null;
 };
@@ -56,18 +62,20 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
   const defaultCenter: [number, number] = [39.8283, -98.5795];
   const defaultZoom = 4;
   
-  // Handle map load event
+  // Handle map load event - optimized to respond faster
   const handleMapLoad = () => {
-    setMapLoaded(true);
+    setTimeout(() => setMapLoaded(true), 100);
   };
   
-  // Filter contacts based on search
-  const filteredContacts = data.filter(contact => 
-    contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.phone?.includes(searchQuery)
-  );
+  // Filter contacts based on search - memoized for performance
+  const filteredContacts = useMemo(() => {
+    return data.filter(contact => 
+      contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.phone?.includes(searchQuery)
+    );
+  }, [data, searchQuery]);
   
   // Handle contact selection
   const handleContactSelect = (contact: any) => {
@@ -146,14 +154,11 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
-            // Fixed: Changed from 'center' and 'zoom' props to 'bounds' prop
-            // react-leaflet v4 expects different prop structures
-            // default view is set in the MapController component
+            preferCanvas={true} // Use canvas for better performance
           >
             <TileLayer
-              // Fixed: Updated attribute names based on react-leaflet v4 expectations
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             
             {/* Controller component to handle map view changes */}
@@ -163,8 +168,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
               contact={selectedContact}
             />
             
-            {/* Add markers for each contact with location */}
-            {filteredContacts.map((contact, index) => {
+            {/* Add markers for each contact with location - only if map is loaded */}
+            {mapLoaded && filteredContacts.map((contact, index) => {
               if (contact.location?.lat && contact.location?.lng) {
                 return (
                   <Marker 
