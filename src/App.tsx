@@ -12,6 +12,10 @@ import Dashboard from "./pages/Dashboard";
 import PropertyDetails from "./pages/PropertyDetails";
 import Lists from "./pages/Lists";
 import Contacts from "./pages/Contacts";
+import Calls from "./pages/Calls";
+import Documents from "./pages/Documents";
+import Settings from "./pages/Settings";
+import LeadsPage from "./pages/LeadsPage";
 
 const queryClient = new QueryClient();
 
@@ -28,11 +32,11 @@ const App = () => (
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/contacts" element={<Contacts />} />
-          <Route path="/leads" element={<NotFound />} />
+          <Route path="/leads" element={<LeadsPage />} />
           <Route path="/lists" element={<Lists />} />
-          <Route path="/calls" element={<NotFound />} />
-          <Route path="/documents" element={<NotFound />} />
-          <Route path="/settings" element={<NotFound />} />
+          <Route path="/calls" element={<Calls />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
