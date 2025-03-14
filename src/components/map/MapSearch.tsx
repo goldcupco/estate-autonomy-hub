@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, User, Users } from 'lucide-react';
 
-// Using a generic public Mapbox token (this is a demo token with limited usage)
+// Using a valid public Mapbox token for demos
 // In production, this should be replaced with your own token or stored securely
-const GENERIC_MAPBOX_TOKEN = 'pk.eyJ1IjoiZGVtby1hY2NvdW50IiwiYSI6ImNrbzBjNGY4ZjA5MnIydnF1eHhlYnZ1OHAifQ.g_u-0i_SoUmY8YBV3q6CkA';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 interface MapSearchProps {
   data: any[];
@@ -23,13 +23,14 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
   
   // Initialize map when component mounts
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
     try {
-      mapboxgl.accessToken = GENERIC_MAPBOX_TOKEN;
+      mapboxgl.accessToken = MAPBOX_TOKEN;
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -38,44 +39,54 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         zoom: 3
       });
       
+      // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
+      // Add error handling for map loading
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        setMapError('Error loading map. Please check console for details.');
+      });
+      
       // Add markers for contact data
-      if (data && data.length > 0) {
-        data.forEach(contact => {
-          if (contact.location?.lat && contact.location?.lng) {
-            const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
-            
-            const el = document.createElement('div');
-            el.className = 'marker';
-            el.style.backgroundColor = markerColor;
-            el.style.width = '20px';
-            el.style.height = '20px';
-            el.style.borderRadius = '50%';
-            el.style.cursor = 'pointer';
-            
-            const marker = new mapboxgl.Marker(el)
-              .setLngLat([contact.location.lng, contact.location.lat])
-              .setPopup(
-                new mapboxgl.Popup({ offset: 25 })
-                  .setHTML(`
-                    <strong>${contact.name}</strong><br>
-                    ${contact.address || ''}<br>
-                    ${contact.email || ''}<br>
-                    ${contact.phone || ''}
-                  `)
-              )
-              .addTo(map.current);
+      map.current.on('load', () => {
+        if (data && data.length > 0 && map.current) {
+          data.forEach(contact => {
+            if (contact.location?.lat && contact.location?.lng) {
+              const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
               
-            el.addEventListener('click', () => {
-              setSelectedContact(contact);
-              if (onSelect) onSelect(contact);
-            });
-          }
-        });
-      }
+              const el = document.createElement('div');
+              el.className = 'marker';
+              el.style.backgroundColor = markerColor;
+              el.style.width = '20px';
+              el.style.height = '20px';
+              el.style.borderRadius = '50%';
+              el.style.cursor = 'pointer';
+              
+              const marker = new mapboxgl.Marker(el)
+                .setLngLat([contact.location.lng, contact.location.lat])
+                .setPopup(
+                  new mapboxgl.Popup({ offset: 25 })
+                    .setHTML(`
+                      <strong>${contact.name}</strong><br>
+                      ${contact.address || ''}<br>
+                      ${contact.email || ''}<br>
+                      ${contact.phone || ''}
+                    `)
+                )
+                .addTo(map.current);
+                
+              el.addEventListener('click', () => {
+                setSelectedContact(contact);
+                if (onSelect) onSelect(contact);
+              });
+            }
+          });
+        }
+      });
     } catch (error) {
       console.error('Error initializing map:', error);
+      setMapError('Error initializing map. Please check console for details.');
     }
     
     return () => {
@@ -155,7 +166,25 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         </CardContent>
       </Card>
       
-      <div className="md:col-span-2 h-[calc(100vh-200px)] rounded-lg overflow-hidden border">
+      <div className="md:col-span-2 h-[calc(100vh-200px)] rounded-lg overflow-hidden border relative">
+        {mapError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <Card className="w-5/6">
+              <CardHeader>
+                <CardTitle>Map Error</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{mapError}</p>
+                <Button 
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload Page
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         <div ref={mapContainer} className="w-full h-full" />
       </div>
     </div>
