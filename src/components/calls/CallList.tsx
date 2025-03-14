@@ -15,7 +15,8 @@ import {
   ChevronUp,
   Trash2,
   Edit,
-  Plus
+  Plus,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -144,8 +145,11 @@ interface CallListProps {
 export const CallList = ({}: CallListProps) => {
   const [calls, setCalls] = useState<Call[]>(DEMO_CALLS);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [smsDialogOpen, setSmsDialogOpen] = useState(false);
   const [editingCall, setEditingCall] = useState<Call | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [smsText, setSmsText] = useState('');
+  const [smsRecipient, setSmsRecipient] = useState<Call | null>(null);
   const { toast } = useToast();
   
   const itemsPerPage = 5;
@@ -181,6 +185,74 @@ export const CallList = ({}: CallListProps) => {
     setEditingCall(call);
     setNewCall(call);
     setDialogOpen(true);
+  };
+  
+  const handleMakeCall = (call: Call) => {
+    // In a real app, this would integrate with a phone API
+    // For demo purposes, we'll just show a notification
+    window.location.href = `tel:${call.contactPhone}`;
+    
+    toast({
+      title: "Initiating call",
+      description: `Calling ${call.contactName} at ${call.contactPhone}`,
+    });
+    
+    // Add this call to history as an outgoing call
+    const newOutgoingCall: Call = {
+      id: uuidv4(),
+      contactName: call.contactName,
+      contactPhone: call.contactPhone,
+      direction: 'outgoing',
+      status: 'completed',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+      duration: 0, // This would be updated after call ends in a real app
+      notes: 'Call initiated from call management screen'
+    };
+    
+    setCalls(prev => [newOutgoingCall, ...prev]);
+  };
+  
+  const openSmsDialog = (call: Call) => {
+    setSmsRecipient(call);
+    setSmsText('');
+    setSmsDialogOpen(true);
+  };
+  
+  const handleSendSms = () => {
+    if (!smsRecipient || !smsText) {
+      toast({
+        title: "Missing information",
+        description: "Please enter a message to send.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // In a real app, this would integrate with an SMS API
+    // For demo purposes, we'll just show a notification
+    toast({
+      title: "SMS sent",
+      description: `Message sent to ${smsRecipient.contactName}`,
+    });
+    
+    // Add SMS to call notes
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    
+    // Update the call notes to include the SMS
+    setCalls(prev => prev.map(call => {
+      if (call.id === smsRecipient.id) {
+        return {
+          ...call,
+          notes: `${call.notes}\n[SMS sent on ${currentDate} at ${currentTime}]: ${smsText}`
+        };
+      }
+      return call;
+    }));
+    
+    setSmsDialogOpen(false);
   };
   
   const handleSaveCall = () => {
@@ -322,7 +394,26 @@ export const CallList = ({}: CallListProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => handleMakeCall(call)}
+                          title="Call"
+                        >
+                          <Phone className="h-4 w-4 text-green-500" />
+                          <span className="sr-only">Call</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openSmsDialog(call)}
+                          title="Send SMS"
+                        >
+                          <MessageSquare className="h-4 w-4 text-blue-500" />
+                          <span className="sr-only">SMS</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => openEditCallDialog(call)}
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
@@ -331,6 +422,7 @@ export const CallList = ({}: CallListProps) => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteCall(call.id)}
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
@@ -521,6 +613,49 @@ export const CallList = ({}: CallListProps) => {
             </Button>
             <Button onClick={handleSaveCall}>
               {editingCall ? 'Update' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* SMS Dialog */}
+      <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send SMS</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {smsRecipient && (
+              <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/50">
+                <User className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{smsRecipient.contactName}</p>
+                  <p className="text-sm text-muted-foreground">{smsRecipient.contactPhone}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label htmlFor="smsText" className="text-sm font-medium">
+                Message
+              </label>
+              <Textarea
+                id="smsText"
+                value={smsText}
+                onChange={(e) => setSmsText(e.target.value)}
+                placeholder="Type your message here..."
+                className="min-h-[120px]"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSmsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendSms}>
+              Send Message
             </Button>
           </DialogFooter>
         </DialogContent>
