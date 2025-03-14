@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Eye } from 'lucide-react';
+import { Eye, Map } from 'lucide-react';
 
 // Fix for Leaflet default marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -55,6 +55,7 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [streetViewOpen, setStreetViewOpen] = useState(false);
   const [streetViewError, setStreetViewError] = useState(false);
+  const [mapView, setMapView] = useState(true); // Controls whether map or street view is shown
 
   const handleMapLoad = () => {
     setIsLoading(false);
@@ -72,81 +73,86 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold">Location</h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => {
-            setStreetViewOpen(true);
-            setStreetViewError(false); // Reset error state when opening
-          }}
-        >
-          <Eye className="h-4 w-4" />
-          <span>Street View</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={mapView ? "default" : "outline"} 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => setMapView(true)}
+          >
+            <Map className="h-4 w-4" />
+            <span>Map</span>
+          </Button>
+          <Button 
+            variant={!mapView ? "default" : "outline"} 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              setMapView(false);
+              setStreetViewError(false); // Reset error state when switching
+            }}
+          >
+            <Eye className="h-4 w-4" />
+            <span>Street View</span>
+          </Button>
+        </div>
       </div>
       
       <div style={{ height, width }} className="relative rounded-md overflow-hidden">
-        {isLoading && (
+        {isLoading && mapView && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-md">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
           </div>
         )}
         
-        <MapContainer 
-          style={{ height: '100%', width: '100%' }}
-          whenReady={handleMapLoad}
-        >
-          <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <AttributionControl
-            position="bottomright"
-            prefix={false}
-          />
-          <Marker position={[location.lat, location.lng]}>
-            <Popup>
-              {address}
-            </Popup>
-          </Marker>
-        </MapContainer>
+        {mapView ? (
+          <MapContainer 
+            style={{ height: '100%', width: '100%' }}
+            whenReady={handleMapLoad}
+          >
+            <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <AttributionControl
+              position="bottomright"
+              prefix={false}
+            />
+            <Marker position={[location.lat, location.lng]}>
+              <Popup>
+                {address}
+              </Popup>
+            </Marker>
+          </MapContainer>
+        ) : (
+          streetViewError ? (
+            <div className="flex flex-col items-center justify-center h-full bg-muted rounded-md">
+              <p className="text-muted-foreground mb-2">Street view is not available for this location</p>
+              <Button 
+                variant="outline" 
+                onClick={() => setMapView(true)}
+              >
+                Show Map Instead
+              </Button>
+            </div>
+          ) : (
+            <iframe
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={streetViewUrl}
+              onError={handleStreetViewError}
+            ></iframe>
+          )
+        )}
       </div>
       
       <p className="text-sm text-muted-foreground">{address}</p>
 
-      {/* Street View Dialog */}
-      <Dialog open={streetViewOpen} onOpenChange={setStreetViewOpen}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Street View - {address}</DialogTitle>
-          </DialogHeader>
-          <div className="w-full h-full min-h-[500px]">
-            {streetViewError ? (
-              <div className="flex flex-col items-center justify-center h-full bg-muted rounded-md">
-                <p className="text-muted-foreground mb-2">Street view is not available for this location</p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setStreetViewOpen(false)}
-                >
-                  Close
-                </Button>
-              </div>
-            ) : (
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0, minHeight: '500px' }}
-                loading="lazy"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src={streetViewUrl}
-                onError={handleStreetViewError}
-              ></iframe>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Removing the dialog as we're now showing the street view inline */}
     </div>
   );
 };
