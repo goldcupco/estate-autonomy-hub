@@ -19,7 +19,7 @@ const ADDITIONAL_IMAGES = [
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
   "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1600&q=80", // Replaced problematic URL with working one
-  "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=80" // Fixed URL, removed ixid parameter
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80" // Completely replaced the 4th image with a reliable Unsplash photo
 ];
 
 export function PropertyImageGallery({ property }: PropertyImageGalleryProps) {
