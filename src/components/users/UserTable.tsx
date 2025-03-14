@@ -40,8 +40,8 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser }) => {
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>
-              <Badge variant={user.isAdmin ? "destructive" : "secondary"}>
-                {user.isAdmin ? "Administrator" : "Campaigner"}
+              <Badge variant={user.role === 'administrator' ? "destructive" : "secondary"}>
+                {user.role === 'administrator' ? "Administrator" : "Campaigner"}
               </Badge>
             </TableCell>
             <TableCell>
@@ -55,7 +55,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser }) => {
                 <span className="sr-only">Edit</span>
               </Button>
               
-              {!user.isAdmin && (
+              {user.role !== 'administrator' && (
                 <>
                   <Button 
                     variant="outline" 

@@ -54,7 +54,7 @@ export const CampaignAccess: React.FC<CampaignAccessProps> = ({ userId }) => {
     }
   };
   
-  const campaignerUsers = users.filter(user => !user.isAdmin);
+  const campaignerUsers = users.filter(user => user.role !== 'administrator');
   
   return (
     <div className="space-y-4">
