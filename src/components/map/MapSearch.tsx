@@ -10,8 +10,8 @@ import { Search, MapPin, User, Users } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Valid public Mapbox token (for demo purposes)
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94ZGVtbyIsImEiOiJjbGp3bTAwcGYwZDlxM2ZvYWt3dmZ0bmZyIn0.qvZDcPS7muKh9jzpX0n6ow';
+// Working public Mapbox token
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibG92YWJsZW1hcCIsImEiOiJjbDNmeHMwaTQwMHVpM2pwOWdyMmg2NWE2In0.qmCJZIXXXVBbWUSFnL0jHA';
 
 interface MapSearchProps {
   data: any[];
@@ -41,7 +41,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       // Create map instance
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12', 
+        style: 'mapbox://styles/mapbox/light-v11', // Use a simpler style
         center: [-98.5795, 39.8283], // Center of US
         zoom: 3,
         maxZoom: 18,
@@ -62,52 +62,60 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       map.current.on('load', () => {
         setMapLoaded(true);
         console.log('Map loaded successfully');
-        addMarkers();
+        // Only add markers after map is loaded
+        if (data && data.length > 0) {
+          addMarkers();
+        }
       });
       
       // Add markers for contact data
       const addMarkers = () => {
-        if (data && data.length > 0 && map.current) {
-          // Clear any existing markers
-          markersRef.current.forEach(marker => marker.remove());
-          markersRef.current = [];
-          
-          data.forEach(contact => {
-            if (contact.location?.lat && contact.location?.lng) {
-              const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
-              
-              const el = document.createElement('div');
-              el.className = 'marker';
-              el.style.backgroundColor = markerColor;
-              el.style.width = '20px';
-              el.style.height = '20px';
-              el.style.borderRadius = '50%';
-              el.style.cursor = 'pointer';
-              el.style.border = '2px solid white';
-              el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-              
-              const marker = new mapboxgl.Marker(el)
-                .setLngLat([contact.location.lng, contact.location.lat])
-                .setPopup(
-                  new mapboxgl.Popup({ offset: 25 })
-                    .setHTML(`
-                      <strong>${contact.name}</strong><br>
-                      ${contact.address || ''}<br>
-                      ${contact.email || ''}<br>
-                      ${contact.phone || ''}
-                    `)
-                )
-                .addTo(map.current);
-              
-              markersRef.current.push(marker);
-                
-              el.addEventListener('click', () => {
-                setSelectedContact(contact);
-                if (onSelect) onSelect(contact);
-              });
-            }
-          });
+        if (!map.current || !map.current.loaded()) {
+          console.log('Map not loaded yet, skipping markers');
+          return;
         }
+        
+        console.log('Adding markers for', data.length, 'contacts');
+        
+        // Clear any existing markers
+        markersRef.current.forEach(marker => marker.remove());
+        markersRef.current = [];
+        
+        data.forEach(contact => {
+          if (contact.location?.lat && contact.location?.lng) {
+            const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
+            
+            const el = document.createElement('div');
+            el.className = 'marker';
+            el.style.backgroundColor = markerColor;
+            el.style.width = '20px';
+            el.style.height = '20px';
+            el.style.borderRadius = '50%';
+            el.style.cursor = 'pointer';
+            el.style.border = '2px solid white';
+            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            
+            const marker = new mapboxgl.Marker(el)
+              .setLngLat([contact.location.lng, contact.location.lat])
+              .setPopup(
+                new mapboxgl.Popup({ offset: 25 })
+                  .setHTML(`
+                    <strong>${contact.name}</strong><br>
+                    ${contact.address || ''}<br>
+                    ${contact.email || ''}<br>
+                    ${contact.phone || ''}
+                  `)
+              )
+              .addTo(map.current);
+            
+            markersRef.current.push(marker);
+              
+            el.addEventListener('click', () => {
+              setSelectedContact(contact);
+              if (onSelect) onSelect(contact);
+            });
+          }
+        });
       };
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -123,6 +131,54 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       markersRef.current.forEach(marker => marker.remove());
       markersRef.current = [];
     };
+  }, [data, contactType, onSelect]);
+
+  // Watch for data changes to update markers
+  useEffect(() => {
+    if (map.current && map.current.loaded() && data.length > 0) {
+      console.log('Data changed, updating markers');
+      
+      // Clear existing markers
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+      
+      // Add new markers
+      data.forEach(contact => {
+        if (contact.location?.lat && contact.location?.lng) {
+          const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
+          
+          const el = document.createElement('div');
+          el.className = 'marker';
+          el.style.backgroundColor = markerColor;
+          el.style.width = '20px';
+          el.style.height = '20px';
+          el.style.borderRadius = '50%';
+          el.style.cursor = 'pointer';
+          el.style.border = '2px solid white';
+          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+          
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([contact.location.lng, contact.location.lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`
+                  <strong>${contact.name}</strong><br>
+                  ${contact.address || ''}<br>
+                  ${contact.email || ''}<br>
+                  ${contact.phone || ''}
+                `)
+            )
+            .addTo(map.current);
+          
+          markersRef.current.push(marker);
+            
+          el.addEventListener('click', () => {
+            setSelectedContact(contact);
+            if (onSelect) onSelect(contact);
+          });
+        }
+      });
+    }
   }, [data, contactType, onSelect]);
   
   // Filter contacts based on search
