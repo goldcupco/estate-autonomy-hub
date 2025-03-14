@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, RefreshCw } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MapPin, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useGoogleMapsApi } from '@/hooks/use-google-maps';
 
 interface PropertyStreetViewProps {
@@ -96,14 +96,18 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
   if (loadError) {
     return (
       <Card className="h-[400px] relative overflow-hidden">
-        <CardContent className="p-0 h-full flex items-center justify-center">
-          <div className="text-center p-6">
-            <Alert>
-              <MapPin className="h-5 w-5 mr-2" />
+        <CardContent className="p-6 h-full flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-5 w-5" />
+              <AlertTitle>Configuration Error</AlertTitle>
               <AlertDescription>
-                Google Maps API could not be loaded. Please check your API key.
+                Google Maps API key is missing or invalid. Please set a valid VITE_GOOGLE_MAPS_API_KEY in your environment.
               </AlertDescription>
             </Alert>
+            <p className="text-sm text-muted-foreground mt-2">
+              Contact your administrator to configure the API key properly.
+            </p>
           </div>
         </CardContent>
       </Card>

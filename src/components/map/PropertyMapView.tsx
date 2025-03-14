@@ -4,8 +4,9 @@ import { MapContainer, TileLayer, Marker, Popup, AttributionControl, useMap } fr
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
-import { Map, Eye } from 'lucide-react';
+import { Map, Eye, AlertTriangle } from 'lucide-react';
 import { useGoogleMapsApi } from '@/hooks/use-google-maps';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Fix for Leaflet default marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -75,6 +76,13 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   // If we want to show street view but don't have a Google Maps API key or it failed to load
   const showStreetViewError = !mapView && (!apiKey || loadError);
 
+  // If there's an API key error and we're trying to view street view, force map view
+  React.useEffect(() => {
+    if (showStreetViewError) {
+      setMapView(true);
+    }
+  }, [showStreetViewError]);
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
@@ -94,15 +102,29 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
             size="sm" 
             className="flex items-center gap-1"
             onClick={() => {
+              if (loadError) {
+                // Don't allow switching to street view if API key is invalid
+                return;
+              }
               setMapView(false);
               setStreetViewError(false); // Reset error state when switching
             }}
+            disabled={!!loadError}
           >
             <Eye className="h-4 w-4" />
             <span>Street View</span>
           </Button>
         </div>
       </div>
+      
+      {loadError && (
+        <Alert className="mb-2">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Street View is unavailable: Google Maps API key is missing or invalid.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div style={{ height, width }} className="relative rounded-md overflow-hidden">
         {isLoading && mapView && (

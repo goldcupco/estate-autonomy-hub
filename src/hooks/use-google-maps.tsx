@@ -46,8 +46,8 @@ export const useGoogleMapsApi = () => {
     script.defer = true;
     
     // Handle errors
-    script.onerror = (error) => {
-      setLoadError(new Error('Failed to load Google Maps API'));
+    script.onerror = () => {
+      setLoadError(new Error('Google Maps API key is invalid or API request was rejected.'));
       delete window[callbackName];
     };
     
@@ -57,8 +57,10 @@ export const useGoogleMapsApi = () => {
     // Clean up on unmount
     return () => {
       // Remove the script if it's still loading
-      if (!isLoaded) {
+      if (!isLoaded && document.head.contains(script)) {
         document.head.removeChild(script);
+      }
+      if (window[callbackName]) {
         delete window[callbackName];
       }
     };
