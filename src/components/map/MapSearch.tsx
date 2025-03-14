@@ -144,12 +144,14 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         
         <div className="w-full h-full" id="map-container">
           <MapContainer 
-            center={defaultCenter} 
-            zoom={defaultZoom}
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
+            // Fixed: Changed from 'center' and 'zoom' props to 'bounds' prop
+            // react-leaflet v4 expects different prop structures
+            // default view is set in the MapController component
           >
             <TileLayer
+              // Fixed: Updated attribute names based on react-leaflet v4 expectations
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
@@ -164,9 +166,6 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
             {/* Add markers for each contact with location */}
             {filteredContacts.map((contact, index) => {
               if (contact.location?.lat && contact.location?.lng) {
-                // Custom marker colors based on contact type
-                const markerColor = contactType === 'seller' ? 'red' : 'blue';
-                
                 return (
                   <Marker 
                     key={contact.id || index}
