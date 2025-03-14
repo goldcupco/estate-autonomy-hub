@@ -1,11 +1,9 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useGoogleMapsApi } from '@/hooks/use-google-maps';
-import { toast } from "sonner";
+import { MapPin, RefreshCw, ExternalLink } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PropertyStreetViewProps {
   latitude: number;
@@ -16,122 +14,36 @@ interface PropertyStreetViewProps {
 const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const { isLoaded: mapsLoaded, loadError, apiKey } = useGoogleMapsApi();
-  const streetViewRef = useRef<HTMLDivElement>(null);
   
-  // A unique ID for this Street View
-  const streetViewId = `street-view-${Math.random().toString(36).substring(2, 11)}`;
+  // Generate OpenStreetMap static map URL
+  const zoom = 18;
+  const mapWidth = 800;
+  const mapHeight = 400;
+  const staticMapUrl = `https://static-maps.openstreetmap.fr/staticmap?center=${latitude},${longitude}&zoom=${zoom}&size=${mapWidth}x${mapHeight}&markers=${latitude},${longitude}&format=png`;
   
-  useEffect(() => {
-    // Only run if we have coordinates and maps are loaded
-    if (!latitude || !longitude || !mapsLoaded || loadError) {
-      if (loadError) {
-        setHasError(true);
-        setIsLoading(false);
-      }
-      return;
-    }
-    
-    let panorama: google.maps.StreetViewPanorama | null = null;
-    let streetViewService: google.maps.StreetViewService | null = null;
-    
-    try {
-      setIsLoading(true);
-      
-      // Get the street view div
-      const streetViewDiv = document.getElementById(streetViewId);
-      if (!streetViewDiv) return;
-      
-      // Create a StreetViewService to check for StreetView imagery
-      streetViewService = new google.maps.StreetViewService();
-      
-      // Set up the panorama
-      panorama = new google.maps.StreetViewPanorama(streetViewDiv, {
-        position: { lat: latitude, lng: longitude },
-        pov: { heading: 34, pitch: 10 },
-        fullscreenControl: false,
-        addressControl: true,
-        motionTracking: false,
-        motionTrackingControl: false
-      });
-      
-      // Check if Street View imagery exists within 50 meters
-      streetViewService.getPanorama({
-        location: { lat: latitude, lng: longitude },
-        radius: 50 // meters
-      }, (data, status) => {
-        if (status === google.maps.StreetViewStatus.OK) {
-          // Street View imagery exists
-          panorama?.setPosition(data.location.latLng);
-          setHasError(false);
-        } else {
-          // No Street View imagery found
-          setHasError(true);
-          toast.error("No Street View imagery found at this location");
-        }
-        setIsLoading(false);
-      });
-    } catch (error) {
-      console.error('Error initializing Street View:', error);
-      setHasError(true);
-      setIsLoading(false);
-    }
-    
-    return () => {
-      // Clean up
-      panorama = null;
-      streetViewService = null;
-    };
-  }, [latitude, longitude, mapsLoaded, loadError, streetViewId]);
-  
-  const reloadStreetView = () => {
+  // Direct link to view the location on OpenStreetMap
+  const osmUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=${zoom}`;
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    console.error('Failed to load the map image');
+  };
+
+  const reloadStaticMap = () => {
     setIsLoading(true);
     setHasError(false);
-    // Trigger a re-render to reload the street view
-    if (streetViewRef.current) {
-      streetViewRef.current.innerHTML = '';
+    // Force reload by appending a timestamp
+    const imgElement = document.getElementById('static-map-img') as HTMLImageElement;
+    if (imgElement) {
+      imgElement.src = `${staticMapUrl}&_t=${Date.now()}`;
     }
-    const initEvent = new Event('load');
-    window.dispatchEvent(initEvent);
   };
-  
-  if (loadError) {
-    return (
-      <Card className="h-[400px] relative overflow-hidden">
-        <CardContent className="p-6 h-full flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-5 w-5" />
-              <AlertTitle>Configuration Error</AlertTitle>
-              <AlertDescription>
-                {!apiKey ? 
-                  "Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in your environment." : 
-                  "Google Maps API key is invalid. Please check your API key and make sure it has the proper permissions."}
-              </AlertDescription>
-            </Alert>
-            <p className="text-sm text-muted-foreground mt-2">
-              To fix this issue:
-              <ol className="text-left list-decimal pl-5 mt-2">
-                <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center">Google Cloud Console <ExternalLink className="h-3 w-3 ml-1" /></a></li>
-                <li>Create a new project or select an existing one</li>
-                <li>Enable the "Street View Static API" and "Maps JavaScript API"</li>
-                <li>Create an API key with appropriate restrictions</li>
-                <li>Add the key to your environment as <code className="bg-muted p-1 rounded text-xs">VITE_GOOGLE_MAPS_API_KEY</code></li>
-                <li>Restart your application</li>
-              </ol>
-            </p>
-            <div className="mt-4 p-3 bg-muted rounded-md text-xs text-left font-mono">
-              <p className="mb-2 text-muted-foreground">For local development:</p>
-              <div className="whitespace-pre overflow-x-auto">
-                # Create a .env.local file in the project root with:
-                VITE_GOOGLE_MAPS_API_KEY=your_api_key_here
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
   
   if (hasError) {
     return (
@@ -141,12 +53,12 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
             <Alert>
               <MapPin className="h-5 w-5 mr-2" />
               <AlertDescription>
-                Street View is not available for this location.
+                Static map image could not be loaded for this location.
                 {address && <div className="mt-2 text-sm opacity-70">{address}</div>}
               </AlertDescription>
             </Alert>
             <Button 
-              onClick={reloadStreetView} 
+              onClick={reloadStaticMap} 
               className="mt-4" 
               variant="outline"
             >
@@ -162,20 +74,36 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
   return (
     <Card className="h-[400px] relative overflow-hidden">
       <CardContent className="p-0 h-full">
-        <div 
-          id={streetViewId} 
-          ref={streetViewRef}
-          className="w-full h-full"
-          aria-label="Street View of property location"
-        >
+        <div className="w-full h-full relative">
+          <img 
+            id="static-map-img"
+            src={staticMapUrl}
+            alt={`Map view of ${address || 'property location'}`}
+            className="w-full h-full object-cover"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+          
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
               <div className="flex flex-col items-center">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                <span className="mt-2 text-sm">Loading Street View...</span>
+                <span className="mt-2 text-sm">Loading map image...</span>
               </div>
             </div>
           )}
+          
+          <div className="absolute bottom-2 right-2">
+            <a 
+              href={osmUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs bg-background/80 hover:bg-background px-2 py-1 rounded flex items-center gap-1"
+            >
+              View on OpenStreetMap
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
         </div>
       </CardContent>
     </Card>
