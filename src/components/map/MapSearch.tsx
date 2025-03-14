@@ -158,8 +158,6 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
             whenReady={handleMapLoad}
-            center={defaultCenter}
-            zoom={defaultZoom}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

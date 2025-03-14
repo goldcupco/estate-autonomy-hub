@@ -72,10 +72,9 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         )}
         
         <MapContainer 
-          center={[location.lat, location.lng]} 
-          zoom={zoom} 
           style={{ height: '100%', width: '100%' }}
           whenReady={handleMapLoad}
+          zoom={zoom}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
