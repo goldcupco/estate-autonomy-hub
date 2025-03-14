@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, FolderOpen, ArrowLeft } from 'lucide-react';
+import { FileText, FolderOpen, ArrowLeft, FileCheck, FileBarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -14,11 +14,34 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+// Sample document data
+const documents = [
+  { id: '1', title: 'Purchase Agreement Template', type: 'pdf', url: 'https://example.com/docs/purchase-agreement.pdf' },
+  { id: '2', title: 'Lease Contract', type: 'docx', url: 'https://example.com/docs/lease-contract.docx' },
+  { id: '3', title: 'Property Disclosure Statement', type: 'pdf', url: 'https://example.com/docs/disclosure.pdf' },
+  { id: '4', title: 'Offer Letter Template', type: 'pdf', url: 'https://example.com/docs/offer-letter.pdf' },
+];
+
 const Documents = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const getDocumentIcon = (type: string) => {
+    switch (type) {
+      case 'pdf':
+        return <FileText className="h-5 w-5" />;
+      case 'docx':
+        return <FileBarChart2 className="h-5 w-5" />;
+      default:
+        return <FileText className="h-5 w-5" />;
+    }
+  };
+
+  const openDocument = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -73,7 +96,24 @@ const Documents = () => {
               <p className="text-muted-foreground mb-4">
                 Access your recently viewed or edited documents.
               </p>
-              <Button className="w-full">View Recent Documents</Button>
+              <div className="space-y-3 mb-4">
+                {documents.slice(0, 2).map(doc => (
+                  <div 
+                    key={doc.id} 
+                    className="flex items-center p-3 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
+                    onClick={() => openDocument(doc.url)}
+                  >
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
+                      {getDocumentIcon(doc.type)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{doc.title}</p>
+                      <p className="text-xs text-muted-foreground">{doc.type.toUpperCase()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button className="w-full" onClick={() => window.alert("This feature is coming soon!")}>View All Recent Documents</Button>
             </div>
             
             {/* Document Categories Card */}
@@ -87,20 +127,62 @@ const Documents = () => {
               <p className="text-muted-foreground mb-4">
                 Browse documents by category or create new ones.
               </p>
-              <Button className="w-full">Browse Categories</Button>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                  <FileCheck className="h-5 w-5 mx-auto mb-1 text-green-500" />
+                  <p className="text-sm font-medium">Contracts</p>
+                </div>
+                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                  <FileText className="h-5 w-5 mx-auto mb-1 text-amber-500" />
+                  <p className="text-sm font-medium">Forms</p>
+                </div>
+                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                  <FileBarChart2 className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+                  <p className="text-sm font-medium">Reports</p>
+                </div>
+                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                  <FileText className="h-5 w-5 mx-auto mb-1 text-purple-500" />
+                  <p className="text-sm font-medium">Templates</p>
+                </div>
+              </div>
+              <Button className="w-full" onClick={() => window.alert("This feature is coming soon!")}>Browse All Categories</Button>
             </div>
           </div>
           
           <div className="glass-card rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-4">Document Management</h2>
-            <p className="text-muted-foreground mb-4">
+            <h2 className="text-xl font-semibold mb-4">All Documents</h2>
+            <p className="text-muted-foreground mb-6">
               Upload, organize, and share important documents with clients and team members.
             </p>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Document management functionality will be implemented soon.</p>
-              <Link to="/dashboard" className="mt-4 inline-block">
-                <Button>Return to Dashboard</Button>
-              </Link>
+            
+            <div className="space-y-4">
+              {documents.map(doc => (
+                <div 
+                  key={doc.id} 
+                  className="flex items-center justify-between p-4 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
+                  onClick={() => openDocument(doc.url)}
+                >
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
+                      {getDocumentIcon(doc.type)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{doc.title}</p>
+                      <p className="text-xs text-muted-foreground">{doc.type.toUpperCase()}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={(e) => {
+                    e.stopPropagation();
+                    openDocument(doc.url);
+                  }}>
+                    Open
+                  </Button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 text-center">
+              <Button onClick={() => window.alert("Document upload feature is coming soon!")}>Upload New Document</Button>
             </div>
           </div>
         </main>

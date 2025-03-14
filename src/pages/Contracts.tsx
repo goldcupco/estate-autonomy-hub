@@ -38,6 +38,7 @@ export function Contracts() {
       status: 'Sent',
       date: '2023-05-15',
       notes: 'Waiting for signature from buyer',
+      documentUrl: 'https://example.com/docs/purchase-agreement-123.pdf',
     },
     {
       id: '2',
@@ -46,6 +47,7 @@ export function Contracts() {
       status: 'Signed',
       date: '2023-05-10',
       notes: 'Completed lease for 12 months',
+      documentUrl: 'https://example.com/docs/lease-agreement-456.pdf',
     },
     {
       id: '3',
@@ -54,6 +56,7 @@ export function Contracts() {
       status: 'Draft',
       date: '2023-05-08',
       notes: 'Draft option contract for 3 months',
+      documentUrl: 'https://example.com/docs/option-contract-789.pdf',
     },
     {
       id: '4',
@@ -62,6 +65,7 @@ export function Contracts() {
       status: 'Signed',
       date: '2023-05-01',
       notes: 'Assignment completed successfully',
+      documentUrl: 'https://example.com/docs/assignment-contract-101.pdf',
     },
   ]);
   
@@ -136,6 +140,23 @@ export function Contracts() {
   const handleViewContract = (contract: Contract) => {
     setCurrentContract(contract);
     setViewContractDialog(true);
+  };
+  
+  // Open document
+  const openDocument = (url?: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      toast({
+        title: "Document unavailable",
+        description: "This document has not been uploaded yet.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Reset form fields
@@ -301,9 +322,7 @@ export function Contracts() {
                     <Button 
                       variant="outline" 
                       className="w-full sm:w-auto"
-                      onClick={() => {
-                        window.open(currentContract.documentUrl, '_blank');
-                      }}
+                      onClick={() => openDocument(currentContract.documentUrl)}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download
@@ -331,8 +350,11 @@ export function Contracts() {
             {contracts.map((contract) => (
               <TableRow key={contract.id} className="animate-fade-in" style={{ animationDelay: `${parseInt(contract.id) * 100}ms` }}>
                 <TableCell className="font-medium">
-                  <div className="flex items-center">
-                    <FileText className="h-4 w-4 mr-2 text-blue-500" />
+                  <div 
+                    className="flex items-center cursor-pointer" 
+                    onClick={() => contract.documentUrl && openDocument(contract.documentUrl)}
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-blue-500 cursor-pointer" />
                     {contract.title}
                   </div>
                 </TableCell>
@@ -369,6 +391,16 @@ export function Contracts() {
                       View
                     </Button>
                     
+                    {contract.documentUrl && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => openDocument(contract.documentUrl, e)}
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    
                     {contract.status === 'Draft' && (
                       <Button 
                         size="sm"
@@ -391,6 +423,12 @@ export function Contracts() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Options</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        {contract.documentUrl && (
+                          <DropdownMenuItem onClick={(e) => openDocument(contract.documentUrl, e)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </DropdownMenuItem>
+                        )}
                         {contract.status !== 'Signed' && (
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive"
