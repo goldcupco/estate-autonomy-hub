@@ -13,13 +13,35 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { toast } from "sonner";
 
-// Sample document data
+// Sample document data with more realistic paths
 const documents = [
-  { id: '1', title: 'Purchase Agreement Template', type: 'pdf', url: 'https://example.com/docs/purchase-agreement.pdf' },
-  { id: '2', title: 'Lease Contract', type: 'docx', url: 'https://example.com/docs/lease-contract.docx' },
-  { id: '3', title: 'Property Disclosure Statement', type: 'pdf', url: 'https://example.com/docs/disclosure.pdf' },
-  { id: '4', title: 'Offer Letter Template', type: 'pdf', url: 'https://example.com/docs/offer-letter.pdf' },
+  { 
+    id: '1', 
+    title: 'Purchase Agreement Template', 
+    type: 'pdf', 
+    // Using a placeholder since we don't have actual files
+    url: 'javascript:void(0)' 
+  },
+  { 
+    id: '2', 
+    title: 'Lease Contract', 
+    type: 'docx', 
+    url: 'javascript:void(0)' 
+  },
+  { 
+    id: '3', 
+    title: 'Property Disclosure Statement', 
+    type: 'pdf', 
+    url: 'javascript:void(0)' 
+  },
+  { 
+    id: '4', 
+    title: 'Offer Letter Template', 
+    type: 'pdf', 
+    url: 'javascript:void(0)' 
+  },
 ];
 
 const Documents = () => {
@@ -40,8 +62,11 @@ const Documents = () => {
     }
   };
 
-  const openDocument = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const openDocument = (title: string, type: string) => {
+    // Instead of opening a URL, we'll show a toast notification
+    toast.info(`Opening ${title}.${type}`, {
+      description: "Document viewer functionality coming soon",
+    });
   };
 
   return (
@@ -101,7 +126,7 @@ const Documents = () => {
                   <div 
                     key={doc.id} 
                     className="flex items-center p-3 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
-                    onClick={() => openDocument(doc.url)}
+                    onClick={() => openDocument(doc.title, doc.type)}
                   >
                     <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
                       {getDocumentIcon(doc.type)}
@@ -113,7 +138,9 @@ const Documents = () => {
                   </div>
                 ))}
               </div>
-              <Button className="w-full" onClick={() => window.alert("This feature is coming soon!")}>View All Recent Documents</Button>
+              <Button className="w-full" onClick={() => toast.info("View All Documents", { description: "This feature is coming soon!" })}>
+                View All Recent Documents
+              </Button>
             </div>
             
             {/* Document Categories Card */}
@@ -128,24 +155,38 @@ const Documents = () => {
                 Browse documents by category or create new ones.
               </p>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                <div 
+                  className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors"
+                  onClick={() => toast.info("Contracts", { description: "Document category view coming soon!" })}
+                >
                   <FileCheck className="h-5 w-5 mx-auto mb-1 text-green-500" />
                   <p className="text-sm font-medium">Contracts</p>
                 </div>
-                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                <div 
+                  className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors"
+                  onClick={() => toast.info("Forms", { description: "Document category view coming soon!" })}
+                >
                   <FileText className="h-5 w-5 mx-auto mb-1 text-amber-500" />
                   <p className="text-sm font-medium">Forms</p>
                 </div>
-                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                <div 
+                  className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors"
+                  onClick={() => toast.info("Reports", { description: "Document category view coming soon!" })}
+                >
                   <FileBarChart2 className="h-5 w-5 mx-auto mb-1 text-blue-500" />
                   <p className="text-sm font-medium">Reports</p>
                 </div>
-                <div className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors">
+                <div 
+                  className="p-3 bg-background/80 rounded-lg text-center hover:bg-background cursor-pointer transition-colors"
+                  onClick={() => toast.info("Templates", { description: "Document category view coming soon!" })}
+                >
                   <FileText className="h-5 w-5 mx-auto mb-1 text-purple-500" />
                   <p className="text-sm font-medium">Templates</p>
                 </div>
               </div>
-              <Button className="w-full" onClick={() => window.alert("This feature is coming soon!")}>Browse All Categories</Button>
+              <Button className="w-full" onClick={() => toast.info("Browse Categories", { description: "This feature is coming soon!" })}>
+                Browse All Categories
+              </Button>
             </div>
           </div>
           
@@ -160,7 +201,7 @@ const Documents = () => {
                 <div 
                   key={doc.id} 
                   className="flex items-center justify-between p-4 bg-background/80 rounded-lg hover:bg-background cursor-pointer transition-colors"
-                  onClick={() => openDocument(doc.url)}
+                  onClick={() => openDocument(doc.title, doc.type)}
                 >
                   <div className="flex items-center">
                     <div className="p-2 bg-blue-500/10 text-blue-500 rounded-full mr-3">
@@ -173,7 +214,7 @@ const Documents = () => {
                   </div>
                   <Button variant="ghost" size="sm" onClick={(e) => {
                     e.stopPropagation();
-                    openDocument(doc.url);
+                    openDocument(doc.title, doc.type);
                   }}>
                     Open
                   </Button>
@@ -182,7 +223,9 @@ const Documents = () => {
             </div>
             
             <div className="mt-6 text-center">
-              <Button onClick={() => window.alert("Document upload feature is coming soon!")}>Upload New Document</Button>
+              <Button onClick={() => toast.info("Upload Document", { description: "Document upload feature is coming soon!" })}>
+                Upload New Document
+              </Button>
             </div>
           </div>
         </main>
