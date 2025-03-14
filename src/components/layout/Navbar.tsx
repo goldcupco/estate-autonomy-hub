@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Bell, Menu, Search, User, X, UsersRound } from 'lucide-react';
@@ -13,10 +12,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { toggleSidebar } from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: () => void }) {
+export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
@@ -48,7 +46,6 @@ export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: ()
 
   // Handle sidebar toggle
   const handleToggleSidebar = () => {
-    // Global toggle is enough - it will update all sidebars through the event system
     toggleSidebar();
   };
 
