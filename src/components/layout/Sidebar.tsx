@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
-  ShieldCheck
+  ShieldCheck,
+  PhoneCall
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -200,13 +201,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 collapsed={!sidebarOpen}
               />
               {isAdmin && (
-                <NavItem 
-                  to="/access-management" 
-                  icon={ShieldCheck} 
-                  label="Manage Access" 
-                  active={location.pathname === '/access-management'} 
-                  collapsed={!sidebarOpen}
-                />
+                <>
+                  <NavItem 
+                    to="/access-management" 
+                    icon={ShieldCheck} 
+                    label="Manage Access" 
+                    active={location.pathname === '/access-management'} 
+                    collapsed={!sidebarOpen}
+                  />
+                  <NavItem 
+                    to="/phone-number-management" 
+                    icon={PhoneCall} 
+                    label="Phone Numbers" 
+                    active={location.pathname === '/phone-number-management'} 
+                    collapsed={!sidebarOpen}
+                  />
+                </>
               )}
             </nav>
           </ScrollArea>

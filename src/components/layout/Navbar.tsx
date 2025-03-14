@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Bell, Menu, Search, User, X, UsersRound, ShieldCheck, Building, FileText, Briefcase, Phone, Users, ListChecks, BarChart3 } from 'lucide-react';
+import { Bell, Menu, Search, User, X, UsersRound, ShieldCheck, Building, FileText, Briefcase, Phone, Users, ListChecks, BarChart3, PhoneCall } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,7 +42,7 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     if (path === '/properties') return 'Properties';
     if (path === '/leads') return 'Leads';
     if (path === '/lists') return 'Lists';
-
+    if (path === '/phone-number-management') return 'Phone Number Management';
     if (path.startsWith('/property/')) return 'Property Details';
     
     return path.charAt(1).toUpperCase() + path.slice(2);
@@ -103,7 +103,8 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
       heading: 'Admin',
       items: [
         { id: 'user-management', name: 'User Management', icon: <Users className="mr-2 h-4 w-4" />, href: '/user-management' },
-        { id: 'access-management', name: 'Access Management', icon: <ShieldCheck className="mr-2 h-4 w-4" />, href: '/access-management' }
+        { id: 'access-management', name: 'Access Management', icon: <ShieldCheck className="mr-2 h-4 w-4" />, href: '/access-management' },
+        { id: 'phone-management', name: 'Phone Number Management', icon: <PhoneCall className="mr-2 h-4 w-4" />, href: '/phone-number-management' }
       ]
     });
   }
@@ -205,9 +206,9 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
                 className="hidden md:flex items-center gap-1"
                 asChild
               >
-                <Link to="/access-management">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="hidden sm:inline">Manage Access</span>
+                <Link to="/phone-number-management">
+                  <PhoneCall className="h-4 w-4" />
+                  <span className="hidden sm:inline">Phone Numbers</span>
                   <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">Admin</Badge>
                 </Link>
               </Button>
