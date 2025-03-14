@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Bell, Menu, Search, User, X, UsersRound } from 'lucide-react';
+import { Bell, Menu, Search, User, X, UsersRound, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
 
 export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const location = useLocation();
@@ -126,6 +127,21 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
               </Button>
             )}
 
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex items-center gap-1"
+                asChild
+              >
+                <Link to="/access-management">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Manage Access</span>
+                  <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">Admin</Badge>
+                </Link>
+              </Button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -146,7 +162,7 @@ export function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
                 {isAdmin && (
                   <Link to="/access-management" className="w-full">
                     <DropdownMenuItem>
-                      <UsersRound className="mr-2 h-4 w-4" />
+                      <ShieldCheck className="mr-2 h-4 w-4" />
                       Manage Access
                     </DropdownMenuItem>
                   </Link>
