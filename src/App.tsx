@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import Campaigns from "./pages/Campaigns";
 import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
 import AccessManagement from "./pages/AccessManagement";
+import PhoneNumberManagement from "./pages/PhoneNumberManagement";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { CampaignProvider } from "./contexts/CampaignContext";
 
@@ -140,10 +140,10 @@ const AppRoutes = () => {
         } 
       />
       <Route 
-        path="/campaigns" 
+        path="/phone-number-management" 
         element={
           <ProtectedRoute>
-            <Campaigns />
+            <PhoneNumberManagement />
           </ProtectedRoute>
         } 
       />

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings as SettingsIcon, User, Lock, Bell, ArrowLeft, Users, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, User, Lock, Bell, ArrowLeft, Users, Shield, Phone, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -139,7 +139,7 @@ const Settings = () => {
                 Administrator Settings
               </h2>
               <p className="text-muted-foreground mb-4">
-                Manage users, permissions, and system settings.
+                Manage users, permissions, system settings, and communication tools.
               </p>
               <div className="space-y-4">
                 <div className="p-4 border rounded-md">
@@ -152,6 +152,32 @@ const Settings = () => {
                   </p>
                   <Link to="/user-management">
                     <Button>Manage Users</Button>
+                  </Link>
+                </div>
+                
+                <div className="p-4 border rounded-md">
+                  <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Phone Number Management
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Add and manage phone numbers from Twilio and CallRail for your campaigns.
+                  </p>
+                  <Link to="/phone-number-management">
+                    <Button>Manage Phone Numbers</Button>
+                  </Link>
+                </div>
+                
+                <div className="p-4 border rounded-md">
+                  <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    API Key Management
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure and manage API keys for integration with external services.
+                  </p>
+                  <Link to="/phone-number-management?tab=api-keys">
+                    <Button>Manage API Keys</Button>
                   </Link>
                 </div>
               </div>
