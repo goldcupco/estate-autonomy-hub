@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Plus, Send, CheckCircle2, Download, Eye, Trash2 } from 'lucide-react';
+import { FileText, Plus, Send, CheckCircle2, Download, Eye, Trash2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Define contract type
 interface Contract {
   id: string;
   title: string;
@@ -29,7 +27,6 @@ interface Contract {
 }
 
 export function Contracts() {
-  // State management
   const [contracts, setContracts] = useState<Contract[]>([
     {
       id: '1',
@@ -68,8 +65,9 @@ export function Contracts() {
   const [newContractDialog, setNewContractDialog] = useState(false);
   const [viewContractDialog, setViewContractDialog] = useState(false);
   const [currentContract, setCurrentContract] = useState<Contract | null>(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState('');
   
-  // Form state
   const [formTitle, setFormTitle] = useState('');
   const [formRecipient, setFormRecipient] = useState('');
   const [formNotes, setFormNotes] = useState('');
@@ -77,7 +75,6 @@ export function Contracts() {
   
   const { toast: hookToast } = useToast();
   
-  // Handle creating a new contract
   const handleCreateContract = () => {
     if (!formTitle || !formRecipient) {
       hookToast({
@@ -107,7 +104,6 @@ export function Contracts() {
     });
   };
   
-  // Handle sending a contract
   const handleSendContract = (contractId: string) => {
     setContracts(contracts.map(contract => 
       contract.id === contractId 
@@ -121,7 +117,6 @@ export function Contracts() {
     });
   };
   
-  // Handle deleting a contract
   const handleDeleteContract = (contractId: string) => {
     setContracts(contracts.filter(contract => contract.id !== contractId));
     
@@ -131,24 +126,20 @@ export function Contracts() {
     });
   };
   
-  // View contract details
   const handleViewContract = (contract: Contract) => {
     setCurrentContract(contract);
     setViewContractDialog(true);
   };
   
-  // Open document - now using toast notifications instead of URLs
   const openDocument = (title: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
     }
     
-    toast.info(`Opening ${title}`, {
-      description: "Document viewer functionality coming soon",
-    });
+    setSelectedDocument(`/sample-contract.pdf`);
+    setDocumentViewerOpen(true);
   };
   
-  // Reset form fields
   const resetForm = () => {
     setFormTitle('');
     setFormRecipient('');
@@ -238,7 +229,6 @@ export function Contracts() {
           </DialogContent>
         </Dialog>
         
-        {/* View Contract Dialog */}
         <Dialog open={viewContractDialog} onOpenChange={setViewContractDialog}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -318,6 +308,53 @@ export function Contracts() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog 
+          open={documentViewerOpen} 
+          onOpenChange={setDocumentViewerOpen}
+        >
+          <DialogContent className="sm:max-w-4xl max-h-screen">
+            <DialogHeader>
+              <div className="flex justify-between items-center">
+                <DialogTitle>Document Viewer</DialogTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setDocumentViewerOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
+            
+            <div className="mt-2 w-full h-[70vh] overflow-auto rounded border">
+              {selectedDocument ? (
+                <iframe 
+                  src={selectedDocument} 
+                  className="w-full h-full"
+                  title="Contract Document"
+                ></iframe>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">No document selected</p>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setDocumentViewerOpen(false)}
+              >
+                Close
+              </Button>
+              <Button onClick={() => window.open(selectedDocument, '_blank')}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
