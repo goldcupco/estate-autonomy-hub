@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { toast } from "sonner";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,6 @@ interface Contract {
   status: 'Draft' | 'Sent' | 'Signed';
   date: string;
   notes?: string;
-  documentUrl?: string;
 }
 
 export function Contracts() {
@@ -38,7 +38,6 @@ export function Contracts() {
       status: 'Sent',
       date: '2023-05-15',
       notes: 'Waiting for signature from buyer',
-      documentUrl: 'https://example.com/docs/purchase-agreement-123.pdf',
     },
     {
       id: '2',
@@ -47,7 +46,6 @@ export function Contracts() {
       status: 'Signed',
       date: '2023-05-10',
       notes: 'Completed lease for 12 months',
-      documentUrl: 'https://example.com/docs/lease-agreement-456.pdf',
     },
     {
       id: '3',
@@ -56,7 +54,6 @@ export function Contracts() {
       status: 'Draft',
       date: '2023-05-08',
       notes: 'Draft option contract for 3 months',
-      documentUrl: 'https://example.com/docs/option-contract-789.pdf',
     },
     {
       id: '4',
@@ -65,7 +62,6 @@ export function Contracts() {
       status: 'Signed',
       date: '2023-05-01',
       notes: 'Assignment completed successfully',
-      documentUrl: 'https://example.com/docs/assignment-contract-101.pdf',
     },
   ]);
   
@@ -79,12 +75,12 @@ export function Contracts() {
   const [formNotes, setFormNotes] = useState('');
   const [formDocument, setFormDocument] = useState<File | null>(null);
   
-  const { toast } = useToast();
+  const { toast: hookToast } = useToast();
   
   // Handle creating a new contract
   const handleCreateContract = () => {
     if (!formTitle || !formRecipient) {
-      toast({
+      hookToast({
         title: "Missing information",
         description: "Please fill in all required fields.",
         variant: "destructive",
@@ -99,14 +95,13 @@ export function Contracts() {
       status: 'Draft',
       date: new Date().toISOString().split('T')[0],
       notes: formNotes,
-      documentUrl: formDocument ? URL.createObjectURL(formDocument) : undefined,
     };
     
     setContracts([newContract, ...contracts]);
     resetForm();
     setNewContractDialog(false);
     
-    toast({
+    hookToast({
       title: "Contract created",
       description: "The contract has been created as a draft.",
     });
@@ -120,7 +115,7 @@ export function Contracts() {
         : contract
     ));
     
-    toast({
+    hookToast({
       title: "Contract sent",
       description: "The contract has been sent to the recipient for signing.",
     });
@@ -130,7 +125,7 @@ export function Contracts() {
   const handleDeleteContract = (contractId: string) => {
     setContracts(contracts.filter(contract => contract.id !== contractId));
     
-    toast({
+    hookToast({
       title: "Contract deleted",
       description: "The contract has been removed.",
     });
@@ -142,21 +137,15 @@ export function Contracts() {
     setViewContractDialog(true);
   };
   
-  // Open document
-  const openDocument = (url?: string, e?: React.MouseEvent) => {
+  // Open document - now using toast notifications instead of URLs
+  const openDocument = (title: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
     }
     
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      toast({
-        title: "Document unavailable",
-        description: "This document has not been uploaded yet.",
-        variant: "destructive",
-      });
-    }
+    toast.info(`Opening ${title}`, {
+      description: "Document viewer functionality coming soon",
+    });
   };
   
   // Reset form fields
@@ -293,7 +282,7 @@ export function Contracts() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">Document</h4>
-                    <p>{currentContract.documentUrl ? 'Available' : 'Not uploaded'}</p>
+                    <p>Available</p>
                   </div>
                 </div>
                 
@@ -318,16 +307,14 @@ export function Contracts() {
                     </Button>
                   )}
                   
-                  {currentContract.documentUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full sm:w-auto"
-                      onClick={() => openDocument(currentContract.documentUrl)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  )}
+                  <Button 
+                    variant="outline" 
+                    className="w-full sm:w-auto"
+                    onClick={() => openDocument(currentContract.title)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
                 </div>
               </div>
             )}
@@ -352,7 +339,7 @@ export function Contracts() {
                 <TableCell className="font-medium">
                   <div 
                     className="flex items-center cursor-pointer" 
-                    onClick={() => contract.documentUrl && openDocument(contract.documentUrl)}
+                    onClick={() => openDocument(contract.title)}
                   >
                     <FileText className="h-4 w-4 mr-2 text-blue-500 cursor-pointer" />
                     {contract.title}
@@ -391,15 +378,13 @@ export function Contracts() {
                       View
                     </Button>
                     
-                    {contract.documentUrl && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => openDocument(contract.documentUrl, e)}
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={(e) => openDocument(contract.title, e)}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
                     
                     {contract.status === 'Draft' && (
                       <Button 
@@ -423,12 +408,10 @@ export function Contracts() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Options</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {contract.documentUrl && (
-                          <DropdownMenuItem onClick={(e) => openDocument(contract.documentUrl, e)}>
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem onClick={() => openDocument(contract.title)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </DropdownMenuItem>
                         {contract.status !== 'Signed' && (
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive"
