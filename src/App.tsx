@@ -19,6 +19,7 @@ import LeadsPage from "./pages/LeadsPage";
 import Campaigns from "./pages/Campaigns";
 import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
+import AccessManagement from "./pages/AccessManagement";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { CampaignProvider } from "./contexts/CampaignContext";
 
@@ -151,6 +152,14 @@ const AppRoutes = () => {
         element={
           <AdminRoute>
             <UserManagement />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/access-management" 
+        element={
+          <AdminRoute>
+            <AccessManagement />
           </AdminRoute>
         } 
       />

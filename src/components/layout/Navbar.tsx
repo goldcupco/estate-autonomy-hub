@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Bell, Menu, Search, User, X } from 'lucide-react';
+import { Bell, Menu, Search, User, X, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,11 +14,13 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { toggleSidebar } from './Sidebar';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: () => void }) {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
+  const { isAdmin } = useAuth();
 
   // Get page title based on current route
   const getPageTitle = () => {
@@ -107,6 +110,15 @@ export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: ()
               <Bell className="h-5 w-5" />
             </Button>
 
+            {isAdmin && (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/access-management">
+                  <UsersRound className="h-5 w-5" />
+                  <span className="sr-only">Manage Access</span>
+                </Link>
+              </Button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -124,6 +136,14 @@ export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: ()
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
+                {isAdmin && (
+                  <Link to="/access-management" className="w-full">
+                    <DropdownMenuItem>
+                      <UsersRound className="mr-2 h-4 w-4" />
+                      Manage Access
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
               </DropdownMenuContent>
