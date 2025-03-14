@@ -20,27 +20,22 @@ const documents = [
   { 
     id: '1', 
     title: 'Purchase Agreement Template', 
-    type: 'pdf', 
-    // Using a placeholder since we don't have actual files
-    url: 'javascript:void(0)' 
+    type: 'pdf',
   },
   { 
     id: '2', 
     title: 'Lease Contract', 
-    type: 'docx', 
-    url: 'javascript:void(0)' 
+    type: 'docx',
   },
   { 
     id: '3', 
     title: 'Property Disclosure Statement', 
-    type: 'pdf', 
-    url: 'javascript:void(0)' 
+    type: 'pdf',
   },
   { 
     id: '4', 
     title: 'Offer Letter Template', 
-    type: 'pdf', 
-    url: 'javascript:void(0)' 
+    type: 'pdf',
   },
 ];
 
