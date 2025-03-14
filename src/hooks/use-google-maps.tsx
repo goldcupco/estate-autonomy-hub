@@ -15,9 +15,15 @@ export const useGoogleMapsApi = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
   
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   useEffect(() => {
+    // If no API key, set an error and don't try to load the API
+    if (!apiKey) {
+      setLoadError(new Error('Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in your environment.'));
+      return;
+    }
+    
     // Check if the API is already loaded
     if (window.google && window.google.maps) {
       setIsLoaded(true);

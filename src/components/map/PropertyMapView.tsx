@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, AttributionControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Eye, Map } from 'lucide-react';
+import { Map, Eye } from 'lucide-react';
+import { useGoogleMapsApi } from '@/hooks/use-google-maps';
 
 // Fix for Leaflet default marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -25,7 +25,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 const MapViewController = ({ center, zoom }: { center: [number, number], zoom: number }) => {
   const map = useMap();
   
-  useEffect(() => {
+  React.useEffect(() => {
     map.setView(center, zoom);
     // Enable or disable scroll wheel zoom programmatically
     map.scrollWheelZoom.disable();
@@ -53,21 +53,27 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   zoom = 17
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [streetViewOpen, setStreetViewOpen] = useState(false);
   const [streetViewError, setStreetViewError] = useState(false);
   const [mapView, setMapView] = useState(true); // Controls whether map or street view is shown
+  const { isLoaded: googleMapsLoaded, loadError } = useGoogleMapsApi();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const handleMapLoad = () => {
     setIsLoading(false);
   };
 
   // Create a dynamic Street View URL using the property's coordinates
-  const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=AIzaSyA9JZYwXcUnf7hSnFMvRCmwGLoOkWQ-JwY&location=${location.lat},${location.lng}&heading=210&pitch=10&fov=90`;
+  const streetViewUrl = apiKey ? 
+    `https://www.google.com/maps/embed/v1/streetview?key=${apiKey}&location=${location.lat},${location.lng}&heading=210&pitch=10&fov=90` :
+    '';
 
   const handleStreetViewError = () => {
     console.error("Street view failed to load");
     setStreetViewError(true);
   };
+
+  // If we want to show street view but don't have a Google Maps API key or it failed to load
+  const showStreetViewError = !mapView && (!apiKey || loadError);
 
   return (
     <div className="space-y-2">
@@ -125,9 +131,13 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
             </Marker>
           </MapContainer>
         ) : (
-          streetViewError ? (
+          showStreetViewError || streetViewError ? (
             <div className="flex flex-col items-center justify-center h-full bg-muted rounded-md">
-              <p className="text-muted-foreground mb-2">Street view is not available for this location</p>
+              <p className="text-muted-foreground mb-2">
+                {showStreetViewError ? 
+                  "Google Maps API key is missing or invalid" : 
+                  "Street view is not available for this location"}
+              </p>
               <Button 
                 variant="outline" 
                 onClick={() => setMapView(true)}
@@ -151,8 +161,6 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
       </div>
       
       <p className="text-sm text-muted-foreground">{address}</p>
-
-      {/* Removing the dialog as we're now showing the street view inline */}
     </div>
   );
 };
