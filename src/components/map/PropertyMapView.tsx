@@ -60,8 +60,8 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
     setIsLoading(false);
   };
 
-  // Using a different approach for Google Street View that doesn't require an API key
-  const streetViewUrl = `https://www.google.com/maps/embed?pb=!4v1647032365345!6m8!1m7!1sCAoSLEFGMVFpcE9kRWE4S0FDZVUybTZURDIzQTBmR09OQzBSMEd6OXJFbDRWTmRq!2m2!1d${location.lat}!2d${location.lng}!3f210!4f10!5f0.8`;
+  // Create a dynamic Street View URL using the property's coordinates
+  const streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=AIzaSyA9JZYwXcUnf7hSnFMvRCmwGLoOkWQ-JwY&location=${location.lat},${location.lng}&heading=210&pitch=10&fov=90`;
 
   const handleStreetViewError = () => {
     console.error("Street view failed to load");
