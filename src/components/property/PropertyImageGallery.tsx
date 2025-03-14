@@ -18,7 +18,7 @@ interface PropertyImageGalleryProps {
 const ADDITIONAL_IMAGES = [
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1600607687644-c7f34b5f0e70?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1600&q=80", // Replaced problematic URL with working one
   "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=80" // Fixed URL, removed ixid parameter
 ];
 
