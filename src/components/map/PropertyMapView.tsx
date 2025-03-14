@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, AttributionControl } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, AttributionControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,17 @@ let DefaultIcon = L.icon({
   popupAnchor: [1, -34],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
+// Helper component to set the map view
+const MapViewController = ({ center, zoom }: { center: [number, number], zoom: number }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  
+  return null;
+};
 
 interface PropertyMapViewProps {
   address: string;
@@ -73,9 +84,11 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
+          center={[0, 0]} // Default center, will be updated by MapViewController
+          zoom={1} // Default zoom, will be updated by MapViewController
           whenReady={handleMapLoad}
-          zoom={zoom}
         >
+          <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />

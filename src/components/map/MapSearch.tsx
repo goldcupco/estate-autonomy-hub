@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -157,6 +158,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         <div className="w-full h-full" id="map-container">
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
+            center={defaultCenter} // Set default center
+            zoom={defaultZoom} // Set default zoom
             whenReady={handleMapLoad}
           >
             <TileLayer
