@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, User, Users } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Public Mapbox token for demo purposes
-// In production, use your own token from your Mapbox account
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+// Known working public Mapbox token (Mapbox demo token)
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 interface MapSearchProps {
   data: any[];
@@ -26,24 +26,27 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   
   // Initialize map when component mounts
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
     try {
+      console.log('Initializing map with token:', MAPBOX_TOKEN);
+      
       // Set the access token
       mapboxgl.accessToken = MAPBOX_TOKEN;
       
       // Create map instance
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/streets-v11', // Try a different style
         center: [-98.5795, 39.8283], // Center of US
         zoom: 3,
         maxZoom: 18,
         minZoom: 2,
-        failIfMajorPerformanceCaveat: true
+        attributionControl: false // We'll add custom attribution
       });
       
       // Add navigation controls
@@ -52,21 +55,23 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       // Add error handling for map loading
       map.current.on('error', (e) => {
         console.error('Map error:', e);
-        setMapError('Error loading map. Please check your internet connection or try again later.');
+        setMapError(`Error loading map: ${e.error?.message || 'Please check your internet connection or try again later.'}`);
       });
       
-      // When the map style is loaded
-      map.current.on('style.load', () => {
-        setMapLoaded(true);
-        console.log('Map style loaded successfully');
-      });
-      
-      // Add markers for contact data
+      // When the map is loaded
       map.current.on('load', () => {
         setMapLoaded(true);
         console.log('Map loaded successfully');
-        
+        addMarkers();
+      });
+      
+      // Add markers for contact data
+      const addMarkers = () => {
         if (data && data.length > 0 && map.current) {
+          // Clear any existing markers
+          markersRef.current.forEach(marker => marker.remove());
+          markersRef.current = [];
+          
           data.forEach(contact => {
             if (contact.location?.lat && contact.location?.lng) {
               const markerColor = contactType === 'seller' ? '#ef4444' : '#3b82f6';
@@ -93,6 +98,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
                     `)
                 )
                 .addTo(map.current);
+              
+              markersRef.current.push(marker);
                 
               el.addEventListener('click', () => {
                 setSelectedContact(contact);
@@ -101,10 +108,10 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
             }
           });
         }
-      });
+      };
     } catch (error) {
       console.error('Error initializing map:', error);
-      setMapError('Error initializing map. Please check your internet connection or try again later.');
+      setMapError(`Error initializing map: ${error instanceof Error ? error.message : 'Please check your internet connection or try again later.'}`);
     }
     
     // Cleanup function
@@ -113,6 +120,8 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         map.current.remove();
         map.current = null;
       }
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
     };
   }, [data, contactType, onSelect]);
   
@@ -191,7 +200,7 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         {!mapLoaded && !mapError && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <Skeleton className="h-12 w-12 rounded-full bg-primary/20 mx-auto animate-pulse" />
               <p className="mt-4 text-muted-foreground">Loading map...</p>
             </div>
           </div>
@@ -205,7 +214,10 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
                 <p>{mapError}</p>
                 <Button 
                   className="mt-4"
-                  onClick={() => window.location.reload()}
+                  onClick={() => {
+                    setMapError(null);
+                    window.location.reload();
+                  }}
                 >
                   Reload Page
                 </Button>
