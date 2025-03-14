@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -25,9 +24,71 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyActivity } from '@/components/property/PropertyActivity';
 import { PropertyImageGallery } from '@/components/property/PropertyImageGallery';
+import { GoogleMapWithStreetView } from '@/components/map/GoogleMapWithStreetView';
 
 // Import the dummy property data from Properties.tsx
 import { propertiesData } from './Properties';
+
+// Extend the properties data with coordinates for Google Maps
+const propertiesWithCoordinates = propertiesData.map(property => {
+  // Default coordinates (these would normally come from your database)
+  // Using different coordinates for each property to simulate real data
+  let coordinates;
+  switch(property.id) {
+    case '1':
+      coordinates = { lat: 30.267153, lng: -97.743057 }; // Austin
+      break;
+    case '2':
+      coordinates = { lat: 39.742043, lng: -104.991531 }; // Denver
+      break;
+    case '3':
+      coordinates = { lat: 25.761681, lng: -80.191788 }; // Miami
+      break;
+    case '4':
+      coordinates = { lat: 47.606209, lng: -122.332071 }; // Seattle
+      break;
+    case '5':
+      coordinates = { lat: 41.878113, lng: -87.629799 }; // Chicago
+      break;
+    case '6':
+      coordinates = { lat: 45.523064, lng: -122.676483 }; // Portland
+      break;
+    case '7':
+      coordinates = { lat: 36.162664, lng: -86.781602 }; // Nashville
+      break;
+    case '8':
+      coordinates = { lat: 32.715736, lng: -117.161087 }; // San Diego
+      break;
+    case '9':
+      coordinates = { lat: 42.360082, lng: -71.058880 }; // Boston
+      break;
+    case '10':
+      coordinates = { lat: 33.748997, lng: -84.387985 }; // Atlanta
+      break;
+    case '11':
+      coordinates = { lat: 33.448376, lng: -112.074036 }; // Phoenix
+      break;
+    case '12':
+      coordinates = { lat: 39.952583, lng: -75.165222 }; // Philadelphia
+      break;
+    case '13':
+      coordinates = { lat: 45.676998, lng: -111.042934 }; // Bozeman
+      break;
+    case '14':
+      coordinates = { lat: 34.869740, lng: -111.760990 }; // Sedona
+      break;
+    case '15':
+      coordinates = { lat: 39.191097, lng: -106.817535 }; // Aspen
+      break;
+    default:
+      coordinates = { lat: 34.0522, lng: -118.2437 }; // Los Angeles (default)
+  }
+  
+  return {
+    ...property,
+    coordinates
+  };
+});
 
 export function PropertyDetails() {
   const { toast } = useToast();
@@ -38,8 +99,8 @@ export function PropertyDetails() {
   const [callLogOpen, setCallLogOpen] = useState(false);
   const [contractOpen, setContractOpen] = useState(false);
 
-  // Find the property by ID from our dummy data
-  const property = propertiesData.find(p => p.id === id);
+  // Find the property by ID from our extended data
+  const property = propertiesWithCoordinates.find(p => p.id === id);
 
   if (!property) {
     return (
@@ -296,8 +357,9 @@ export function PropertyDetails() {
 
           {/* Property tabs */}
           <Tabs defaultValue="details">
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-4 w-full">
               <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="maps">Maps</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
@@ -362,6 +424,21 @@ export function PropertyDetails() {
                       <p className="text-muted-foreground">Map View</p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Maps tab */}
+            <TabsContent value="maps">
+              <Card>
+                <CardContent className="pt-6">
+                  {property.coordinates && (
+                    <GoogleMapWithStreetView 
+                      address={`${property.address}, ${property.city}, ${property.state} ${property.zipCode}`}
+                      location={property.coordinates}
+                      height="500px"
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

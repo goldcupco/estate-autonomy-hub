@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Building, MapPin, Heart, DollarSign } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -20,6 +19,10 @@ interface PropertyCardProps {
     status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
     imageUrl: string;
     propertyType?: 'House' | 'Land' | 'Condo' | 'Apartment' | 'Commercial';
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
   };
   className?: string;
   style?: React.CSSProperties;
@@ -30,14 +33,12 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Format price to USD
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(property.price);
   
-  // Status badge styles
   const getStatusStyles = (status: string) => {
     switch(status) {
       case 'For Sale':
@@ -55,7 +56,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
     }
   };
 
-  // Property type badge styles
   const getPropertyTypeStyles = (type?: string) => {
     switch(type) {
       case 'Land':
@@ -72,7 +72,7 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
   };
 
   const handleFavorite = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when clicking favorite
+    e.stopPropagation();
     setIsFavorite(!isFavorite);
   };
 
@@ -88,7 +88,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
     >
       <div className="relative">
         <AspectRatio ratio={4/3} className="bg-muted">
-          {/* Image with blur-up loading effect */}
           <div className={cn("absolute inset-0 bg-muted transition-opacity duration-300", 
             isLoading ? "opacity-100" : "opacity-0"
           )} />
@@ -103,7 +102,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           />
         </AspectRatio>
         
-        {/* Status badge */}
         <Badge className={cn(
           "absolute top-3 left-3 px-2 py-1 text-xs font-medium",
           getStatusStyles(property.status)
@@ -111,7 +109,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           {property.status}
         </Badge>
         
-        {/* Property type badge */}
         {property.propertyType && (
           <Badge className={cn(
             "absolute top-9 left-3 px-2 py-1 text-xs font-medium",
@@ -121,7 +118,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           </Badge>
         )}
         
-        {/* Favorite button */}
         <Button
           size="icon"
           variant="ghost"
@@ -131,7 +127,6 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           <Heart className={cn("h-4 w-4", isFavorite && "fill-rose-500 text-rose-500")} />
         </Button>
         
-        {/* Price overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
           <div className="flex items-center text-white">
             <DollarSign className="h-4 w-4 mr-1" />
