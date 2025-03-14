@@ -8,7 +8,6 @@ import Navbar from '@/components/layout/Navbar';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -49,15 +48,11 @@ const Calls = () => {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <Link to="/">
-                    <BreadcrumbLink>Home</BreadcrumbLink>
-                  </Link>
+                  <Link to="/">Home</Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <Link to="/dashboard">
-                    <BreadcrumbLink>Dashboard</BreadcrumbLink>
-                  </Link>
+                  <Link to="/dashboard">Dashboard</Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>

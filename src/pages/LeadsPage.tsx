@@ -8,7 +8,6 @@ import Navbar from '@/components/layout/Navbar';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -41,7 +40,7 @@ const LeadsPage = () => {
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
         <Navbar toggleSidebar={() => toggleSidebar()} />
         
         <main className="container mx-auto px-4 pt-24 pb-12">
@@ -49,15 +48,11 @@ const LeadsPage = () => {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <Link to="/">
-                    <BreadcrumbLink>Home</BreadcrumbLink>
-                  </Link>
+                  <Link to="/">Home</Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <Link to="/dashboard">
-                    <BreadcrumbLink>Dashboard</BreadcrumbLink>
-                  </Link>
+                  <Link to="/dashboard">Dashboard</Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
