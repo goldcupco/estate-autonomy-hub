@@ -17,7 +17,7 @@ import {
 const LeadsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Subscribe to global sidebar state
+  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -27,6 +27,14 @@ const LeadsPage = () => {
     return () => {
       window.removeEventListener('sidebarStateChange' as any, handler);
     };
+  }, []);
+
+  // On mount, initialize sidebar state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      setSidebarOpen(savedState === 'true');
+    }
   }, []);
 
   return (

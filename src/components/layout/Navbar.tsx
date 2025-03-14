@@ -28,6 +28,10 @@ export function Navbar({ toggleSidebar: propToggleSidebar }: { toggleSidebar: ()
     if (path === '/properties') return 'Properties';
     if (path === '/leads') return 'Leads';
     if (path === '/lists') return 'Lists';
+
+    // Handle nested routes or paths with params
+    if (path.startsWith('/property/')) return 'Property Details';
+    
     return path.charAt(1).toUpperCase() + path.slice(2);
   };
 

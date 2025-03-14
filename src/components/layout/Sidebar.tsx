@@ -24,14 +24,29 @@ type SidebarProps = {
   onClose: () => void;
 };
 
-// Create a global state for sidebar visibility
+// Create a global state for sidebar visibility that persists across page navigation
 let globalSidebarState = true;
-const sidebarStateListeners: ((isOpen: boolean) => void)[] = [];
 
-// Function to update all sidebar instances
-const updateGlobalSidebarState = (isOpen: boolean) => {
-  globalSidebarState = isOpen;
-  sidebarStateListeners.forEach(listener => listener(isOpen));
+// Create a global event to notify all components about sidebar state changes
+export const sidebarStateChangeEvent = new CustomEvent('sidebarStateChange', { 
+  detail: globalSidebarState,
+  bubbles: true 
+});
+
+// Update the global sidebar state and dispatch the event
+export const toggleSidebar = () => {
+  globalSidebarState = !globalSidebarState;
+  
+  // Update the event detail with the new state
+  const event = new CustomEvent('sidebarStateChange', { 
+    detail: globalSidebarState,
+    bubbles: true 
+  });
+  
+  window.dispatchEvent(event);
+  
+  // Store sidebar state in localStorage for persistence across page refreshes
+  localStorage.setItem('sidebarState', globalSidebarState.toString());
 };
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -39,18 +54,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(globalSidebarState);
   
+  // On first mount, check localStorage for saved state
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState !== null) {
+      globalSidebarState = savedState === 'true';
+      setSidebarOpen(globalSidebarState);
+    }
+    setMounted(true);
+  }, []);
+  
   // Subscribe to global sidebar state changes
   useEffect(() => {
-    const listener = (newState: boolean) => {
-      setSidebarOpen(newState);
+    const listener = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setSidebarOpen(customEvent.detail);
     };
     
-    sidebarStateListeners.push(listener);
+    window.addEventListener('sidebarStateChange', listener as EventListener);
     return () => {
-      const index = sidebarStateListeners.indexOf(listener);
-      if (index > -1) {
-        sidebarStateListeners.splice(index, 1);
-      }
+      window.removeEventListener('sidebarStateChange', listener as EventListener);
     };
   }, []);
 
@@ -59,23 +82,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     setSidebarOpen(isOpen);
   }, [isOpen]);
 
-  // Handle initial mount animation
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Close sidebar on route change on mobile
   useEffect(() => {
     if (window.innerWidth < 768) {
       onClose();
     }
   }, [location.pathname, onClose]);
-
-  const toggleSidebar = () => {
-    const newState = !sidebarOpen;
-    setSidebarOpen(newState);
-    updateGlobalSidebarState(newState);
-  };
 
   return (
     <>
@@ -224,10 +236,5 @@ function NavItem({ to, icon: Icon, label, active, collapsed }: NavItemProps) {
     </TooltipProvider>
   );
 }
-
-// Export the toggle function for external use
-export const toggleSidebar = () => {
-  updateGlobalSidebarState(!globalSidebarState);
-};
 
 export default Sidebar;
