@@ -21,6 +21,8 @@ import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
 import AccessManagement from "./pages/AccessManagement";
 import PhoneNumberManagement from "./pages/PhoneNumberManagement";
+import SellerMapSearch from "./pages/SellerMapSearch";
+import BuyerMapSearch from "./pages/BuyerMapSearch";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { CampaignProvider } from "./contexts/CampaignContext";
 
@@ -137,6 +139,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/seller-map" 
+        element={
+          <ProtectedRoute>
+            <SellerMapSearch />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/buyer-map" 
+        element={
+          <ProtectedRoute>
+            <BuyerMapSearch />
           </ProtectedRoute>
         } 
       />
