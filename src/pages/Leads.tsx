@@ -1,12 +1,12 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LeadTable, { Lead } from '@/components/leads/LeadTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 // Dummy lead data (expanded)
-const leadsData: Lead[] = [
+const initialLeadsData: Lead[] = [
   {
     id: '1',
     name: 'John Smith',
@@ -160,12 +160,27 @@ const leadsData: Lead[] = [
 ];
 
 // Filter leads by status for the tabs
-const filterLeadsByStatus = (status: string) => {
-  if (status === 'All') return leadsData;
-  return leadsData.filter(lead => lead.status === status);
+const filterLeadsByStatus = (leads: Lead[], status: string) => {
+  if (status === 'All') return leads;
+  return leads.filter(lead => lead.status === status);
 };
 
 export function Leads() {
+  const [leadsData, setLeadsData] = useState<Lead[]>(initialLeadsData);
+  const { toast } = useToast();
+
+  const handleEditLead = (updatedLead: Lead) => {
+    setLeadsData(prevLeads => 
+      prevLeads.map(lead => 
+        lead.id === updatedLead.id ? updatedLead : lead
+      )
+    );
+  };
+
+  const handleDeleteLead = (id: string) => {
+    setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== id));
+  };
+
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -188,31 +203,59 @@ export function Leads() {
         </TabsList>
         
         <TabsContent value="All" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('All')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'All')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="New" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('New')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'New')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="Contacted" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('Contacted')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'Contacted')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="Qualified" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('Qualified')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'Qualified')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="Negotiating" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('Negotiating')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'Negotiating')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="Closed" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('Closed')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'Closed')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
         
         <TabsContent value="Lost" className="space-y-6 mt-6">
-          <LeadTable data={filterLeadsByStatus('Lost')} />
+          <LeadTable 
+            data={filterLeadsByStatus(leadsData, 'Lost')} 
+            onEditLead={handleEditLead}
+            onDeleteLead={handleDeleteLead}
+          />
         </TabsContent>
       </Tabs>
     </div>

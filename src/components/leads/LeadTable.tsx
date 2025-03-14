@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   ColumnDef,
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { LeadActions } from './LeadActions';
 
 export interface Lead {
   id: string;
@@ -29,9 +29,11 @@ export interface Lead {
 
 interface LeadTableProps {
   data: Lead[];
+  onEditLead?: (updatedLead: Lead) => void;
+  onDeleteLead?: (id: string) => void;
 }
 
-export function LeadTable({ data }: LeadTableProps) {
+export function LeadTable({ data, onEditLead, onDeleteLead }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -115,6 +117,19 @@ export function LeadTable({ data }: LeadTableProps) {
     {
       accessorKey: "lastContact",
       header: "Last Contact",
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => {
+        return onEditLead && onDeleteLead ? (
+          <LeadActions 
+            lead={row.original} 
+            onEdit={onEditLead} 
+            onDelete={onDeleteLead}
+          />
+        ) : null;
+      },
     },
   ];
 
