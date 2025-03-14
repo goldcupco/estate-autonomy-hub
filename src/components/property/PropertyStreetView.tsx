@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, RefreshCw, AlertTriangle } from 'lucide-react';
+import { MapPin, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useGoogleMapsApi } from '@/hooks/use-google-maps';
 import { toast } from "sonner";
@@ -112,11 +112,21 @@ const PropertyStreetView = ({ latitude, longitude, address }: PropertyStreetView
             <p className="text-sm text-muted-foreground mt-2">
               To fix this issue:
               <ol className="text-left list-decimal pl-5 mt-2">
-                <li>Create a Google Maps API key with Street View API enabled</li>
-                <li>Add the key to your environment as VITE_GOOGLE_MAPS_API_KEY</li>
+                <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center">Google Cloud Console <ExternalLink className="h-3 w-3 ml-1" /></a></li>
+                <li>Create a new project or select an existing one</li>
+                <li>Enable the "Street View Static API" and "Maps JavaScript API"</li>
+                <li>Create an API key with appropriate restrictions</li>
+                <li>Add the key to your environment as <code className="bg-muted p-1 rounded text-xs">VITE_GOOGLE_MAPS_API_KEY</code></li>
                 <li>Restart your application</li>
               </ol>
             </p>
+            <div className="mt-4 p-3 bg-muted rounded-md text-xs text-left font-mono">
+              <p className="mb-2 text-muted-foreground">For local development:</p>
+              <div className="whitespace-pre overflow-x-auto">
+                # Create a .env.local file in the project root with:
+                VITE_GOOGLE_MAPS_API_KEY=your_api_key_here
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
