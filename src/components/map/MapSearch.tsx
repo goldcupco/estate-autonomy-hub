@@ -32,13 +32,18 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
     if (!mapContainer.current || map.current) return;
     
     try {
+      // Set the access token
       mapboxgl.accessToken = MAPBOX_TOKEN;
       
+      // Create map instance
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [-98.5795, 39.8283], // Center of US
-        zoom: 3
+        zoom: 3,
+        maxZoom: 18,
+        minZoom: 2,
+        failIfMajorPerformanceCaveat: true
       });
       
       // Add navigation controls
@@ -53,11 +58,14 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       // When the map style is loaded
       map.current.on('style.load', () => {
         setMapLoaded(true);
+        console.log('Map style loaded successfully');
       });
       
       // Add markers for contact data
       map.current.on('load', () => {
         setMapLoaded(true);
+        console.log('Map loaded successfully');
+        
         if (data && data.length > 0 && map.current) {
           data.forEach(contact => {
             if (contact.location?.lat && contact.location?.lng) {
@@ -99,9 +107,12 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
       setMapError('Error initializing map. Please check your internet connection or try again later.');
     }
     
+    // Cleanup function
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [data, contactType, onSelect]);
   
@@ -202,7 +213,14 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
             </Alert>
           </div>
         )}
+        
+        {/* Map container */}
         <div ref={mapContainer} className="w-full h-full" />
+        
+        {/* Add map attribution - required by Mapbox TOS */}
+        <div className="absolute bottom-0 right-0 text-xs text-muted-foreground bg-background/70 px-2 py-1 rounded-tl-md">
+          © <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">Mapbox</a>
+        </div>
       </div>
     </div>
   );
