@@ -158,8 +158,6 @@ export const MapSearch = ({ data, contactType, onSelect }: MapSearchProps) => {
         <div className="w-full h-full" id="map-container">
           <MapContainer 
             style={{ height: '100%', width: '100%' }}
-            center={defaultCenter} // Set default center
-            zoom={defaultZoom} // Set default zoom
             whenReady={handleMapLoad}
           >
             <TileLayer

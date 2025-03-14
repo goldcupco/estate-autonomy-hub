@@ -84,8 +84,6 @@ export const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         
         <MapContainer 
           style={{ height: '100%', width: '100%' }}
-          center={[0, 0]} // Default center, will be updated by MapViewController
-          zoom={1} // Default zoom, will be updated by MapViewController
           whenReady={handleMapLoad}
         >
           <MapViewController center={[location.lat, location.lng]} zoom={zoom} />
