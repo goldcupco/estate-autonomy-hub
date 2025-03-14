@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -10,12 +9,21 @@ import { Phone, Mail, MessageSquare, FileText, Search, Filter, Plus, Calendar } 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from 'sonner';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { trackLetterSending } from '@/utils/communicationUtils';
+import { useToast } from "@/hooks/use-toast";
 
 interface ContactTrackerProps {
   contactId: string;
 }
 
-// Sample contact data for demo purposes
 const getContactById = (id: string) => {
   const contacts = [
     {
@@ -93,7 +101,6 @@ const getContactById = (id: string) => {
   return contacts.find(c => c.id === id) || contacts[0];
 };
 
-// Sample activities for the given contact
 const getContactActivities = (contactId: string) => {
   const activities = [
     {
@@ -164,11 +171,16 @@ const getContactActivities = (contactId: string) => {
 export default function ContactTracker({ contactId }: ContactTrackerProps) {
   const [activeTab, setActiveTab] = useState("details");
   const [newActivityType, setNewActivityType] = useState("email");
-  const [progress, setProgress] = useState(75); // Mock engagement score
+  const [progress, setProgress] = useState(75);
+  const [isLetterDialogOpen, setIsLetterDialogOpen] = useState(false);
+  const [letterContent, setLetterContent] = useState('');
+  const [letterAddress, setLetterAddress] = useState('');
+  const [letterTrackingNumber, setLetterTrackingNumber] = useState('');
   
   const form = useForm();
   const contact = getContactById(contactId);
   const activities = getContactActivities(contactId);
+  const { toast: uiToast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
@@ -197,6 +209,55 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
     form.reset();
   };
 
+  const handleSendLetter = () => {
+    if (!letterContent) {
+      uiToast({
+        title: "Missing content",
+        description: "Please enter letter content.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const letterRecord = trackLetterSending(
+        contact.name,
+        letterContent,
+        letterAddress || undefined
+      );
+      
+      setLetterTrackingNumber(letterRecord.trackingNumber || '');
+      
+      const newActivity = {
+        id: Math.random().toString(),
+        contactId,
+        type: "Letter",
+        date: new Date().toISOString().split('T')[0],
+        subject: "Letter Communication",
+        notes: `Letter sent: "${letterContent.substring(0, 50)}${letterContent.length > 50 ? '...' : ''}"`,
+        status: "Sent",
+        response: "Pending",
+        trackingNumber: letterRecord.trackingNumber
+      };
+      
+      uiToast({
+        title: "Letter queued and tracked",
+        description: `Letter to ${contact.name} has been queued. Tracking #: ${letterRecord.trackingNumber}`,
+      });
+    } catch (error) {
+      console.error('Error tracking letter:', error);
+      uiToast({
+        title: "Error tracking letter",
+        description: "Letter queued but could not be tracked",
+        variant: "destructive"
+      });
+    }
+    
+    setIsLetterDialogOpen(false);
+    setLetterContent('');
+    setLetterAddress('');
+  };
+
   return (
     <div className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto">
       <div className="flex justify-between items-center">
@@ -217,6 +278,66 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
         </div>
       </div>
 
+      <Dialog open={isLetterDialogOpen} onOpenChange={setIsLetterDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Letter for {contact.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="letterAddress" className="text-sm font-medium">
+                  Mailing Address
+                </label>
+                <Input
+                  id="letterAddress"
+                  value={letterAddress}
+                  onChange={(e) => setLetterAddress(e.target.value)}
+                  placeholder="Enter recipient's mailing address"
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="letterContent" className="text-sm font-medium">
+                  Letter Content
+                </label>
+                <Textarea
+                  id="letterContent"
+                  value={letterContent}
+                  onChange={(e) => setLetterContent(e.target.value)}
+                  placeholder="Type your letter content here..."
+                  className="min-h-[200px] mt-2"
+                />
+              </div>
+              
+              {letterTrackingNumber && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <p className="text-sm font-medium">Previous letter tracking number:</p>
+                  <p className="text-sm font-mono">{letterTrackingNumber}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsLetterDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendLetter}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Send Letter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="details" onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="details">Contact Details</TabsTrigger>
@@ -225,7 +346,6 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         
-        {/* Contact Details Tab */}
         <TabsContent value="details" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -319,12 +439,20 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
                   <MessageSquare className="h-4 w-4" />
                   <span>SMS</span>
                 </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-100 border-amber-200"
+                  onClick={() => setIsLetterDialogOpen(true)}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Letter</span>
+                </Button>
               </div>
             </div>
           </div>
         </TabsContent>
         
-        {/* Activity History Tab */}
         <TabsContent value="activity" className="space-y-4 mt-4">
           <div className="flex justify-between">
             <div className="relative w-64">
@@ -377,7 +505,6 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
           </div>
         </TabsContent>
         
-        {/* Log Activity Tab */}
         <TabsContent value="log" className="space-y-4 mt-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleAddActivity)} className="space-y-4">
@@ -503,7 +630,6 @@ export default function ContactTracker({ contactId }: ContactTrackerProps) {
           </Form>
         </TabsContent>
         
-        {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="border rounded-md p-4">
