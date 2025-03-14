@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Plus, Send, CheckCircle2, Download, Eye, Trash2, X } from 'lucide-react';
@@ -218,7 +219,207 @@ export function Contracts() {
                     <div className="space-y-2">
                       <Label htmlFor="notes">Notes</Label>
                       <Textarea
+                        id="notes"
+                        placeholder="Add any notes or details about this contract..."
+                        value={formNotes}
+                        onChange={(e) => setFormNotes(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="document">Upload Document</Label>
+                      <Input
+                        id="document"
+                        type="file"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            setFormDocument(files[0]);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setNewContractDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateContract}>
+                      Create Draft
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
+            <div className="bg-card rounded-lg border shadow-sm animate-fade-up">
+              <div className="relative overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contract</TableHead>
+                      <TableHead>Recipient</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contracts.map((contract) => (
+                      <TableRow 
+                        key={contract.id} 
+                        className="cursor-pointer hover:bg-accent/50"
+                        onClick={() => handleViewContract(contract)}
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            {contract.title}
+                          </div>
+                        </TableCell>
+                        <TableCell>{contract.recipient}</TableCell>
+                        <TableCell>{contract.date}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {contract.status === 'Signed' && (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            )}
+                            {contract.status}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <span className="sr-only">Open menu</span>
+                                <span>•••</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewContract(contract);
+                              }}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                openDocument(contract.title, e);
+                              }}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download PDF
+                              </DropdownMenuItem>
+                              
+                              {contract.status === 'Draft' && (
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSendContract(contract.id);
+                                }}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Recipient
+                                </DropdownMenuItem>
+                              )}
+                              
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem 
+                                className="text-destructive focus:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteContract(contract.id);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Contract
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      {/* View Contract Dialog */}
+      <Dialog open={viewContractDialog} onOpenChange={setViewContractDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{currentContract?.title}</DialogTitle>
+            <DialogDescription>
+              Contract details and status information.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentContract && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Recipient</p>
+                  <p className="text-sm text-muted-foreground">{currentContract.recipient}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Date</p>
+                  <p className="text-sm text-muted-foreground">{currentContract.date}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Status</p>
+                  <p className="text-sm text-muted-foreground">{currentContract.status}</p>
+                </div>
+              </div>
+              
+              {currentContract.notes && (
+                <div>
+                  <p className="text-sm font-medium">Notes</p>
+                  <p className="text-sm text-muted-foreground">{currentContract.notes}</p>
+                </div>
+              )}
+              
+              <Button 
+                className="w-full" 
+                onClick={(e) => openDocument(currentContract.title, e as React.MouseEvent)}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                View Document
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Document Viewer */}
+      <Dialog open={documentViewerOpen} onOpenChange={setDocumentViewerOpen}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Contract Document</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 h-full min-h-[60vh]">
+            <iframe 
+              src={selectedDocument} 
+              className="w-full h-full border rounded-md"
+              title="Contract Document Viewer"
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button asChild>
+              <a href={selectedDocument} download target="_blank" rel="noreferrer">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
-
-
-
+export default Contracts;
