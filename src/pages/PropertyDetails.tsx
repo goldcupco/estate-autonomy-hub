@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Layout } from '@/components/layout/Layout';
-import PropertyImageGallery from '@/components/property/PropertyImageGallery';
-import PropertyActivity from '@/components/property/PropertyActivity';
-import PropertyMapView from '@/components/property/PropertyMapView';
+import { PropertyImageGallery } from '@/components/property/PropertyImageGallery';
+import { PropertyActivity } from '@/components/property/PropertyActivity';
 import PropertyStreetView from '@/components/property/PropertyStreetView';
+import PropertyMapView from '@/components/map/PropertyMapView';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,9 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Home, MapPin, Info, PencilLine, Calendar, DollarSign, Users, Eye } from 'lucide-react';
 
-// Mock property data - in a real app, you would fetch this from an API
 const fetchProperty = async (id: string) => {
-  // Simulate API call
   return {
     id,
     address: '123 Main Street',
@@ -137,7 +134,7 @@ const PropertyDetails = () => {
         </div>
 
         <div className="mb-6">
-          <PropertyImageGallery images={property.images} />
+          <PropertyImageGallery property={{ id: property.id, address: property.address, imageUrl: property.images[0] }} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -222,9 +219,8 @@ const PropertyDetails = () => {
                   </CardHeader>
                   <CardContent className="p-0">
                     <PropertyMapView 
-                      latitude={property.latitude} 
-                      longitude={property.longitude} 
-                      address={property.address}
+                      address={`${property.address}, ${property.city}, ${property.state} ${property.zipCode}`}
+                      location={{ lat: property.latitude, lng: property.longitude }}
                     />
                   </CardContent>
                 </Card>

@@ -7,6 +7,7 @@ declare global {
     google: {
       maps: any;
     };
+    [key: string]: any; // Allow dynamic properties for callback names
   }
 }
 
@@ -27,9 +28,9 @@ export const useGoogleMapsApi = () => {
     const callbackName = `gmapsCallback_${Math.round(Date.now() * Math.random())}`;
     
     // Define the callback function
-    window[callbackName as keyof Window] = function() {
+    window[callbackName] = function() {
       setIsLoaded(true);
-      delete window[callbackName as keyof Window];
+      delete window[callbackName];
     };
     
     // Create the script element
@@ -41,7 +42,7 @@ export const useGoogleMapsApi = () => {
     // Handle errors
     script.onerror = (error) => {
       setLoadError(new Error('Failed to load Google Maps API'));
-      delete window[callbackName as keyof Window];
+      delete window[callbackName];
     };
     
     // Append the script to the document
@@ -52,7 +53,7 @@ export const useGoogleMapsApi = () => {
       // Remove the script if it's still loading
       if (!isLoaded) {
         document.head.removeChild(script);
-        delete window[callbackName as keyof Window];
+        delete window[callbackName];
       }
     };
   }, [apiKey]);
