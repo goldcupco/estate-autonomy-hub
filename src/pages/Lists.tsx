@@ -17,6 +17,8 @@ export function Lists() {
   const [buyerData, setBuyerData] = useState<any[] | null>(null);
   const [activeCampaign, setActiveCampaign] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [exportType, setExportType] = useState<'all' | 'seller' | 'buyer'>('all');
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -95,16 +97,6 @@ export function Lists() {
     },
   ];
 
-  const filterListsByType = (type: string) => {
-    if (type === 'all') return listsSummary;
-    return listsSummary.filter(list => list.type === type);
-  };
-
-  const filterCampaignsByType = (type: string) => {
-    if (type === 'all') return campaignsData;
-    return campaignsData.filter(campaign => campaign.type === type);
-  };
-
   const listsSummary = [
     {
       title: "All Sellers",
@@ -150,6 +142,50 @@ export function Lists() {
     },
   ];
 
+  const filterListsByType = (type: string) => {
+    if (type === 'all') return listsSummary;
+    return listsSummary.filter(list => list.type === type);
+  };
+
+  const filterCampaignsByType = (type: string) => {
+    if (type === 'all') return campaignsData;
+    return campaignsData.filter(campaign => campaign.type === type);
+  };
+
+  const handleExport = () => {
+    let dataToExport;
+    
+    if (exportType === 'seller') {
+      dataToExport = filterListsByType('seller');
+    } else if (exportType === 'buyer') {
+      dataToExport = filterListsByType('buyer');
+    } else {
+      dataToExport = listsSummary;
+    }
+    
+    const headers = ['title', 'description', 'count', 'lastUpdated', 'type'];
+    const csvContent = [
+      headers.join(','),
+      ...dataToExport.map(item => 
+        headers.map(header => `"${(item as any)[header]}"`).join(',')
+      )
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${exportType}-lists-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export Complete",
+      description: `Successfully exported ${dataToExport.length} ${exportType} list records.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -162,18 +198,33 @@ export function Lists() {
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold tracking-tight">Lists & Campaigns</h1>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex items-center gap-2 animate-scale-in animate-delay-100">
+                <Button 
+                  onClick={handleExport}
+                  variant="outline" 
+                  className="flex items-center gap-2 animate-scale-in animate-delay-100"
+                >
                   <Download className="h-4 w-4" />
                   <span>Export</span>
                 </Button>
-                <Button className="flex items-center gap-2 animate-scale-in">
+                <Button 
+                  onClick={() => setShowImportDialog(true)}
+                  className="flex items-center gap-2 animate-scale-in"
+                >
                   <Upload className="h-4 w-4" />
                   <span>Import</span>
                 </Button>
               </div>
             </div>
             
-            <Tabs defaultValue="all" className="w-full animate-scale-in">
+            <Tabs 
+              defaultValue="all" 
+              className="w-full animate-scale-in"
+              onValueChange={(value) => {
+                if (['all', 'seller', 'buyer'].includes(value)) {
+                  setExportType(value as 'all' | 'seller' | 'buyer');
+                }
+              }}
+            >
               <TabsList className="mb-6">
                 <TabsTrigger value="all">All Lists</TabsTrigger>
                 <TabsTrigger value="seller">Seller Lists</TabsTrigger>
@@ -421,6 +472,47 @@ export function Lists() {
           </div>
         </main>
       </div>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Import Lists</DialogTitle>
+            <DialogDescription>
+              Upload your seller or buyer lists
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Seller List</CardTitle>
+                <CardDescription>Import seller data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataUploader 
+                  title="Upload Seller Data"
+                  description="CSV with seller contacts"
+                  onUploadComplete={handleSellerUploadComplete}
+                />
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Buyer List</CardTitle>
+                <CardDescription>Import buyer data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataUploader 
+                  title="Upload Buyer Data"
+                  description="CSV with buyer contacts"
+                  onUploadComplete={handleBuyerUploadComplete}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
