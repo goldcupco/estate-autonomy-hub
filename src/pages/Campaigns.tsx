@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Plus, Users, Edit, Trash2, Eye, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ const Campaigns = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [showViewDetailsDialog, setShowViewDetailsDialog] = useState(false);
   const [campaignToView, setCampaignToView] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   const { toast } = useToast();
   const { accessibleCampaigns, addCampaign, updateCampaign, deleteCampaign, assignUserToCampaign, removeUserFromCampaign, getCampaign } = useCampaigns();
@@ -89,6 +89,7 @@ const Campaigns = () => {
       type: 'seller',
       status: 'draft'
     });
+    setShowEditDialog(false);
     
     toast({
       title: "Success",
@@ -115,6 +116,7 @@ const Campaigns = () => {
       type: campaign.type,
       status: campaign.status
     });
+    setShowEditDialog(true);
   };
   
   const handleViewCampaign = (id: string) => {
@@ -211,11 +213,9 @@ const Campaigns = () => {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{campaignBeingEdited ? 'Edit Campaign' : 'Create New Campaign'}</DialogTitle>
+                  <DialogTitle>Create New Campaign</DialogTitle>
                   <DialogDescription>
-                    {campaignBeingEdited 
-                      ? 'Update the campaign details below'
-                      : 'Fill in the details to create a new campaign'}
+                    Fill in the details to create a new campaign
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -279,11 +279,7 @@ const Campaigns = () => {
                 </div>
                 
                 <DialogFooter>
-                  {campaignBeingEdited ? (
-                    <Button onClick={handleUpdateCampaign}>Update Campaign</Button>
-                  ) : (
-                    <Button onClick={handleAddCampaign}>Create Campaign</Button>
-                  )}
+                  <Button onClick={handleAddCampaign}>Create Campaign</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -714,6 +710,81 @@ const Campaigns = () => {
                   </DialogFooter>
                 </>
               )}
+            </DialogContent>
+          </Dialog>
+          
+          {/* New Edit Campaign Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Campaign</DialogTitle>
+                <DialogDescription>
+                  Update the campaign details below
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Campaign Name</Label>
+                  <Input 
+                    id="edit-name" 
+                    value={newCampaign.name} 
+                    onChange={(e) => setNewCampaign({...newCampaign, name: e.target.value})}
+                    placeholder="Enter campaign name"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea 
+                    id="edit-description" 
+                    value={newCampaign.description} 
+                    onChange={(e) => setNewCampaign({...newCampaign, description: e.target.value})}
+                    placeholder="Enter campaign description"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-type">Campaign Type</Label>
+                    <Select 
+                      value={newCampaign.type} 
+                      onValueChange={(value) => setNewCampaign({...newCampaign, type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="seller">Seller</SelectItem>
+                        <SelectItem value="buyer">Buyer</SelectItem>
+                        <SelectItem value="both">Both</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select 
+                      value={newCampaign.status} 
+                      onValueChange={(value) => setNewCampaign({...newCampaign, status: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="paused">Paused</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button onClick={handleUpdateCampaign}>Update Campaign</Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </main>
