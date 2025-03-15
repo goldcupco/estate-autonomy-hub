@@ -8,6 +8,9 @@ import PropertyCard from '@/components/dashboard/PropertyCard';
 import LeadTable, { Lead } from '@/components/leads/LeadTable';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { AddPropertyModal } from '@/components/property/AddPropertyModal';
+import { AddLeadModal } from '@/components/leads/AddLeadModal';
+import { ScheduleCallModal } from '@/components/calls/ScheduleCallModal';
 
 // Dummy property data
 const recentProperties = [
@@ -122,6 +125,15 @@ const recentLeads: Lead[] = [
 export function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Modal states
+  const [addPropertyOpen, setAddPropertyOpen] = useState(false);
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [scheduleCallOpen, setScheduleCallOpen] = useState(false);
+  
+  // Local state for properties and leads
+  const [properties, setProperties] = useState(recentProperties);
+  const [leads, setLeads] = useState(recentLeads);
 
   // Subscribe to global sidebar state changes
   useEffect(() => {
@@ -143,6 +155,16 @@ export function Dashboard() {
     }
   }, []);
 
+  // Handler for adding a new property
+  const handlePropertyAdded = (property: any) => {
+    setProperties(prev => [property, ...prev]);
+  };
+
+  // Handler for adding a new lead
+  const handleLeadAdded = (lead: Lead) => {
+    setLeads(prev => [lead, ...prev]);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -154,15 +176,26 @@ export function Dashboard() {
           <div className="space-y-8 py-8 animate-fade-in">
             {/* Quick action buttons */}
             <div className="flex flex-wrap gap-4">
-              <Button className="flex items-center gap-2 animate-scale-in">
+              <Button 
+                className="flex items-center gap-2 animate-scale-in"
+                onClick={() => setAddPropertyOpen(true)}
+              >
                 <Building className="h-4 w-4" />
                 Add Property
               </Button>
-              <Button className="flex items-center gap-2 animate-scale-in animate-delay-100" variant="outline">
+              <Button 
+                className="flex items-center gap-2 animate-scale-in animate-delay-100" 
+                variant="outline"
+                onClick={() => setAddLeadOpen(true)}
+              >
                 <UserPlus className="h-4 w-4" />
                 Add Lead
               </Button>
-              <Button className="flex items-center gap-2 animate-scale-in animate-delay-200" variant="outline">
+              <Button 
+                className="flex items-center gap-2 animate-scale-in animate-delay-200" 
+                variant="outline"
+                onClick={() => setScheduleCallOpen(true)}
+              >
                 <Truck className="h-4 w-4" />
                 Schedule Call
               </Button>
@@ -182,7 +215,7 @@ export function Dashboard() {
                 </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recentProperties.map((property, index) => (
+                {properties.slice(0, 4).map((property, index) => (
                   <PropertyCard 
                     key={property.id} 
                     property={property} 
@@ -202,11 +235,27 @@ export function Dashboard() {
                   View All
                 </Button>
               </div>
-              <LeadTable data={recentLeads} />
+              <LeadTable data={leads.slice(0, 5)} />
             </section>
           </div>
         </main>
       </div>
+
+      {/* Modals */}
+      <AddPropertyModal 
+        open={addPropertyOpen} 
+        onOpenChange={setAddPropertyOpen} 
+        onPropertyAdded={handlePropertyAdded}
+      />
+      <AddLeadModal 
+        open={addLeadOpen} 
+        onOpenChange={setAddLeadOpen} 
+        onLeadAdded={handleLeadAdded}
+      />
+      <ScheduleCallModal 
+        open={scheduleCallOpen} 
+        onOpenChange={setScheduleCallOpen} 
+      />
     </div>
   );
 }
