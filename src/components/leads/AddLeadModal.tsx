@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Lead } from '@/components/leads/LeadTable';
+import { Lead, Note } from '@/components/leads/LeadTable';
 
 interface AddLeadModalProps {
   open: boolean;
@@ -46,7 +46,8 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
       status: lead.status || 'New',
       source: lead.source || 'Website Inquiry',
       dateAdded: lead.dateAdded || new Date().toISOString().split('T')[0],
-      lastContact: lead.lastContact || new Date().toISOString().split('T')[0]
+      lastContact: lead.lastContact || new Date().toISOString().split('T')[0],
+      notes: lead.notes || [] // Ensure notes is an empty array if not provided
     } as Lead;
 
     if (onLeadAdded) {
@@ -144,7 +145,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
             <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
-              value={lead.notes || ''}
+              value={lead.notes ? (typeof lead.notes === 'string' ? lead.notes : '') : ''}
               onChange={e => handleInputChange('notes', e.target.value)}
               placeholder="Additional information about this lead..."
               rows={3}
