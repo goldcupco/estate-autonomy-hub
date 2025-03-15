@@ -27,9 +27,11 @@ const Campaigns = () => {
   const [campaignBeingEdited, setCampaignBeingEdited] = useState<string | null>(null);
   const [showUserAssignDialog, setShowUserAssignDialog] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [showViewDetailsDialog, setShowViewDetailsDialog] = useState(false);
+  const [campaignToView, setCampaignToView] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { accessibleCampaigns, addCampaign, updateCampaign, deleteCampaign, assignUserToCampaign, removeUserFromCampaign } = useCampaigns();
+  const { accessibleCampaigns, addCampaign, updateCampaign, deleteCampaign, assignUserToCampaign, removeUserFromCampaign, getCampaign } = useCampaigns();
   const { users, currentUser, isAdmin } = useAuth();
   
   const handleToggleSidebar = () => {
@@ -113,6 +115,11 @@ const Campaigns = () => {
       type: campaign.type,
       status: campaign.status
     });
+  };
+  
+  const handleViewCampaign = (id: string) => {
+    setCampaignToView(id);
+    setShowViewDetailsDialog(true);
   };
   
   const handleAssignUser = (campaignId: string, userId: string) => {
@@ -333,7 +340,11 @@ const Campaigns = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="icon">
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => handleViewCampaign(campaign.id)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         {isAdmin && (
@@ -397,7 +408,11 @@ const Campaigns = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => handleViewCampaign(campaign.id)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
@@ -461,7 +476,11 @@ const Campaigns = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => handleViewCampaign(campaign.id)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
@@ -525,7 +544,11 @@ const Campaigns = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => handleViewCampaign(campaign.id)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
@@ -600,6 +623,97 @@ const Campaigns = () => {
               <DialogFooter>
                 <Button onClick={() => setShowUserAssignDialog(false)}>Close</Button>
               </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Dialog for viewing campaign details */}
+          <Dialog open={showViewDetailsDialog} onOpenChange={setShowViewDetailsDialog}>
+            <DialogContent className="sm:max-w-[800px]">
+              {campaignToView && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Campaign Details</DialogTitle>
+                    <DialogDescription>
+                      Detailed information about this campaign
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="py-4">
+                    {(() => {
+                      const campaign = getCampaign(campaignToView);
+                      if (!campaign) return <p>Campaign not found</p>;
+                      
+                      return (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-medium">Name</h3>
+                              <p>{campaign.name}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium">Status</h3>
+                              <div>{getCampaignStatusBadge(campaign.status)}</div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h3 className="text-sm font-medium">Description</h3>
+                            <p className="mt-1">{campaign.description}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-medium">Type</h3>
+                              <div className="mt-1">{getCampaignTypeBadge(campaign.type)}</div>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium">Start Date</h3>
+                              <p className="mt-1">{new Date(campaign.startDate).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-medium">Leads</h3>
+                              <p className="text-2xl font-bold">{campaign.leads.length}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium">Team Members</h3>
+                              <p className="text-2xl font-bold">{campaign.assignedUsers.length}</p>
+                            </div>
+                          </div>
+                          
+                          {campaign.assignedUsers.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-medium mb-2">Assigned Team Members</h3>
+                              <div className="border rounded-md p-2">
+                                {campaign.assignedUsers.map(userId => {
+                                  const user = users.find(u => u.id === userId);
+                                  return user ? (
+                                    <div key={userId} className="flex items-center p-2">
+                                      <div className="w-8 h-8 rounded-full bg-gray-200 mr-2 flex items-center justify-center">
+                                        {user.name.charAt(0)}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                      </div>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button onClick={() => setShowViewDetailsDialog(false)}>Close</Button>
+                  </DialogFooter>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </main>
