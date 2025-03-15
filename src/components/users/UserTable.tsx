@@ -50,7 +50,12 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser }) => {
               </Badge>
             </TableCell>
             <TableCell className="text-right space-x-2">
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 w-8 p-0"
+                onClick={() => onSelectUser(user.id)}
+              >
                 <EditIcon className="h-4 w-4" />
                 <span className="sr-only">Edit</span>
               </Button>
