@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AddLeadModal } from '@/components/leads/AddLeadModal';
 
 const initialLeadsData: Lead[] = [
   {
@@ -205,6 +207,7 @@ export function Leads() {
   const [quickCallDialogOpen, setQuickCallDialogOpen] = useState(false);
   const [quickSmsDialogOpen, setQuickSmsDialogOpen] = useState(false);
   const [quickLetterDialogOpen, setQuickLetterDialogOpen] = useState(false);
+  const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [smsRecipient, setSmsRecipient] = useState('');
   const [smsText, setSmsText] = useState('');
@@ -247,6 +250,15 @@ export function Leads() {
     toast({
       title: "Note added",
       description: "Your note has been added to the lead."
+    });
+  };
+
+  const handleAddLead = (newLead: Lead) => {
+    setLeadsData(prevLeads => [newLead, ...prevLeads]);
+    
+    toast({
+      title: "Lead added",
+      description: `${newLead.name} has been added to your leads.`
     });
   };
 
@@ -343,12 +355,21 @@ export function Leads() {
             <FileText className="h-4 w-4" />
             <span>Quick Letter</span>
           </Button>
-          <Button className="flex items-center gap-2 animate-scale-in">
+          <Button 
+            className="flex items-center gap-2 animate-scale-in"
+            onClick={() => setAddLeadModalOpen(true)}
+          >
             <UserPlus className="h-4 w-4" />
             <span>Add Lead</span>
           </Button>
         </div>
       </div>
+      
+      <AddLeadModal 
+        open={addLeadModalOpen}
+        onOpenChange={setAddLeadModalOpen}
+        onLeadAdded={handleAddLead}
+      />
       
       <Dialog open={quickCallDialogOpen} onOpenChange={setQuickCallDialogOpen}>
         <DialogContent className="max-w-md">

@@ -36,6 +36,17 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
       return;
     }
 
+    // Create initial note if notes text exists
+    const notes: Note[] = [];
+    if (lead.notes && typeof lead.notes === 'string' && lead.notes.trim()) {
+      notes.push({
+        id: `note-${Date.now()}`,
+        text: lead.notes as string,
+        type: 'other',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // In a real app, this would call an API to save the lead
     const newLead = {
       ...lead,
@@ -47,7 +58,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
       source: lead.source || 'Website Inquiry',
       dateAdded: lead.dateAdded || new Date().toISOString().split('T')[0],
       lastContact: lead.lastContact || new Date().toISOString().split('T')[0],
-      notes: lead.notes || [] // Ensure notes is an empty array if not provided
+      notes: notes // Use our transformed notes array
     } as Lead;
 
     if (onLeadAdded) {
@@ -55,6 +66,15 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
     }
 
     toast.success('Lead added successfully');
+    
+    // Reset form
+    setLead({
+      status: 'New',
+      source: 'Website Inquiry',
+      dateAdded: new Date().toISOString().split('T')[0],
+      lastContact: new Date().toISOString().split('T')[0]
+    });
+    
     onOpenChange(false);
   };
 
@@ -145,7 +165,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
             <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
-              value={lead.notes ? (typeof lead.notes === 'string' ? lead.notes : '') : ''}
+              value={typeof lead.notes === 'string' ? lead.notes : ''}
               onChange={e => handleInputChange('notes', e.target.value)}
               placeholder="Additional information about this lead..."
               rows={3}
