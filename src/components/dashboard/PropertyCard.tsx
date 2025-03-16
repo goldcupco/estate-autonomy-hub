@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Building, MapPin, Heart, DollarSign } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -27,9 +28,10 @@ interface PropertyCardProps {
   className?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
+  onEdit?: (e: React.MouseEvent) => void;
 }
 
-export const PropertyCard = ({ property, className, style, onClick }: PropertyCardProps) => {
+export const PropertyCard = ({ property, className, style, onClick, onEdit }: PropertyCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -140,6 +142,16 @@ export const PropertyCard = ({ property, className, style, onClick }: PropertyCa
           <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
             {property.address}
           </h3>
+          {onEdit && (
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="h-7 px-2 ml-2" 
+              onClick={onEdit}
+            >
+              Edit
+            </Button>
+          )}
         </div>
         
         <div className="flex items-center text-sm text-muted-foreground mb-3">
