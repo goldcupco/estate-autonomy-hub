@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,7 @@ import AccessManagement from "./pages/AccessManagement";
 import PhoneNumberManagement from "./pages/PhoneNumberManagement";
 import SellerMapSearch from "./pages/SellerMapSearch";
 import BuyerMapSearch from "./pages/BuyerMapSearch";
+import Messages from "./pages/Messages";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { CampaignProvider } from "./contexts/CampaignContext";
 
@@ -127,6 +127,14 @@ const AppRoutes = () => {
         } 
       />
       <Route 
+        path="/messages" 
+        element={
+          <ProtectedRoute>
+            <Messages />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/documents" 
         element={
           <ProtectedRoute>
@@ -190,7 +198,6 @@ const AppRoutes = () => {
           </AdminRoute>
         } 
       />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Target,
   ShieldCheck,
-  PhoneCall
+  PhoneCall,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -191,6 +192,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 icon={Phone} 
                 label="Calls" 
                 active={location.pathname === '/calls'} 
+                collapsed={!sidebarOpen}
+              />
+              <NavItem 
+                to="/messages" 
+                icon={MessageSquare} 
+                label="Messages" 
+                active={location.pathname === '/messages'} 
                 collapsed={!sidebarOpen}
               />
               <NavItem 
