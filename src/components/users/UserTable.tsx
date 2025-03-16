@@ -15,13 +15,22 @@ import { EditIcon, Trash2Icon, KeyRound } from 'lucide-react';
 
 interface UserTableProps {
   onSelectUser: (userId: string) => void;
+  onEditUser?: (userId: string) => void;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ onSelectUser }) => {
+export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }) => {
   const { users, deleteUser } = useAuth();
   
   // Filter out the admin from the displayed users list
   const displayUsers = users;
+  
+  const handleEdit = (userId: string) => {
+    if (onEditUser) {
+      onEditUser(userId);
+    } else {
+      onSelectUser(userId);
+    }
+  };
   
   return (
     <Table>
@@ -54,7 +63,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser }) => {
                 variant="outline" 
                 size="sm" 
                 className="h-8 w-8 p-0"
-                onClick={() => onSelectUser(user.id)}
+                onClick={() => handleEdit(user.id)}
               >
                 <EditIcon className="h-4 w-4" />
                 <span className="sr-only">Edit</span>

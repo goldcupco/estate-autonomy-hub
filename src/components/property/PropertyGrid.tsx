@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PropertyCard } from '@/components/dashboard/PropertyCard';
 import { Button } from '@/components/ui/button';
@@ -32,9 +31,10 @@ interface Property {
 interface PropertyGridProps {
   properties: Property[];
   onPropertyClick?: (id: string) => void;
+  onPropertyEdit?: (id: string) => void;
 }
 
-export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps) {
+export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: PropertyGridProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortOrder, setSortOrder] = useState('newest');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -75,6 +75,19 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  const handlePropertyClick = (id: string) => {
+    if (onPropertyClick) {
+      onPropertyClick(id);
+    }
+  };
+
+  const handlePropertyEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    if (onPropertyEdit) {
+      onPropertyEdit(id);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -239,7 +252,8 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
               property={property} 
               className="opacity-0 animate-fade-in cursor-pointer"
               style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
-              onClick={() => onPropertyClick && onPropertyClick(property.id)}
+              onClick={() => handlePropertyClick(property.id)}
+              onEdit={onPropertyEdit ? (e) => handlePropertyEdit(property.id, e) : undefined}
             />
           ))}
         </div>
@@ -250,7 +264,7 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
               key={property.id}
               className="glass-card rounded-lg overflow-hidden transition-all hover:shadow-md hover:bg-accent/10 flex flex-col md:flex-row opacity-0 animate-fade-in cursor-pointer"
               style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
-              onClick={() => onPropertyClick && onPropertyClick(property.id)}
+              onClick={() => handlePropertyClick(property.id)}
             >
               <div className="w-full md:w-48 h-48 md:h-auto relative flex-shrink-0">
                 <img 
@@ -313,6 +327,17 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                     </div>
                   )}
                 </div>
+                {onPropertyEdit && (
+                  <div className="mt-3 text-right">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => handlePropertyEdit(property.id, e)}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
