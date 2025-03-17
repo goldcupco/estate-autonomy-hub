@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Lead, Note } from '@/components/leads/types';
@@ -15,7 +16,7 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   notes: lead.notes || [],
   flaggedForNextStage: false,
   readyToMove: false,
-  doNotContact: false // Renamed from doNotCall
+  doNotContact: false
 }));
 
 export function Leads() {
@@ -62,11 +63,30 @@ export function Leads() {
   }, [searchParams, leadsData, toast]);
 
   const handleEditLead = (updatedLead: Lead) => {
-    setLeadsData(prevLeads => 
-      prevLeads.map(lead => 
+    setLeadsData(prevLeads => {
+      const leadToUpdate = prevLeads.find(lead => lead.id === updatedLead.id);
+      
+      // If the status has changed, add a note to track the change
+      if (leadToUpdate && leadToUpdate.status !== updatedLead.status) {
+        const stageChangeNote: Note = {
+          id: uuidv4(),
+          text: `Status changed from ${leadToUpdate.status} to ${updatedLead.status}`,
+          type: 'stage_change',
+          timestamp: new Date().toISOString(),
+          metadata: {
+            previousStage: leadToUpdate.status,
+            newStage: updatedLead.status
+          }
+        };
+        
+        // Add the note to the updated lead
+        updatedLead.notes = [...(updatedLead.notes || []), stageChangeNote];
+      }
+      
+      return prevLeads.map(lead => 
         lead.id === updatedLead.id ? updatedLead : lead
-      )
-    );
+      );
+    });
     
     toast({
       title: "Lead updated",
@@ -101,7 +121,23 @@ export function Leads() {
   };
 
   const handleAddLead = (newLead: Lead) => {
-    setLeadsData(prevLeads => [newLead, ...prevLeads]);
+    // Add an initial note recording when the lead was added
+    const initialNote: Note = {
+      id: uuidv4(),
+      text: `Lead created with status: ${newLead.status}`,
+      type: 'stage_change',
+      timestamp: new Date().toISOString(),
+      metadata: {
+        newStage: newLead.status
+      }
+    };
+    
+    const leadWithNote = {
+      ...newLead,
+      notes: [initialNote]
+    };
+    
+    setLeadsData(prevLeads => [leadWithNote, ...prevLeads]);
     
     toast({
       title: "Lead added",
@@ -135,13 +171,24 @@ export function Leads() {
     }
   };
 
-  const handleToggleDoNotContact = (leadId: string, doNotContact: boolean) => { // Renamed from handleToggleDoNotCall
+  const handleToggleDoNotContact = (leadId: string, doNotContact: boolean) => {
     setLeadsData(prevLeads =>
       prevLeads.map(lead => {
         if (lead.id === leadId) {
+          // Add a note about the do not contact status change
+          const newNote: Note = {
+            id: uuidv4(),
+            text: doNotContact 
+              ? 'Lead marked as Do Not Contact'
+              : 'Do Not Contact flag removed',
+            type: 'other',
+            timestamp: new Date().toISOString()
+          };
+          
           return {
             ...lead,
-            doNotContact // Renamed from doNotCall
+            doNotContact,
+            notes: [...(lead.notes || []), newNote]
           };
         }
         return lead;
@@ -151,10 +198,10 @@ export function Leads() {
     const lead = leadsData.find(l => l.id === leadId);
     if (lead) {
       toast({
-        title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed", // Updated text
+        title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed",
         description: doNotContact
-          ? `${lead.name} has been marked as Do Not Contact.` // Updated text
-          : `${lead.name} can now be contacted.` // Updated text
+          ? `${lead.name} has been marked as Do Not Contact.`
+          : `${lead.name} can now be contacted.`
       });
     }
   };
@@ -171,6 +218,18 @@ export function Leads() {
       return;
     }
     
+    // Create a note for the stage change
+    const stageChangeNote: Note = {
+      id: uuidv4(),
+      text: `Status changed from ${lead.status} to ${nextStage}`,
+      type: 'stage_change',
+      timestamp: new Date().toISOString(),
+      metadata: {
+        previousStage: lead.status,
+        newStage: nextStage as Lead['status']
+      }
+    };
+    
     setLeadsData(prevLeads =>
       prevLeads.map(l => {
         if (l.id === lead.id) {
@@ -178,6 +237,7 @@ export function Leads() {
             ...l,
             status: nextStage as Lead['status'],
             flaggedForNextStage: false,
+            notes: [...(l.notes || []), stageChangeNote]
           };
         }
         return l;
@@ -234,7 +294,7 @@ export function Leads() {
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
-        onToggleDoNotContact={handleToggleDoNotContact} // Renamed from onToggleDoNotCall
+        onToggleDoNotContact={handleToggleDoNotContact}
       />
     </div>
   );

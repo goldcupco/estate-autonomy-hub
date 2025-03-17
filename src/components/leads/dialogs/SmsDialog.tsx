@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Dialog,
@@ -93,9 +92,9 @@ export function SmsDialog({
         lead.name
       );
       
-      // Add a note for the SMS
+      // Add a detailed note for the SMS with full message text
       onAddNote(lead.id, {
-        text: `SMS sent: "${processedText}"`,
+        text: `SMS sent to ${lead.phone}: "${processedText}"`,
         type: 'sms',
         timestamp: new Date().toISOString()
       });

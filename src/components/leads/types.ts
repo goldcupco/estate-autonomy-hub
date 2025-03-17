@@ -2,8 +2,16 @@
 export interface Note {
   id: string;
   text: string;
-  type: 'sms' | 'call' | 'letter' | 'contract' | 'other';
+  type: 'sms' | 'call' | 'letter' | 'contract' | 'other' | 'stage_change';
   timestamp: string;
+  metadata?: {
+    recordingUrl?: string;
+    letterUrl?: string; 
+    contractUrl?: string;
+    previousStage?: string;
+    newStage?: string;
+    callDuration?: number;
+  };
 }
 
 export interface Lead {
@@ -18,5 +26,5 @@ export interface Lead {
   notes?: Note[];
   flaggedForNextStage?: boolean;
   readyToMove?: boolean;
-  doNotContact?: boolean; // Renamed from doNotCall
+  doNotContact?: boolean;
 }

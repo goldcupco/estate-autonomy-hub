@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Phone, Mic, MicOff } from 'lucide-react';
 import { 
@@ -46,9 +45,13 @@ export function CallDialog({
           
           // Add a note about the recorded call
           onAddNote(lead.id, {
-            text: `Recorded call (${duration} seconds). Recording URL: ${callRecord.recordingUrl}`,
+            text: `Recorded call (${duration} seconds)`,
             type: 'call',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            metadata: {
+              recordingUrl: callRecord.recordingUrl,
+              callDuration: duration
+            }
           });
           
           toast({
@@ -93,11 +96,12 @@ export function CallDialog({
     if (lead.phone) {
       window.location.href = `tel:${lead.phone}`;
       
-      // Add a note for the call
+      // Add a more detailed note for the call
+      const now = new Date();
       onAddNote(lead.id, {
-        text: `Phone call initiated`,
+        text: `Phone call initiated to ${lead.phone}`,
         type: 'call',
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString()
       });
       
       toast({

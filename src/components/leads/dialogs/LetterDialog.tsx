@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Dialog,
@@ -57,11 +56,17 @@ export function LetterDialog({
       
       setLetterTrackingNumber(letterRecord.trackingNumber || '');
       
-      // Add a note for the letter
+      // Create a mockup letter URL for demo purposes
+      const mockLetterUrl = `https://example.com/letters/${letterRecord.trackingNumber}`;
+      
+      // Add a detailed note for the letter with full letter text
       onAddNote(lead.id, {
-        text: `Letter sent: "${letterText.substring(0, 50)}${letterText.length > 50 ? '...' : ''}" Tracking #: ${letterRecord.trackingNumber}`,
+        text: `Letter sent to ${lead.name}\n\nContent: "${letterText}"\n\nTracking #: ${letterRecord.trackingNumber}`,
         type: 'letter',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        metadata: {
+          letterUrl: mockLetterUrl
+        }
       });
       
       toast({
