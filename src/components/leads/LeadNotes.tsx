@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -26,7 +25,7 @@ import {
   Clock,
   FileText
 } from 'lucide-react';
-import { Lead, Note } from './LeadTable';
+import { Lead, Note } from './types';
 
 interface LeadNotesProps {
   lead: Lead;

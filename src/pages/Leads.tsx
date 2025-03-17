@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
+import LeadTable from '@/components/leads/LeadTable';
+import { Lead, Note } from '@/components/leads/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";

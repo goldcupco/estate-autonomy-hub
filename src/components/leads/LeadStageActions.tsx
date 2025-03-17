@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Flag, ArrowRight, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Lead } from './LeadTable';
+import { Lead } from './types';
 import { getNextStage, isLeadReadyToMove } from './LeadUtils';
 
 interface LeadStageActionsProps {

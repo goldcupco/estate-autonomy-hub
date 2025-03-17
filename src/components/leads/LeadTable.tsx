@@ -1,41 +1,25 @@
 
 import { useState } from 'react';
 import {
-  flexRender,
-  getCoreRowModel,
   useReactTable,
+  getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   ColumnFiltersState,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { LeadTableHeader } from './LeadTableHeader';
+import { LeadTableHeaderRow } from './LeadTableHeaderRow';
+import { LeadTableBody } from './LeadTableBody';
+import { LeadTablePagination } from './LeadTablePagination';
 import { createLeadColumns } from './LeadTableColumns';
 import { isLeadReadyToMove } from './LeadUtils';
+import { Lead, Note } from './types';
 
-export interface Note {
-  id: string;
-  text: string;
-  type: 'sms' | 'call' | 'letter' | 'contract' | 'other';
-  timestamp: string;
-}
-
-export interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'New' | 'Contacted' | 'Qualified' | 'Negotiating' | 'Closed' | 'Lost';
-  source: string;
-  dateAdded: string;
-  lastContact: string;
-  notes?: Note[];
-  flaggedForNextStage?: boolean;
-  readyToMove?: boolean;
-}
+// Re-export the types for backward compatibility
+export type { Lead, Note };
 
 interface LeadTableProps {
   data: Lead[];
@@ -102,97 +86,22 @@ export function LeadTable({
       <div className="glass-card rounded-lg border animate-scale-in">
         <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr 
-                  key={headerGroup.id}
-                  className="border-b bg-secondary/50"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <th 
-                      key={header.id}
-                      className="px-4 py-3 text-left font-medium"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row, i) => {
-                  const lead = row.original;
-                  const isReadyToMove = lead.readyToMove;
-                  const isFlagged = lead.flaggedForNextStage;
-                  
-                  let highlightClass = '';
-                  if (isReadyToMove && !isFlagged) {
-                    highlightClass = 'bg-blue-50';
-                  } else if (isFlagged) {
-                    highlightClass = 'bg-amber-50';
-                  }
-                  
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`border-b hover:bg-muted/50 transition-colors ${highlightClass}`}
-                      style={{ 
-                        animationDelay: `${i * 50}ms`,
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-4 py-3">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No results.
-                  </td>
-                </tr>
-              )}
-            </tbody>
+            <LeadTableHeaderRow headerGroups={table.getHeaderGroups()} />
+            <LeadTableBody 
+              getRowModel={table.getRowModel} 
+              columnsLength={columns.length}
+              getVisibleCells={table.getVisibleCells}
+            />
           </table>
         </div>
-        <div className="flex items-center justify-between p-4">
-          <div className="text-sm text-muted-foreground">
-            Showing {table.getFilteredRowModel().rows.length} of {data.length} leads
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <LeadTablePagination 
+          tableRowCount={table.getFilteredRowModel().rows.length}
+          totalRowCount={data.length}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+        />
       </div>
     </div>
   );

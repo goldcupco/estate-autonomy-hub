@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
-import { Lead, Note } from './LeadTable';
+import { Lead, Note } from './types';
 import { isLeadReadyToMove } from './LeadUtils';
 
 interface CreateLeadColumnsProps {
