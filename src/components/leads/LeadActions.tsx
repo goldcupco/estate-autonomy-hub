@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
@@ -78,6 +79,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
     e.stopPropagation();
     e.preventDefault();
     
+    // Direct deletion without dialog, similar to the Calls page
     onDelete(lead.id);
     
     toast({
