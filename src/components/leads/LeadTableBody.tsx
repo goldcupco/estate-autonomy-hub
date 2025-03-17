@@ -1,18 +1,16 @@
 
 import React from 'react';
-import { flexRender, RowModel } from "@tanstack/react-table";
-import { Lead } from './LeadTable';
+import { flexRender, RowModel, Row } from "@tanstack/react-table";
+import { Lead } from './types';
 
 interface LeadTableBodyProps {
   getRowModel: () => RowModel<Lead>;
   columnsLength: number;
-  getVisibleCells: (row: any) => any[];
 }
 
 export function LeadTableBody({ 
   getRowModel, 
-  columnsLength,
-  getVisibleCells
+  columnsLength
 }: LeadTableBodyProps) {
   return (
     <tbody>

@@ -90,7 +90,6 @@ export function LeadTable({
             <LeadTableBody 
               getRowModel={table.getRowModel} 
               columnsLength={columns.length}
-              getVisibleCells={table.getVisibleCells}
             />
           </table>
         </div>

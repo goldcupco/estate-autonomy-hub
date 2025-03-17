@@ -26,23 +26,27 @@ export function LeadStageActions({
   const handleFlagLead = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log("LeadStageActions: handleFlagLead", lead.id, !lead.flaggedForNextStage);
-    if (onFlagLead) {
-      onFlagLead(lead.id, !lead.flaggedForNextStage);
-    } else {
+    
+    if (!onFlagLead) {
       console.error("onFlagLead callback is not provided");
+      return;
     }
+    
+    console.log("LeadStageActions: handleFlagLead", lead.id, !lead.flaggedForNextStage);
+    onFlagLead(lead.id, !lead.flaggedForNextStage);
   };
 
   const handleMoveToNextStage = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log("LeadStageActions: handleMoveToNextStage", lead);
-    if (onMoveToNextStage) {
-      onMoveToNextStage(lead);
-    } else {
+    
+    if (!onMoveToNextStage) {
       console.error("onMoveToNextStage callback is not provided");
+      return;
     }
+    
+    console.log("LeadStageActions: handleMoveToNextStage", lead);
+    onMoveToNextStage(lead);
   };
   
   return (
@@ -53,6 +57,7 @@ export function LeadStageActions({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
+              type="button"
               variant="outline" 
               size="icon" 
               className={`h-7 w-7 transition-colors duration-200 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' : 'hover:bg-slate-100'}`}
@@ -73,6 +78,7 @@ export function LeadStageActions({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="outline" 
                 size="icon" 
                 className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200 transition-colors duration-200"

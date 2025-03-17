@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText, Mic, MicOff } from 'lucide-react';
 import { 
@@ -20,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Lead, Note } from './LeadTable';
+import { Lead, Note } from './types';
 import { useToast } from "@/hooks/use-toast";
 import { LeadForm } from './LeadForm';
 import { LeadNotes } from './LeadNotes';
@@ -67,9 +68,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
   const [letterTrackingNumber, setLetterTrackingNumber] = useState('');
   const { toast } = useToast();
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    console.log("LeadActions: handleDelete called", lead.id);
     onDelete(lead.id);
     setIsDeleteDialogOpen(false);
+    
     toast({
       title: "Lead deleted",
       description: `${lead.name} has been removed from your leads.`,
@@ -263,9 +269,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsCallDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsCallDialogOpen(true);
+                }}
                 className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
               >
                 <Phone className="h-4 w-4" />
@@ -333,9 +344,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsSmsDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsSmsDialogOpen(true);
+                }}
                 className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -451,9 +467,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsLetterDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsLetterDialogOpen(true);
+                }}
                 className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
               >
                 <FileText className="h-4 w-4" />
@@ -531,9 +552,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsNotesDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsNotesDialogOpen(true);
+                }}
                 className="h-8 w-8"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -570,9 +596,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsEditDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsEditDialogOpen(true);
+                }}
                 className="h-8 w-8"
               >
                 <Pencil className="h-4 w-4" />
@@ -616,9 +647,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                type="button"
                 variant="ghost" 
                 size="icon" 
-                onClick={() => setIsDeleteDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsDeleteDialogOpen(true);
+                }}
                 className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
               >
                 <Trash2 className="h-4 w-4" />

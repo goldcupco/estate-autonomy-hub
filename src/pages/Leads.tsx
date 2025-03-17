@@ -37,18 +37,31 @@ export function Leads() {
   const { toast } = useToast();
 
   const handleEditLead = (updatedLead: Lead) => {
+    console.log("Leads: handleEditLead called", updatedLead);
     setLeadsData(prevLeads => 
       prevLeads.map(lead => 
         lead.id === updatedLead.id ? updatedLead : lead
       )
     );
+    
+    toast({
+      title: "Lead updated",
+      description: `${updatedLead.name} has been updated successfully.`
+    });
   };
 
   const handleDeleteLead = (id: string) => {
+    console.log("Leads: handleDeleteLead called", id);
     setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== id));
+    
+    toast({
+      title: "Lead deleted",
+      description: "Lead has been removed from your list."
+    });
   };
 
   const handleAddNote = (leadId: string, note: Omit<Note, 'id'>) => {
+    console.log("Leads: handleAddNote called", leadId, note);
     const newNote: Note = {
       ...note,
       id: uuidv4()
@@ -75,6 +88,7 @@ export function Leads() {
   };
 
   const handleAddLead = (newLead: Lead) => {
+    console.log("Leads: handleAddLead called", newLead);
     setLeadsData(prevLeads => [newLead, ...prevLeads]);
     
     toast({
@@ -128,7 +142,7 @@ export function Leads() {
         if (l.id === lead.id) {
           return {
             ...l,
-            status: nextStage,
+            status: nextStage as Lead['status'],
             flaggedForNextStage: false,
           };
         }
