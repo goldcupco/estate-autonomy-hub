@@ -30,8 +30,8 @@ export function SmsHistoryDialog({
   const navigate = useNavigate();
 
   const handleNavigateToLead = (contactName: string) => {
-    // Navigate to the Leads page
-    navigate('/leads');
+    // Navigate to the Leads page with search parameter to filter to specific contact
+    navigate(`/leads?search=${encodeURIComponent(contactName)}`);
     onOpenChange(false);
     
     // Show a toast to indicate navigation

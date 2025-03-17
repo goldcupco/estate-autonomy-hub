@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Lead, Note } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
@@ -18,12 +19,49 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
 }));
 
 export function Leads() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [leadsData, setLeadsData] = useState<Lead[]>(leadsWithNotes);
   const [quickCallDialogOpen, setQuickCallDialogOpen] = useState(false);
   const [quickSmsDialogOpen, setQuickSmsDialogOpen] = useState(false);
   const [quickLetterDialogOpen, setQuickLetterDialogOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('All');
   const { toast } = useToast();
+
+  // Check for contact name in URL and filter leads accordingly
+  useEffect(() => {
+    const searchTerm = searchParams.get('search');
+    if (searchTerm) {
+      // Set the global filter in the table
+      const leadName = decodeURIComponent(searchTerm);
+      
+      // Find the lead by name
+      const matchingLead = leadsData.find(lead => 
+        lead.name.toLowerCase() === leadName.toLowerCase()
+      );
+      
+      if (matchingLead) {
+        // Set the current tab to match the lead's status
+        setCurrentTab(matchingLead.status);
+        
+        // Show toast notification
+        toast({
+          title: "Contact found",
+          description: `Showing details for ${leadName}`
+        });
+      } else {
+        // If no exact match, stay on All tab but set filter
+        setCurrentTab('All');
+        
+        toast({
+          title: "Searching for contact",
+          description: `Showing results for "${leadName}"`
+        });
+      }
+      
+      // Clear the search parameter after processing
+      setSearchParams({});
+    }
+  }, [searchParams, leadsData, toast, setSearchParams]);
 
   const handleEditLead = (updatedLead: Lead) => {
     setLeadsData(prevLeads => 

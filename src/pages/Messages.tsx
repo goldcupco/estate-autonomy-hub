@@ -289,7 +289,7 @@ const Messages = () => {
   };
 
   const handleNavigateToLead = (contactName: string) => {
-    navigate('/leads');
+    navigate(`/leads?search=${encodeURIComponent(contactName)}`);
     toast.info(`Navigating to ${contactName}`);
   };
 
