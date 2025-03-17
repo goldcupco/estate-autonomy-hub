@@ -11,24 +11,31 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { EditIcon, Trash2Icon, KeyRound } from 'lucide-react';
+import { EditIcon, Trash2Icon, KeyRound, Eye } from 'lucide-react';
 
 interface UserTableProps {
   onSelectUser: (userId: string) => void;
   onEditUser?: (userId: string) => void;
+  onViewUser?: (userId: string) => void;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }) => {
+export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser, onViewUser }) => {
   const { users, deleteUser } = useAuth();
   
   // Filter out the admin from the displayed users list
   const displayUsers = users;
   
-  const handleEdit = (userId: string) => {
+  const handleEdit = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onEditUser) {
       onEditUser(userId);
-    } else {
-      onSelectUser(userId);
+    }
+  };
+  
+  const handleView = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onViewUser) {
+      onViewUser(userId);
     }
   };
   
@@ -45,7 +52,7 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }
       </TableHeader>
       <TableBody>
         {displayUsers.map((user) => (
-          <TableRow key={user.id}>
+          <TableRow key={user.id} onClick={() => onSelectUser(user.id)}>
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>
@@ -63,10 +70,20 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }
                 variant="outline" 
                 size="sm" 
                 className="h-8 w-8 p-0"
-                onClick={() => handleEdit(user.id)}
+                onClick={(e) => handleEdit(user.id, e)}
               >
                 <EditIcon className="h-4 w-4" />
                 <span className="sr-only">Edit</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 w-8 p-0"
+                onClick={(e) => handleView(user.id, e)}
+              >
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">View</span>
               </Button>
               
               {user.role !== 'administrator' && (
@@ -75,7 +92,10 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }
                     variant="outline" 
                     size="sm" 
                     className="h-8 w-8 p-0"
-                    onClick={() => onSelectUser(user.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectUser(user.id);
+                    }}
                   >
                     <KeyRound className="h-4 w-4" />
                     <span className="sr-only">Manage Access</span>
@@ -85,7 +105,10 @@ export const UserTable: React.FC<UserTableProps> = ({ onSelectUser, onEditUser }
                     variant="outline" 
                     size="sm" 
                     className="h-8 w-8 p-0" 
-                    onClick={() => deleteUser && deleteUser(user.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteUser && deleteUser(user.id);
+                    }}
                   >
                     <Trash2Icon className="h-4 w-4" />
                     <span className="sr-only">Delete</span>
