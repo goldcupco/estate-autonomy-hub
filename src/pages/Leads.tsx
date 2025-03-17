@@ -31,10 +31,8 @@ export function Leads() {
   useEffect(() => {
     const searchTerm = searchParams.get('search');
     if (searchTerm) {
-      // Set the global filter in the table
-      const leadName = decodeURIComponent(searchTerm);
-      
       // Find the lead by name
+      const leadName = decodeURIComponent(searchTerm);
       const matchingLead = leadsData.find(lead => 
         lead.name.toLowerCase() === leadName.toLowerCase()
       );
@@ -58,10 +56,10 @@ export function Leads() {
         });
       }
       
-      // Clear the search parameter after processing
-      setSearchParams({});
+      // We'll keep the search parameter in the URL to ensure the table filter is applied
+      // instead of clearing it immediately
     }
-  }, [searchParams, leadsData, toast, setSearchParams]);
+  }, [searchParams, leadsData, toast]);
 
   const handleEditLead = (updatedLead: Lead) => {
     setLeadsData(prevLeads => 

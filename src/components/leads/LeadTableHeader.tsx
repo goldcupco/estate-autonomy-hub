@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, X, PhoneOff } from 'lucide-react';
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSearchParams } from 'react-router-dom';
 
 interface LeadTableHeaderProps {
   globalFilter: string;
@@ -28,6 +29,16 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [doNotContactFilter, setDoNotContactFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [searchParams] = useSearchParams();
+
+  // Apply search term from URL parameter
+  useEffect(() => {
+    const searchTerm = searchParams.get('search');
+    if (searchTerm) {
+      // Set the global filter to the search term
+      setGlobalFilter(decodeURIComponent(searchTerm));
+    }
+  }, [searchParams, setGlobalFilter]);
 
   const clearFilter = () => {
     setGlobalFilter("");
