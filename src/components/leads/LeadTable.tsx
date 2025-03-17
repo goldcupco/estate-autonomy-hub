@@ -97,7 +97,8 @@ export function LeadTable({
     readyToMove: isLeadReadyToMove(lead)
   }));
 
-  const handleMoveToNextStage = (lead: Lead) => {
+  const handleMoveToNextStage = (e: React.MouseEvent, lead: Lead) => {
+    e.stopPropagation();
     console.log("LeadTable: handleMoveToNextStage", lead);
     if (onMoveToNextStage) {
       onMoveToNextStage(lead);
@@ -106,7 +107,8 @@ export function LeadTable({
     }
   };
 
-  const handleFlagLead = (leadId: string, flagged: boolean) => {
+  const handleFlagLead = (e: React.MouseEvent, leadId: string, flagged: boolean) => {
+    e.stopPropagation();
     console.log("LeadTable: handleFlagLead", leadId, flagged);
     if (onFlagLead) {
       onFlagLead(leadId, flagged);
@@ -213,10 +215,7 @@ export function LeadTable({
                     variant="outline" 
                     size="icon" 
                     className={`h-7 w-7 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFlagLead(lead.id, !lead.flaggedForNextStage);
-                    }}
+                    onClick={(e) => handleFlagLead(e, lead.id, !lead.flaggedForNextStage)}
                   >
                     <Flag className={`h-4 w-4 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
                     <span className="sr-only">Flag for {nextStage}</span>
@@ -236,10 +235,7 @@ export function LeadTable({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveToNextStage(lead);
-                      }}
+                      onClick={(e) => handleMoveToNextStage(e, lead)}
                     >
                       <ArrowRight className="h-4 w-4" />
                       <span className="sr-only">Move to {nextStage}</span>
