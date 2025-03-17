@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Lead, Note } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
@@ -137,15 +138,17 @@ export function Leads() {
   const handleDeleteLead = (leadId: string) => {
     console.log("Leads: handleDeleteLead called with:", leadId);
     
+    // Find the lead before deleting it
+    const leadToDelete = leadsData.find(lead => lead.id === leadId);
+    
     // Simple approach - just filter out the lead with the given ID
     setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
     
-    // Show success toast
-    const lead = leadsData.find(l => l.id === leadId);
-    if (lead) {
+    // Show success toast if the lead was found
+    if (leadToDelete) {
       toast({
         title: "Lead deleted",
-        description: `${lead.name} has been removed from your leads.`
+        description: `${leadToDelete.name} has been removed from your leads.`
       });
     }
   };
