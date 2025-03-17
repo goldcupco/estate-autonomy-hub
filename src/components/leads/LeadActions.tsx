@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Lead, Note } from './types';
@@ -76,17 +76,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
     setIsEditDialogOpen(true);
   };
 
-  // Simple delete function without event propagation handling
-  const handleDeleteClick = () => {
-    // Execute the delete function directly
+  // This is the key function we're fixing - simplified with no event handling
+  function handleDelete() {
     onDelete(lead.id);
-    
-    // Show a success toast notification
     toast({
       title: "Lead deleted",
-      description: `${lead.name} has been removed from your leads.`,
+      description: `${lead.name} has been removed from your leads.`
     });
-  };
+  }
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -152,35 +149,15 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           label="View Notes"
         />
         
-        <div className="contents">
-          {isNotesDialogOpen && (
-            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={(e) => e.stopPropagation()}>
-              <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full" onClick={(e) => e.stopPropagation()}>
-                <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-                  <h2 className="text-lg font-semibold text-foreground">Notes for {lead.name}</h2>
-                </div>
-                
-                <LeadNotes 
-                  lead={lead} 
-                  onAddNote={onAddNote}
-                />
-                
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
-                  <button 
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsNotesDialogOpen(false);
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notes for {lead.name}</DialogTitle>
+          </DialogHeader>
+          <LeadNotes 
+            lead={lead} 
+            onAddNote={onAddNote}
+          />
+        </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -190,46 +167,27 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           label="Edit Lead"
         />
         
-        {isEditDialogOpen && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={(e) => e.stopPropagation()}>
-            <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full" onClick={(e) => e.stopPropagation()}>
-              <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-                <h2 className="text-lg font-semibold text-foreground">Edit Lead</h2>
-              </div>
-              
-              <LeadForm 
-                initialData={lead}
-                onSubmit={(updatedLead) => {
-                  onEdit(updatedLead);
-                  setIsEditDialogOpen(false);
-                  toast({
-                    title: "Lead updated",
-                    description: "Lead details have been updated successfully.",
-                  });
-                }}
-              />
-              
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
-                <button 
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsEditDialogOpen(false);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Lead</DialogTitle>
+          </DialogHeader>
+          <LeadForm 
+            initialData={lead}
+            onSubmit={(updatedLead) => {
+              onEdit(updatedLead);
+              setIsEditDialogOpen(false);
+              toast({
+                title: "Lead updated",
+                description: "Lead details have been updated successfully.",
+              });
+            }}
+          />
+        </DialogContent>
       </Dialog>
 
-      {/* Delete button implementation similar to Calls page */}
+      {/* Simple standalone delete button - properly implemented */}
       <Button
-        type="button"
-        onClick={handleDeleteClick}
+        onClick={handleDelete}
         size="icon"
         variant="ghost"
         className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
