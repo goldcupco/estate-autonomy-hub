@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserPlus, Phone, MessageSquare, FileText, Info } from 'lucide-react';
+import { UserPlus, Phone, MessageSquare, FileText, Info, Flag, ArrowRight } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import {
