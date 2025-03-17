@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Lead, Note } from './types';
 import { LeadForm } from './LeadForm';
@@ -75,13 +76,12 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    // Immediately delete the lead (no confirmation dialog)
+  // Simple delete function without event propagation handling
+  const handleDeleteClick = () => {
+    // Execute the delete function directly
     onDelete(lead.id);
     
-    // Show a toast notification
+    // Show a success toast notification
     toast({
       title: "Lead deleted",
       description: `${lead.name} has been removed from your leads.`,
@@ -226,14 +226,17 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         )}
       </Dialog>
 
-      <button
+      {/* Delete button implementation similar to Calls page */}
+      <Button
         type="button"
         onClick={handleDeleteClick}
-        className="p-2 rounded-full text-destructive hover:text-destructive/90 hover:bg-destructive/10 transition-colors"
-        aria-label="Delete Lead"
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
       >
         <Trash2 className="h-4 w-4" />
-      </button>
+        <span className="sr-only">Delete Lead</span>
+      </Button>
     </div>
   );
 }
