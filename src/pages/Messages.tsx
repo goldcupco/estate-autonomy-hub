@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Clock, Users, ArrowLeft, Phone, Send, MessageCircle } from 'lucide-react';
+import { MessageSquare, Clock, Users, ArrowLeft, Phone, Send, MessageCircle, AlertCircle, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -27,10 +26,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Switch,
+} from "@/components/ui/switch";
+import {
+  Slider,
+} from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { logSmsMessage, getSmsHistory, SmsRecord } from '@/utils/communicationUtils';
+import { parseSpintax, validateSpintax, getRandomDelay } from '@/utils/spintaxUtils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const Messages = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -46,8 +64,13 @@ const Messages = () => {
     { id: 'follow-up', name: 'Follow-up', text: 'Just following up on our conversation about [PROPERTY]. Let me know if you have any questions or would like to schedule a viewing.' },
     { id: 'reminder', name: 'Appointment Reminder', text: 'This is a reminder about your appointment tomorrow at [TIME]. Looking forward to meeting with you!' }
   ]);
+  const [useSpintax, setUseSpintax] = useState(false);
+  const [useDistributedSending, setUseDistributedSending] = useState(false);
+  const [delayRange, setDelayRange] = useState<[number, number]>([2, 10]);
+  const [isSending, setIsSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
+  const [spintaxError, setSpintaxError] = useState<string | null>(null);
 
-  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -59,21 +82,17 @@ const Messages = () => {
     };
   }, []);
 
-  // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
     if (savedState !== null) {
       setSidebarOpen(savedState === 'true');
     }
     
-    // Load message history
     const history = getSmsHistory();
     setMessageHistory(history);
   }, []);
 
-  // Update recipient count based on selection
   useEffect(() => {
-    // In a real app, this would query the database
     switch (bulkRecipientType) {
       case 'all-leads':
         setRecipientCount(124);
@@ -92,22 +111,45 @@ const Messages = () => {
     }
   }, [bulkRecipientType]);
 
+  const validateSmsText = (text: string): boolean => {
+    if (!text.trim()) {
+      toast.error('Please enter a message');
+      return false;
+    }
+    
+    if (useSpintax) {
+      const validation = validateSpintax(text);
+      if (!validation.isValid) {
+        setSpintaxError(validation.error);
+        toast.error(`Spintax error: ${validation.error}`);
+        return false;
+      }
+    }
+    
+    setSpintaxError(null);
+    return true;
+  };
+
   const handleQuickSms = () => {
     if (!smsRecipient || !smsText) {
       toast.error('Please enter a recipient and message');
       return;
     }
     
-    // Log the SMS
+    if (!validateSmsText(smsText)) {
+      return;
+    }
+    
+    const processedText = useSpintax ? parseSpintax(smsText) : smsText;
+    
     try {
       const smsRecord = logSmsMessage(
         smsRecipient, 
-        smsText, 
+        processedText, 
         'outgoing',
         'Quick SMS Recipient'
       );
       
-      // Add to history
       setMessageHistory(prev => [smsRecord, ...prev]);
       
       toast.success(`Message sent to ${smsRecipient}`);
@@ -121,9 +163,13 @@ const Messages = () => {
     setSmsText('');
   };
 
-  const handleBulkSms = () => {
+  const handleBulkSms = async () => {
     if (!smsText) {
       toast.error('Please enter a message');
+      return;
+    }
+    
+    if (!validateSmsText(smsText)) {
       return;
     }
     
@@ -132,34 +178,80 @@ const Messages = () => {
       return;
     }
     
-    // In a real app, this would send messages to all recipients
-    // For demo purposes, we'll just log a few sample messages
     const sampleRecipients = [
       { phone: '(555) 111-2222', name: 'John Smith' },
       { phone: '(555) 333-4444', name: 'Mary Johnson' },
-      { phone: '(555) 555-6666', name: 'Robert Davis' }
+      { phone: '(555) 555-6666', name: 'Robert Davis' },
+      { phone: '(555) 777-8888', name: 'Sarah Wilson' },
+      { phone: '(555) 999-0000', name: 'Michael Brown' }
     ];
     
-    let newHistory: SmsRecord[] = [];
-    
-    sampleRecipients.forEach(recipient => {
-      try {
-        const smsRecord = logSmsMessage(
-          recipient.phone,
-          smsText,
-          'outgoing',
-          recipient.name
-        );
-        newHistory.push(smsRecord);
-      } catch (error) {
-        console.error(`Error logging SMS to ${recipient.name}:`, error);
+    if (useDistributedSending) {
+      setIsSending(true);
+      setSendProgress({ current: 0, total: sampleRecipients.length });
+      
+      let newHistory: SmsRecord[] = [];
+      
+      for (let i = 0; i < sampleRecipients.length; i++) {
+        const recipient = sampleRecipients[i];
+        
+        const processedText = useSpintax ? parseSpintax(smsText) : smsText;
+        
+        const delay = getRandomDelay(delayRange[0], delayRange[1]);
+        
+        setSendProgress(prev => ({ ...prev, current: i }));
+        
+        toast.info(`Sending to ${recipient.name}...`, {
+          duration: delay,
+          icon: <Hourglass className="h-4 w-4 animate-spin" />
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        try {
+          const smsRecord = logSmsMessage(
+            recipient.phone,
+            processedText,
+            'outgoing',
+            recipient.name
+          );
+          newHistory.push(smsRecord);
+          
+          toast.success(`Sent to ${recipient.name}`);
+        } catch (error) {
+          console.error(`Error logging SMS to ${recipient.name}:`, error);
+          toast.error(`Failed to send to ${recipient.name}`);
+        }
       }
-    });
+      
+      setMessageHistory(prev => [...newHistory, ...prev]);
+      setIsSending(false);
+      
+      toast.success(`Bulk message sent to ${sampleRecipients.length} recipients`);
+    } else {
+      let newHistory: SmsRecord[] = [];
+      
+      sampleRecipients.forEach(recipient => {
+        const processedText = useSpintax ? parseSpintax(smsText) : smsText;
+        
+        try {
+          const smsRecord = logSmsMessage(
+            recipient.phone,
+            processedText,
+            'outgoing',
+            recipient.name
+          );
+          newHistory.push(smsRecord);
+        } catch (error) {
+          console.error(`Error logging SMS to ${recipient.name}:`, error);
+        }
+      });
+      
+      setMessageHistory(prev => [...newHistory, ...prev]);
+      
+      toast.success(`Bulk message sent to ${recipientCount} recipients`);
+    }
     
-    // Update history
-    setMessageHistory(prev => [...newHistory, ...prev]);
-    
-    toast.success(`Bulk message sent to ${recipientCount} recipients`);
     setBulkSmsDialogOpen(false);
     setSmsText('');
     setBulkRecipientType('all-leads');
@@ -236,7 +328,6 @@ const Messages = () => {
           </div>
           
           <div className="grid gap-6 md:grid-cols-3 mb-8">
-            {/* Messages Sent Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Messages Sent</h2>
@@ -248,7 +339,6 @@ const Messages = () => {
               <p className="text-muted-foreground">Total messages sent</p>
             </div>
             
-            {/* Response Rate Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Response Rate</h2>
@@ -260,7 +350,6 @@ const Messages = () => {
               <p className="text-muted-foreground">Average response rate</p>
             </div>
             
-            {/* Recipients Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Recipients</h2>
@@ -318,7 +407,6 @@ const Messages = () => {
         </main>
       </div>
       
-      {/* Quick SMS Dialog */}
       <Dialog open={quickSmsDialogOpen} onOpenChange={setQuickSmsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -343,16 +431,46 @@ const Messages = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="quickSmsText" className="text-sm font-medium">
-                Message
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="quickSmsText" className="text-sm font-medium">
+                  Message
+                </label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Spintax</span>
+                  <Switch 
+                    checked={useSpintax} 
+                    onCheckedChange={setUseSpintax} 
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-muted-foreground cursor-help">
+                          <AlertCircle size={16} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p>Spintax allows you to create message variations.</p>
+                        <p className="mt-1">Example: Hello {"{"}name|friend|there{"}"}, how are you?</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
               <Textarea
                 id="quickSmsText"
                 value={smsText}
                 onChange={(e) => setSmsText(e.target.value)}
-                placeholder="Type your message here..."
+                placeholder={useSpintax ? "Hi {there|friend}, how {are you|is it going}?" : "Type your message here..."}
                 className="min-h-[120px]"
               />
+              {spintaxError && (
+                <p className="text-sm text-red-500">{spintaxError}</p>
+              )}
+              {useSpintax && !spintaxError && (
+                <p className="text-xs text-muted-foreground">
+                  Use {"{"}option1|option2|option3{"}"} format for text variations
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -385,7 +503,6 @@ const Messages = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Bulk SMS Dialog */}
       <Dialog open={bulkSmsDialogOpen} onOpenChange={setBulkSmsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -417,17 +534,95 @@ const Messages = () => {
               </p>
             </div>
             
+            <Accordion type="single" collapsible>
+              <AccordionItem value="sending-options">
+                <AccordionTrigger>Advanced Sending Options</AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-medium">Spintax Formatting</label>
+                        <p className="text-xs text-muted-foreground">
+                          Create unique messages for each recipient
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={useSpintax} 
+                        onCheckedChange={setUseSpintax} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-medium">Distributed Sending</label>
+                        <p className="text-xs text-muted-foreground">
+                          Send messages with random delays
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={useDistributedSending} 
+                        onCheckedChange={setUseDistributedSending} 
+                      />
+                    </div>
+                    
+                    {useDistributedSending && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">Delay Range (seconds)</label>
+                          <span className="text-sm text-muted-foreground">
+                            {delayRange[0]} - {delayRange[1]} sec
+                          </span>
+                        </div>
+                        <Slider
+                          value={delayRange}
+                          min={1}
+                          max={30}
+                          step={1}
+                          onValueChange={setDelayRange as (value: number[]) => void}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            
             <div className="space-y-2">
-              <label htmlFor="bulkSmsText" className="text-sm font-medium">
-                Message
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="bulkSmsText" className="text-sm font-medium">
+                  Message
+                </label>
+                {useSpintax && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-muted-foreground cursor-help">
+                          <AlertCircle size={16} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p>Spintax format: Hello {"{"}name|friend|there{"}"}, how are you?</p>
+                        <p className="mt-1">This will randomly select one option for each recipient.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <Textarea
                 id="bulkSmsText"
                 value={smsText}
                 onChange={(e) => setSmsText(e.target.value)}
-                placeholder="Type your message here..."
+                placeholder={useSpintax ? "Hi {there|friend}, how {are you|is it going}?" : "Type your message here..."}
                 className="min-h-[120px]"
               />
+              {spintaxError && (
+                <p className="text-sm text-red-500">{spintaxError}</p>
+              )}
+              {useSpintax && !spintaxError && (
+                <p className="text-xs text-muted-foreground">
+                  Use {"{"}option1|option2|option3{"}"} format for text variations
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 Character count: {smsText.length} / 160
                 {smsText.length > 160 && " (will be sent as multiple messages)"}
@@ -457,8 +652,18 @@ const Messages = () => {
             <Button variant="outline" onClick={() => setBulkSmsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleBulkSms}>
-              Send to {recipientCount} Recipients
+            <Button 
+              onClick={handleBulkSms}
+              disabled={isSending}
+            >
+              {isSending ? (
+                <>
+                  <Hourglass className="mr-2 h-4 w-4 animate-spin" />
+                  Sending ({sendProgress.current + 1}/{sendProgress.total})
+                </>
+              ) : (
+                `Send to ${recipientCount} Recipients`
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -468,3 +673,4 @@ const Messages = () => {
 };
 
 export default Messages;
+
