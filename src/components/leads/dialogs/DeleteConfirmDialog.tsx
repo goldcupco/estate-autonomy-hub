@@ -9,12 +9,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Lead } from '../types';
+import { useToast } from "@/hooks/use-toast";
 
 interface DeleteConfirmDialogProps {
   lead: Lead;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirmDelete: (e: React.MouseEvent) => void;
+  onConfirmDelete: (id: string) => void;
 }
 
 export function DeleteConfirmDialog({
@@ -23,6 +24,23 @@ export function DeleteConfirmDialog({
   onOpenChange,
   onConfirmDelete
 }: DeleteConfirmDialogProps) {
+  const { toast } = useToast();
+  
+  const handleDelete = () => {
+    // Call the delete function with just the ID parameter
+    // similar to how it's done in CallList.tsx
+    onConfirmDelete(lead.id);
+    
+    // Close the dialog
+    onOpenChange(false);
+    
+    // Show a toast notification
+    toast({
+      title: "Lead deleted",
+      description: `${lead.name} has been removed from your leads.`,
+    });
+  };
+
   return (
     <AlertDialogContent>
       <AlertDialogHeader>
@@ -36,7 +54,7 @@ export function DeleteConfirmDialog({
           Cancel
         </AlertDialogCancel>
         <AlertDialogAction 
-          onClick={onConfirmDelete} 
+          onClick={handleDelete} 
           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
         >
           Delete

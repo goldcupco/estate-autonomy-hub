@@ -254,7 +254,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           lead={lead}
           isOpen={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
-          onConfirmDelete={handleDelete}
+          onConfirmDelete={onDelete}
         />
       </AlertDialog>
     </div>
