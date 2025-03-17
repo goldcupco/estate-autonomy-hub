@@ -1,18 +1,12 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import LeadTable from '@/components/leads/LeadTable';
 import { Lead, Note } from '@/components/leads/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserPlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
-import { AddLeadModal } from '@/components/leads/AddLeadModal';
-import { QuickCallDialog } from '@/components/leads/quick-actions/QuickCallDialog';
-import { QuickSmsDialog } from '@/components/leads/quick-actions/QuickSmsDialog';
-import { QuickLetterDialog } from '@/components/leads/quick-actions/QuickLetterDialog';
-import { LeadQuickActions } from '@/components/leads/quick-actions/LeadQuickActions';
 import { LeadInfoBanner } from '@/components/leads/LeadInfoBanner';
+import { LeadHeader } from '@/components/leads/LeadHeader';
+import { LeadQuickActionDialogs } from '@/components/leads/LeadQuickActionDialogs';
+import { LeadTabs } from '@/components/leads/LeadTabs';
 import { initialLeadsData, getNextStage } from '@/components/leads/LeadData';
 
 // Process initial leads data
@@ -23,18 +17,11 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   readyToMove: false
 }));
 
-// Helper function to filter leads by status
-const filterLeadsByStatus = (leads: Lead[], status: string) => {
-  if (status === 'All') return leads;
-  return leads.filter(lead => lead.status === status);
-};
-
 export function Leads() {
   const [leadsData, setLeadsData] = useState<Lead[]>(leadsWithNotes);
   const [quickCallDialogOpen, setQuickCallDialogOpen] = useState(false);
   const [quickSmsDialogOpen, setQuickSmsDialogOpen] = useState(false);
   const [quickLetterDialogOpen, setQuickLetterDialogOpen] = useState(false);
-  const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('All');
   const { toast } = useToast();
 
@@ -158,86 +145,36 @@ export function Leads() {
     });
   };
 
-  // Render all tab contents
-  const renderTabContent = (status: string) => (
-    <TabsContent value={status} className="space-y-6 mt-6">
-      <LeadTable 
-        data={filterLeadsByStatus(leadsData, status === 'All' ? 'All' : status)} 
+  return (
+    <div className="space-y-6 py-8 animate-fade-in">
+      <LeadHeader 
+        onLeadAdded={handleAddLead}
+        onOpenCall={() => setQuickCallDialogOpen(true)}
+        onOpenSms={() => setQuickSmsDialogOpen(true)}
+        onOpenLetter={() => setQuickLetterDialogOpen(true)}
+      />
+      
+      <LeadInfoBanner />
+      
+      <LeadQuickActionDialogs 
+        quickCallDialogOpen={quickCallDialogOpen}
+        setQuickCallDialogOpen={setQuickCallDialogOpen}
+        quickSmsDialogOpen={quickSmsDialogOpen}
+        setQuickSmsDialogOpen={setQuickSmsDialogOpen}
+        quickLetterDialogOpen={quickLetterDialogOpen}
+        setQuickLetterDialogOpen={setQuickLetterDialogOpen}
+      />
+      
+      <LeadTabs 
+        leadsData={leadsData}
+        currentTab={currentTab}
+        onTabChange={setCurrentTab}
         onEditLead={handleEditLead}
         onDeleteLead={handleDeleteLead}
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
       />
-    </TabsContent>
-  );
-
-  return (
-    <div className="space-y-6 py-8 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-        <div className="flex space-x-2">
-          <LeadQuickActions 
-            onOpenCall={() => setQuickCallDialogOpen(true)}
-            onOpenSms={() => setQuickSmsDialogOpen(true)} 
-            onOpenLetter={() => setQuickLetterDialogOpen(true)}
-          />
-          <Button 
-            className="flex items-center gap-2 animate-scale-in"
-            onClick={() => setAddLeadModalOpen(true)}
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Add Lead</span>
-          </Button>
-        </div>
-      </div>
-      
-      <LeadInfoBanner />
-      
-      <AddLeadModal 
-        open={addLeadModalOpen}
-        onOpenChange={setAddLeadModalOpen}
-        onLeadAdded={handleAddLead}
-      />
-      
-      <QuickCallDialog 
-        open={quickCallDialogOpen} 
-        onOpenChange={setQuickCallDialogOpen} 
-      />
-      
-      <QuickSmsDialog 
-        open={quickSmsDialogOpen} 
-        onOpenChange={setQuickSmsDialogOpen} 
-      />
-      
-      <QuickLetterDialog 
-        open={quickLetterDialogOpen} 
-        onOpenChange={setQuickLetterDialogOpen} 
-      />
-      
-      <Tabs 
-        defaultValue="All" 
-        className="w-full animate-scale-in"
-        onValueChange={(value) => setCurrentTab(value)}
-      >
-        <TabsList className="mb-6">
-          <TabsTrigger value="All">All Leads</TabsTrigger>
-          <TabsTrigger value="New">New</TabsTrigger>
-          <TabsTrigger value="Contacted">Contacted</TabsTrigger>
-          <TabsTrigger value="Qualified">Qualified</TabsTrigger>
-          <TabsTrigger value="Negotiating">Negotiating</TabsTrigger>
-          <TabsTrigger value="Closed">Closed</TabsTrigger>
-          <TabsTrigger value="Lost">Lost</TabsTrigger>
-        </TabsList>
-        
-        {renderTabContent('All')}
-        {renderTabContent('New')}
-        {renderTabContent('Contacted')}
-        {renderTabContent('Qualified')}
-        {renderTabContent('Negotiating')}
-        {renderTabContent('Closed')}
-        {renderTabContent('Lost')}
-      </Tabs>
     </div>
   );
 }
