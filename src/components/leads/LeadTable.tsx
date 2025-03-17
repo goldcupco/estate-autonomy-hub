@@ -9,13 +9,11 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { useToast } from "@/hooks/use-toast";
 import { LeadTableHeader } from './LeadTableHeader';
 import { LeadTableHeaderRow } from './LeadTableHeaderRow';
 import { LeadTableBody } from './LeadTableBody';
 import { LeadTablePagination } from './LeadTablePagination';
 import { createLeadColumns } from './LeadTableColumns';
-import { isLeadReadyToMove } from './LeadUtils';
 import { Lead, Note } from './types';
 
 // Re-export the types for backward compatibility
@@ -39,13 +37,9 @@ export function LeadTable({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const { toast } = useToast();
 
-  // Process data to check if leads are ready to move
-  const processedData = data.map(lead => ({
-    ...lead,
-    readyToMove: isLeadReadyToMove(lead)
-  }));
+  // Simplified data processing - no more complex ready to move calculations
+  const processedData = data;
 
   // Create table columns
   const columns = createLeadColumns({

@@ -12,24 +12,9 @@ export const getNextStage = (currentStatus: Lead['status']): Lead['status'] | nu
   return statusFlow[currentIndex + 1];
 };
 
+// Simple function to determine if lead is ready to move - now just based on flagged status
 export const isLeadReadyToMove = (lead: Lead): boolean => {
-  if (!lead.notes || lead.notes.length === 0) return false;
-  
-  switch (lead.status) {
-    case 'New':
-      return lead.notes.some(note => ['sms', 'call', 'letter'].includes(note.type));
-    case 'Contacted':
-      const communicationTypes = new Set(lead.notes
-        .filter(note => ['sms', 'call', 'letter'].includes(note.type))
-        .map(note => note.type));
-      return communicationTypes.size >= 2;
-    case 'Qualified':
-      return lead.notes.some(note => note.type === 'contract');
-    case 'Negotiating':
-      return lead.notes.filter(note => note.type === 'contract').length >= 2;
-    default:
-      return false;
-  }
+  return Boolean(lead.flaggedForNextStage);
 };
 
 export const getStatusColor = (status: string): string => {

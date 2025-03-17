@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Flag, ArrowRight, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lead } from './types';
-import { getNextStage, isLeadReadyToMove } from './LeadUtils';
+import { getNextStage } from './LeadData';
 
 interface LeadStageActionsProps {
   lead: Lead;
@@ -21,18 +21,14 @@ export function LeadStageActions({
   
   if (!nextStage) return null;
 
-  const isReady = Boolean(lead.readyToMove) || isLeadReadyToMove(lead);
+  // Simplified logic - no more complex conditions that might cause re-renders
+  const isReady = Boolean(lead.flaggedForNextStage);
 
   const handleFlagLead = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     
-    if (!onFlagLead) {
-      console.error("onFlagLead callback is not provided");
-      return;
-    }
-    
-    console.log("LeadStageActions: handleFlagLead", lead.id, !lead.flaggedForNextStage);
+    if (!onFlagLead) return;
     onFlagLead(lead.id, !lead.flaggedForNextStage);
   };
 
@@ -40,12 +36,7 @@ export function LeadStageActions({
     e.stopPropagation();
     e.preventDefault();
     
-    if (!onMoveToNextStage) {
-      console.error("onMoveToNextStage callback is not provided");
-      return;
-    }
-    
-    console.log("LeadStageActions: handleMoveToNextStage", lead);
+    if (!onMoveToNextStage) return;
     onMoveToNextStage(lead);
   };
   
@@ -73,7 +64,7 @@ export function LeadStageActions({
         </Tooltip>
       </TooltipProvider>
       
-      {(isReady || lead.flaggedForNextStage) && (
+      {isReady && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -95,7 +86,7 @@ export function LeadStageActions({
         </TooltipProvider>
       )}
       
-      {!isReady && !lead.flaggedForNextStage && (
+      {!isReady && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -104,7 +95,7 @@ export function LeadStageActions({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Not ready to move to next stage</p>
+              <p>Flag the lead to move it to the next stage</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

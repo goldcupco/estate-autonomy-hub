@@ -26,7 +26,6 @@ export function Leads() {
   const { toast } = useToast();
 
   const handleEditLead = (updatedLead: Lead) => {
-    console.log("Leads: handleEditLead called", updatedLead);
     setLeadsData(prevLeads => 
       prevLeads.map(lead => 
         lead.id === updatedLead.id ? updatedLead : lead
@@ -40,7 +39,6 @@ export function Leads() {
   };
 
   const handleAddNote = (leadId: string, note: Omit<Note, 'id'>) => {
-    console.log("Leads: handleAddNote called", leadId, note);
     const newNote: Note = {
       ...note,
       id: uuidv4()
@@ -67,7 +65,6 @@ export function Leads() {
   };
 
   const handleAddLead = (newLead: Lead) => {
-    console.log("Leads: handleAddLead called", newLead);
     setLeadsData(prevLeads => [newLead, ...prevLeads]);
     
     toast({
@@ -77,7 +74,6 @@ export function Leads() {
   };
 
   const handleFlagLead = (leadId: string, flagged: boolean) => {
-    console.log("Leads: handleFlagLead called with:", leadId, flagged);
     setLeadsData(prevLeads =>
       prevLeads.map(lead => {
         if (lead.id === leadId) {
@@ -104,7 +100,6 @@ export function Leads() {
   };
 
   const handleMoveToNextStage = (lead: Lead) => {
-    console.log("Leads: handleMoveToNextStage called with:", lead);
     const nextStage = getNextStage(lead.status);
     
     if (!nextStage) {
@@ -136,8 +131,6 @@ export function Leads() {
   };
 
   const handleDeleteLead = (leadId: string) => {
-    console.log("Leads: handleDeleteLead called with:", leadId);
-    
     // Find the lead before deleting it
     const leadToDelete = leadsData.find(lead => lead.id === leadId);
     
