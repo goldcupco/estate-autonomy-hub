@@ -82,7 +82,11 @@ export function CallDialog({
     }
   };
 
-  const handleCall = () => {
+  const handleCall = (e: React.MouseEvent) => {
+    // Add event prevention to stop propagation from the parent
+    e.preventDefault();
+    e.stopPropagation();
+    
     // In a real app, this would integrate with a phone API
     if (lead.phone) {
       window.location.href = `tel:${lead.phone}`;
@@ -145,7 +149,16 @@ export function CallDialog({
       
       <DialogFooter>
         <DialogClose asChild>
-          <Button variant="outline" type="button">Cancel</Button>
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            Cancel
+          </Button>
         </DialogClose>
         <Button 
           onClick={handleCall} 

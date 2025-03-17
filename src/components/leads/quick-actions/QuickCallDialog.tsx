@@ -40,7 +40,7 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Make a Quick Call</DialogTitle>
         </DialogHeader>
@@ -56,6 +56,7 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="(555) 123-4567"
               type="tel"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>

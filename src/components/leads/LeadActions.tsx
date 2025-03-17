@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
@@ -64,7 +63,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       {/* Call Button & Dialog */}
       <Dialog open={isCallDialogOpen} onOpenChange={setIsCallDialogOpen}>
         <ActionButton 
