@@ -8,6 +8,7 @@ import {
   SortingState,
   ColumnFiltersState,
   getFilteredRowModel,
+  FilterFn,
 } from "@tanstack/react-table";
 import { LeadTableHeader } from './LeadTableHeader';
 import { LeadTableHeaderRow } from './LeadTableHeaderRow';
@@ -43,6 +44,33 @@ export function LeadTable({
   // Simplified data processing - no more complex ready to move calculations
   const processedData = data;
 
+  // Custom filter function to handle the "Do Not Call" filter
+  const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+    // If no value is set, return true for all rows
+    if (!value) return true;
+
+    // Handle the custom "Do Not Call" filter
+    if (value.includes("doNotCall:true") && row.original.doNotCall === true) {
+      return true;
+    }
+
+    if (value.includes("doNotCall:false") && row.original.doNotCall === false) {
+      return true;
+    }
+
+    // For other filter strings, do a basic text search on all columns
+    const cleanValue = value
+      .replace(/doNotCall:true\s*/g, '')
+      .replace(/doNotCall:false\s*/g, '')
+      .trim()
+      .toLowerCase();
+      
+    if (!cleanValue) return true;
+    
+    const searchText = String(row.getValue(columnId) || "").toLowerCase();
+    return searchText.includes(cleanValue);
+  };
+
   // Create table columns
   const columns = createLeadColumns({
     onEditLead,
@@ -63,11 +91,15 @@ export function LeadTable({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
     state: {
       sorting,
       columnFilters,
       globalFilter,
     },
+    globalFilterFn: "fuzzy",
   });
 
   return (

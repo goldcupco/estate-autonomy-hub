@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, PhoneOff } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LeadTableHeaderProps {
   globalFilter: string;
@@ -19,9 +26,37 @@ interface LeadTableHeaderProps {
 
 export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHeaderProps) {
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const [doNotCallFilter, setDoNotCallFilter] = useState<string>("all");
   
   const clearFilter = () => {
     setGlobalFilter("");
+  };
+
+  const handleDoNotCallFilterChange = (value: string) => {
+    setDoNotCallFilter(value);
+    
+    // Apply filter based on the selected value
+    if (value === "donotcall") {
+      setGlobalFilter((prev) => {
+        // Check if filter already includes doNotCall:true
+        if (prev.includes("doNotCall:true")) return prev;
+        return prev ? `${prev} doNotCall:true` : "doNotCall:true";
+      });
+    } else if (value === "cancall") {
+      setGlobalFilter((prev) => {
+        // Check if filter already includes doNotCall:false
+        if (prev.includes("doNotCall:false")) return prev;
+        return prev ? `${prev} doNotCall:false` : "doNotCall:false";
+      });
+    } else {
+      // Remove any doNotCall filters when 'all' is selected
+      setGlobalFilter((prev) => {
+        return prev
+          .replace(/doNotCall:true\s*/g, '')
+          .replace(/doNotCall:false\s*/g, '')
+          .trim();
+      });
+    }
   };
 
   return (
@@ -47,36 +82,52 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
         )}
       </div>
       
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="ml-2">
-            <Filter className="mr-2 h-4 w-4" />
-            Filter
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem>
-            New
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem>
-            Contacted
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem>
-            Qualified
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem>
-            Negotiating
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem>
-            Closed
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem>
-            Lost
-          </DropdownMenuCheckboxItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center">
+          <PhoneOff className="h-4 w-4 mr-2 text-muted-foreground" />
+          <Select value={doNotCallFilter} onValueChange={handleDoNotCallFilterChange}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Call Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Leads</SelectItem>
+              <SelectItem value="donotcall">Do Not Call</SelectItem>
+              <SelectItem value="cancall">Can Call</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem>
+              New
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem>
+              Contacted
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem>
+              Qualified
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem>
+              Negotiating
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem>
+              Closed
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem>
+              Lost
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
