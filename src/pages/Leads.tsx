@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Lead, Note } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
@@ -13,8 +14,7 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   ...lead,
   notes: lead.notes || [],
   flaggedForNextStage: false,
-  readyToMove: false,
-  doNotContact: false
+  readyToMove: false
 }));
 
 export function Leads() {
@@ -153,38 +153,6 @@ export function Leads() {
     }
   };
 
-  const handleToggleDoNotContact = (leadId: string) => {
-    console.log("Leads: handleToggleDoNotContact called with:", leadId);
-    
-    // Find the lead before toggling the flag
-    const lead = leadsData.find(l => l.id === leadId);
-    
-    if (!lead) return;
-    
-    const newDoNotContactValue = !lead.doNotContact;
-    
-    // Toggle the doNotContact flag
-    setLeadsData(prevLeads => 
-      prevLeads.map(l => {
-        if (l.id === leadId) {
-          return {
-            ...l,
-            doNotContact: newDoNotContactValue
-          };
-        }
-        return l;
-      })
-    );
-    
-    // Show toast
-    toast({
-      title: newDoNotContactValue ? "Do Not Contact Flag Added" : "Do Not Contact Flag Removed",
-      description: newDoNotContactValue 
-        ? `${lead.name} has been flagged as Do Not Contact.` 
-        : `Do Not Contact flag removed from ${lead.name}.`
-    });
-  };
-
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <LeadHeader 
@@ -213,7 +181,6 @@ export function Leads() {
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
-        onToggleDoNotContact={handleToggleDoNotContact}
       />
     </div>
   );
