@@ -7,6 +7,7 @@ import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
 import { Lead, Note } from './LeadTable';
+import { isLeadReadyToMove } from './LeadUtils';
 
 interface CreateLeadColumnsProps {
   onEditLead?: (updatedLead: Lead) => void;

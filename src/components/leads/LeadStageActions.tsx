@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Flag, ArrowRight, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lead } from './LeadTable';
-import { getNextStage } from './LeadUtils';
+import { getNextStage, isLeadReadyToMove } from './LeadUtils';
 
 interface LeadStageActionsProps {
   lead: Lead;
@@ -21,8 +21,11 @@ export function LeadStageActions({
   
   if (!nextStage) return null;
 
+  const isReady = lead.readyToMove || isLeadReadyToMove(lead);
+
   const handleFlagLead = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     console.log("LeadStageActions: handleFlagLead", lead.id, !lead.flaggedForNextStage);
     if (onFlagLead) {
       onFlagLead(lead.id, !lead.flaggedForNextStage);
@@ -33,6 +36,7 @@ export function LeadStageActions({
 
   const handleMoveToNextStage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     console.log("LeadStageActions: handleMoveToNextStage", lead);
     if (onMoveToNextStage) {
       onMoveToNextStage(lead);
@@ -64,7 +68,7 @@ export function LeadStageActions({
         </Tooltip>
       </TooltipProvider>
       
-      {(lead.readyToMove || lead.flaggedForNextStage) && (
+      {(isReady || lead.flaggedForNextStage) && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -85,7 +89,7 @@ export function LeadStageActions({
         </TooltipProvider>
       )}
       
-      {!lead.readyToMove && !lead.flaggedForNextStage && (
+      {!isReady && !lead.flaggedForNextStage && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
