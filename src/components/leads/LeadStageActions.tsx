@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Flag, ArrowRight } from 'lucide-react';
+import { Flag, ArrowRight, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lead } from './LeadTable';
 import { getNextStage } from './LeadUtils';
@@ -43,17 +43,18 @@ export function LeadStageActions({
   
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm">{nextStage}</span>
+      <span className="text-sm font-medium">{nextStage}</span>
+      
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
               variant="outline" 
               size="icon" 
-              className={`h-7 w-7 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300' : ''}`}
+              className={`h-7 w-7 transition-colors duration-200 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' : 'hover:bg-slate-100'}`}
               onClick={handleFlagLead}
             >
-              <Flag className={`h-4 w-4 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
+              <Flag className={`h-4 w-4 transition-colors duration-200 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
               <span className="sr-only">Flag for {nextStage}</span>
             </Button>
           </TooltipTrigger>
@@ -70,7 +71,7 @@ export function LeadStageActions({
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200 transition-colors duration-200"
                 onClick={handleMoveToNextStage}
               >
                 <ArrowRight className="h-4 w-4" />
@@ -79,6 +80,21 @@ export function LeadStageActions({
             </TooltipTrigger>
             <TooltipContent>
               <p>Move to {nextStage}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      
+      {!lead.readyToMove && !lead.flaggedForNextStage && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="ml-1 text-muted-foreground cursor-help">
+                <AlertCircle className="h-4 w-4" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Not ready to move to next stage</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

@@ -34,12 +34,41 @@ export const isLeadReadyToMove = (lead: Lead): boolean => {
 
 export const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'New': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-    case 'Contacted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-    case 'Qualified': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-    case 'Negotiating': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-    case 'Closed': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
-    case 'Lost': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+    case 'New': 
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300';
+    case 'Contacted': 
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-300';
+    case 'Qualified': 
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300';
+    case 'Negotiating': 
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300';
+    case 'Closed': 
+      return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 border-teal-300';
+    case 'Lost': 
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-300';
+    default: 
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-300';
   }
+};
+
+export const getStatusIcon = (status: string): string => {
+  switch (status) {
+    case 'New': return 'new-lead';
+    case 'Contacted': return 'contacted-lead';
+    case 'Qualified': return 'qualified-lead';
+    case 'Negotiating': return 'negotiating-lead';
+    case 'Closed': return 'closed-lead';
+    case 'Lost': return 'lost-lead';
+    default: return 'unknown-lead';
+  }
+};
+
+export const formatLeadData = (lead: Lead): Record<string, string | number | boolean> => {
+  return {
+    ...lead,
+    statusLabel: lead.status,
+    lastContactFormatted: new Date(lead.lastContact).toLocaleDateString(),
+    hasNotes: lead.notes && lead.notes.length > 0,
+    noteCount: lead.notes?.length || 0,
+  };
 };

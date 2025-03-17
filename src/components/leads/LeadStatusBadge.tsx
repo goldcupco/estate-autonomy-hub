@@ -11,7 +11,7 @@ export function LeadStatusBadge({ status }: LeadStatusBadgeProps) {
   const statusColorClass = getStatusColor(status);
   
   return (
-    <Badge className={statusColorClass}>
+    <Badge className={`${statusColorClass} transition-all duration-200 hover:scale-105 font-medium`}>
       {status}
     </Badge>
   );
