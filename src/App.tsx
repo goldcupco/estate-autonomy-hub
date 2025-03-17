@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import Calls from "./pages/Calls";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import LeadsPage from "./pages/LeadsPage";
+import LeadDetail from "./pages/LeadDetail";
 import Campaigns from "./pages/Campaigns";
 import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
@@ -107,6 +109,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <LeadsPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/lead/:id" 
+        element={
+          <ProtectedRoute>
+            <LeadDetail />
           </ProtectedRoute>
         } 
       />

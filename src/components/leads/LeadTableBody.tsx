@@ -2,6 +2,7 @@
 import React from 'react';
 import { flexRender, RowModel } from "@tanstack/react-table";
 import { Lead } from './types';
+import { useNavigate } from 'react-router-dom';
 
 interface LeadTableBodyProps {
   getRowModel: () => RowModel<Lead>;
@@ -12,6 +13,13 @@ export function LeadTableBody({
   getRowModel, 
   columnsLength
 }: LeadTableBodyProps) {
+  const navigate = useNavigate();
+
+  // Handle click on lead data
+  const handleLeadClick = (leadId: string) => {
+    navigate(`/lead/${leadId}`);
+  };
+
   return (
     <tbody>
       {getRowModel().rows.length ? (
@@ -30,14 +38,23 @@ export function LeadTableBody({
                 animationDelay: `${i * 50}ms`,
               }}
             >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-3">
-                  {flexRender(
-                    cell.column.columnDef.cell,
-                    cell.getContext()
-                  )}
-                </td>
-              ))}
+              {row.getVisibleCells().map((cell) => {
+                // Make specific columns clickable to navigate to lead detail
+                const isClickableColumn = ['name', 'email', 'phone', 'status', 'source', 'dateAdded', 'lastContact'].includes(cell.column.id);
+                
+                return (
+                  <td 
+                    key={cell.id} 
+                    className={`px-4 py-3 ${isClickableColumn ? 'cursor-pointer hover:text-primary hover:underline' : ''}`}
+                    onClick={isClickableColumn ? () => handleLeadClick(lead.id) : undefined}
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </td>
+                );
+              })}
             </tr>
           );
         })
