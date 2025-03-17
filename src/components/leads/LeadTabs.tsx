@@ -11,7 +11,6 @@ interface LeadTabsProps {
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
-  onToggleDoNotContact: (leadId: string) => void;
 }
 
 export function LeadTabs({
@@ -21,8 +20,7 @@ export function LeadTabs({
   onEditLead,
   onAddNote,
   onFlagLead,
-  onMoveToNextStage,
-  onToggleDoNotContact
+  onMoveToNextStage
 }: LeadTabsProps) {
   const statuses = ['All', 'New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
   
@@ -50,7 +48,6 @@ export function LeadTabs({
             onAddNote={onAddNote}
             onFlagLead={onFlagLead}
             onMoveToNextStage={onMoveToNextStage}
-            onToggleDoNotContact={onToggleDoNotContact}
           />
         </TabsContent>
       ))}
