@@ -14,7 +14,8 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   ...lead,
   notes: lead.notes || [],
   flaggedForNextStage: false,
-  readyToMove: false
+  readyToMove: false,
+  doNotCall: false
 }));
 
 export function Leads() {
@@ -99,6 +100,30 @@ export function Leads() {
     }
   };
 
+  const handleToggleDoNotCall = (leadId: string, doNotCall: boolean) => {
+    setLeadsData(prevLeads =>
+      prevLeads.map(lead => {
+        if (lead.id === leadId) {
+          return {
+            ...lead,
+            doNotCall
+          };
+        }
+        return lead;
+      })
+    );
+
+    const lead = leadsData.find(l => l.id === leadId);
+    if (lead) {
+      toast({
+        title: doNotCall ? "Do Not Call flag added" : "Do Not Call flag removed",
+        description: doNotCall
+          ? `${lead.name} has been marked as Do Not Call.`
+          : `${lead.name} can now be called.`
+      });
+    }
+  };
+
   const handleMoveToNextStage = (lead: Lead) => {
     const nextStage = getNextStage(lead.status);
     
@@ -174,6 +199,7 @@ export function Leads() {
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
+        onToggleDoNotCall={handleToggleDoNotCall}
       />
     </div>
   );

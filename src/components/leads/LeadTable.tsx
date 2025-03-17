@@ -25,6 +25,7 @@ interface LeadTableProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
+  onToggleDoNotCall?: (leadId: string, doNotCall: boolean) => void;
 }
 
 export function LeadTable({ 
@@ -32,7 +33,8 @@ export function LeadTable({
   onEditLead, 
   onAddNote, 
   onMoveToNextStage,
-  onFlagLead
+  onFlagLead,
+  onToggleDoNotCall
 }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -46,7 +48,8 @@ export function LeadTable({
     onEditLead,
     onAddNote,
     onMoveToNextStage,
-    onFlagLead
+    onFlagLead,
+    onToggleDoNotCall
   });
 
   // Initialize table

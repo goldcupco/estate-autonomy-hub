@@ -2,7 +2,7 @@
 import React from 'react';
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, PhoneOff, Phone } from 'lucide-react';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
@@ -14,13 +14,15 @@ interface CreateLeadColumnsProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
+  onToggleDoNotCall?: (leadId: string, doNotCall: boolean) => void;
 }
 
 export const createLeadColumns = ({
   onEditLead,
   onAddNote,
   onMoveToNextStage,
-  onFlagLead
+  onFlagLead,
+  onToggleDoNotCall
 }: CreateLeadColumnsProps): ColumnDef<Lead>[] => [
   {
     accessorKey: "name",
@@ -84,6 +86,37 @@ export const createLeadColumns = ({
   {
     accessorKey: "lastContact",
     header: "Last Contact",
+  },
+  {
+    id: 'doNotCall',
+    header: "Do Not Call",
+    cell: ({ row }) => {
+      const lead = row.original;
+      const doNotCall = lead.doNotCall || false;
+      
+      return (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`w-8 h-8 ${doNotCall ? 'text-red-500' : 'text-gray-400'}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onToggleDoNotCall) {
+                onToggleDoNotCall(lead.id, !doNotCall);
+              }
+            }}
+            title={doNotCall ? "Remove Do Not Call flag" : "Mark as Do Not Call"}
+          >
+            {doNotCall ? (
+              <PhoneOff className="h-5 w-5" />
+            ) : (
+              <Phone className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+      );
+    },
   },
   {
     id: 'nextStage',
