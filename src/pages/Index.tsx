@@ -99,7 +99,7 @@ export default function Index() {
     <Layout>
       <div className="space-y-6 py-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-4">Welcome to Real Estate CRM</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-4">Welcome to Goldcup RE</h1>
           <p className="text-muted-foreground">
             Manage your properties, clients, and business from one central dashboard.
           </p>

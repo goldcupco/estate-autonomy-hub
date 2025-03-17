@@ -121,11 +121,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex h-16 items-center border-b px-6">
             <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
               <div className="h-6 w-6 rounded-md bg-primary text-white flex items-center justify-center shrink-0">
-                RE
+                GC
               </div>
               <span className={cn("transition-opacity duration-300", 
                 sidebarOpen ? "opacity-100" : "opacity-0 hidden md:block"
-              )}>RealEstate Pro</span>
+              )}>Goldcup RE</span>
             </Link>
             <Button 
               variant="ghost" 

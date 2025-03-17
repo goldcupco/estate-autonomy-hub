@@ -42,8 +42,13 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
-          <CardDescription>
+          <div className="flex items-center justify-center mb-2">
+            <div className="h-10 w-10 rounded-md bg-primary text-white flex items-center justify-center">
+              <span className="font-bold">GC</span>
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">Goldcup RE</CardTitle>
+          <CardDescription className="text-center">
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
