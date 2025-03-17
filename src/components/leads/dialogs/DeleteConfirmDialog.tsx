@@ -8,7 +8,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Lead } from '../types';
 
@@ -26,7 +25,7 @@ export function DeleteConfirmDialog({
   onConfirmDelete
 }: DeleteConfirmDialogProps) {
   return (
-    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+    <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
         <AlertDialogDescription>
@@ -36,7 +35,6 @@ export function DeleteConfirmDialog({
       <AlertDialogFooter>
         <AlertDialogCancel 
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             onOpenChange(false);
           }}
@@ -45,7 +43,6 @@ export function DeleteConfirmDialog({
         </AlertDialogCancel>
         <AlertDialogAction 
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             onConfirmDelete(e);
           }} 
