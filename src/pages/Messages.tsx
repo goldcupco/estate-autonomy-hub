@@ -42,7 +42,7 @@ const Messages = () => {
   const [recipientCount, setRecipientCount] = useState(0);
   const [messageHistory, setMessageHistory] = useState<SmsRecord[]>([]);
   const [messageTemplates] = useState([
-    { id: 'intro', name: 'Introduction', text: 'Hi, this is Jane from RealEstate Pro. I noticed you were interested in properties in [AREA]. I'd love to help you find your dream home!' },
+    { id: 'intro', name: 'Introduction', text: 'Hi, this is Jane from RealEstate Pro. I noticed you were interested in properties in [AREA]. I\'d love to help you find your dream home!' },
     { id: 'follow-up', name: 'Follow-up', text: 'Just following up on our conversation about [PROPERTY]. Let me know if you have any questions or would like to schedule a viewing.' },
     { id: 'reminder', name: 'Appointment Reminder', text: 'This is a reminder about your appointment tomorrow at [TIME]. Looking forward to meeting with you!' }
   ]);
