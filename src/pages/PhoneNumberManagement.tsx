@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { APIKeyManager } from '@/components/admin/APIKeyManager';
 import { PhoneNumberSelector } from '@/components/admin/PhoneNumberSelector';
+import { CommunicationSettings } from '@/components/admin/CommunicationSettings';
 import { useToast } from '@/hooks/use-toast';
 
 const PhoneNumberManagement = () => {
@@ -95,12 +96,15 @@ const PhoneNumberManagement = () => {
           </div>
 
           <Tabs defaultValue="phone-numbers" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
               <TabsTrigger value="phone-numbers">
                 <Phone className="mr-2 h-4 w-4" /> Phone Numbers
               </TabsTrigger>
               <TabsTrigger value="api-keys">
                 <Key className="mr-2 h-4 w-4" /> API Keys
+              </TabsTrigger>
+              <TabsTrigger value="providers">
+                <Phone className="mr-2 h-4 w-4" /> Call & SMS
               </TabsTrigger>
             </TabsList>
             
@@ -142,6 +146,10 @@ const PhoneNumberManagement = () => {
                   <APIKeyManager />
                 </CardContent>
               </Card>
+            </TabsContent>
+            
+            <TabsContent value="providers" className="mt-6">
+              <CommunicationSettings />
             </TabsContent>
           </Tabs>
         </main>
