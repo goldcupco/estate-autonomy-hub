@@ -56,7 +56,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       return;
     }
     
-    // Get SMS history for this lead
     const history = getSmsHistory(lead.phone);
     setSmsHistory(history);
     setIsSmsHistoryDialogOpen(true);
