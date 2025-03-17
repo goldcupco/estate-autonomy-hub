@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
+import { Pencil, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Lead, Note } from './types';
 import { LeadForm } from './LeadForm';
@@ -17,11 +16,10 @@ import { getSmsHistory, SmsRecord } from '@/utils/communicationUtils';
 interface LeadActionsProps {
   lead: Lead;
   onEdit: (updatedLead: Lead) => void;
-  onDelete: (id: string) => void;
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
 }
 
-export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsProps) {
+export function LeadActions({ lead, onEdit, onAddNote }: LeadActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [isCallDialogOpen, setIsCallDialogOpen] = useState(false);
@@ -75,15 +73,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
     e.preventDefault();
     setIsEditDialogOpen(true);
   };
-
-  // This is the key function we're fixing - simplified with no event handling
-  function handleDelete() {
-    onDelete(lead.id);
-    toast({
-      title: "Lead deleted",
-      description: `${lead.name} has been removed from your leads.`
-    });
-  }
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -184,17 +173,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
           />
         </DialogContent>
       </Dialog>
-
-      {/* Simple standalone delete button - properly implemented */}
-      <Button
-        onClick={handleDelete}
-        size="icon"
-        variant="ghost"
-        className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="sr-only">Delete Lead</span>
-      </Button>
     </div>
   );
 }

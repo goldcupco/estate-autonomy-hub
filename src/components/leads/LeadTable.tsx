@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   useReactTable,
@@ -24,7 +23,6 @@ export type { Lead, Note };
 interface LeadTableProps {
   data: Lead[];
   onEditLead?: (updatedLead: Lead) => void;
-  onDeleteLead?: (id: string) => void;
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
@@ -33,7 +31,6 @@ interface LeadTableProps {
 export function LeadTable({ 
   data, 
   onEditLead, 
-  onDeleteLead, 
   onAddNote, 
   onMoveToNextStage,
   onFlagLead
@@ -52,7 +49,6 @@ export function LeadTable({
   // Create table columns
   const columns = createLeadColumns({
     onEditLead,
-    onDeleteLead,
     onAddNote,
     onMoveToNextStage,
     onFlagLead

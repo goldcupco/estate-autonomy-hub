@@ -6,7 +6,6 @@ interface LeadTabContentProps {
   data: Lead[];
   status: string;
   onEditLead: (updatedLead: Lead) => void;
-  onDeleteLead: (id: string) => void;
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
@@ -16,7 +15,6 @@ export function LeadTabContent({
   data,
   status,
   onEditLead,
-  onDeleteLead,
   onAddNote,
   onFlagLead,
   onMoveToNextStage
@@ -28,7 +26,6 @@ export function LeadTabContent({
     <LeadTable 
       data={filteredLeads}
       onEditLead={onEditLead}
-      onDeleteLead={onDeleteLead}
       onAddNote={onAddNote}
       onFlagLead={onFlagLead}
       onMoveToNextStage={onMoveToNextStage}

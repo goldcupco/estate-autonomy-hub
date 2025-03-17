@@ -39,16 +39,6 @@ export function Leads() {
     });
   };
 
-  const handleDeleteLead = (id: string) => {
-    console.log("Leads: handleDeleteLead called", id);
-    setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== id));
-    
-    toast({
-      title: "Lead deleted",
-      description: "Lead has been removed from your list."
-    });
-  };
-
   const handleAddNote = (leadId: string, note: Omit<Note, 'id'>) => {
     console.log("Leads: handleAddNote called", leadId, note);
     const newNote: Note = {
@@ -170,7 +160,6 @@ export function Leads() {
         currentTab={currentTab}
         onTabChange={setCurrentTab}
         onEditLead={handleEditLead}
-        onDeleteLead={handleDeleteLead}
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,6 @@ import { Lead, Note } from './types';
 
 interface CreateLeadColumnsProps {
   onEditLead?: (updatedLead: Lead) => void;
-  onDeleteLead?: (id: string) => void;
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
@@ -18,7 +16,6 @@ interface CreateLeadColumnsProps {
 
 export const createLeadColumns = ({
   onEditLead,
-  onDeleteLead,
   onAddNote,
   onMoveToNextStage,
   onFlagLead
@@ -108,7 +105,6 @@ export const createLeadColumns = ({
         <LeadActions 
           lead={row.original} 
           onEdit={onEditLead || (() => {})}
-          onDelete={onDeleteLead || (() => {})}
           onAddNote={onAddNote || (() => {})}
         />
       );

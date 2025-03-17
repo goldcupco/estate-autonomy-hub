@@ -8,7 +8,6 @@ interface LeadTabsProps {
   currentTab: string;
   onTabChange: (value: string) => void;
   onEditLead: (updatedLead: Lead) => void;
-  onDeleteLead: (id: string) => void;
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
@@ -19,7 +18,6 @@ export function LeadTabs({
   currentTab,
   onTabChange,
   onEditLead,
-  onDeleteLead,
   onAddNote,
   onFlagLead,
   onMoveToNextStage
@@ -47,7 +45,6 @@ export function LeadTabs({
             data={leadsData}
             status={status}
             onEditLead={onEditLead}
-            onDeleteLead={onDeleteLead}
             onAddNote={onAddNote}
             onFlagLead={onFlagLead}
             onMoveToNextStage={onMoveToNextStage}
