@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
