@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,25 +36,32 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
     
     // Apply filter based on the selected value
     if (value === "donotcall") {
-      setGlobalFilter((prev) => {
-        // Check if filter already includes doNotCall:true
-        if (prev.includes("doNotCall:true")) return prev;
-        return prev ? `${prev} doNotCall:true` : "doNotCall:true";
-      });
+      // Check if filter already includes doNotCall:true
+      if (globalFilter.includes("doNotCall:true")) {
+        // If it does, leave it unchanged
+        return;
+      }
+      
+      // Otherwise, add the filter
+      const newFilter = globalFilter ? `${globalFilter} doNotCall:true` : "doNotCall:true";
+      setGlobalFilter(newFilter);
     } else if (value === "cancall") {
-      setGlobalFilter((prev) => {
-        // Check if filter already includes doNotCall:false
-        if (prev.includes("doNotCall:false")) return prev;
-        return prev ? `${prev} doNotCall:false` : "doNotCall:false";
-      });
+      // Check if filter already includes doNotCall:false
+      if (globalFilter.includes("doNotCall:false")) {
+        // If it does, leave it unchanged
+        return;
+      }
+      
+      // Otherwise, add the filter
+      const newFilter = globalFilter ? `${globalFilter} doNotCall:false` : "doNotCall:false";
+      setGlobalFilter(newFilter);
     } else {
       // Remove any doNotCall filters when 'all' is selected
-      setGlobalFilter((prev) => {
-        return prev
-          .replace(/doNotCall:true\s*/g, '')
-          .replace(/doNotCall:false\s*/g, '')
-          .trim();
-      });
+      const newFilter = globalFilter
+        .replace(/doNotCall:true\s*/g, '')
+        .replace(/doNotCall:false\s*/g, '')
+        .trim();
+      setGlobalFilter(newFilter);
     }
   };
 

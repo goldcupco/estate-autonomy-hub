@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   useReactTable,
@@ -99,7 +98,7 @@ export function LeadTable({
       columnFilters,
       globalFilter,
     },
-    globalFilterFn: "fuzzy",
+    globalFilterFn: fuzzyFilter,
   });
 
   return (
