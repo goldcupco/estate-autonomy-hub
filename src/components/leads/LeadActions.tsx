@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
-import { AlertDialog } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Lead, Note } from './types';
 import { LeadForm } from './LeadForm';
@@ -11,7 +10,6 @@ import { CallDialog } from './dialogs/CallDialog';
 import { SmsDialog } from './dialogs/SmsDialog';
 import { SmsHistoryDialog } from './dialogs/SmsHistoryDialog';
 import { LetterDialog } from './dialogs/LetterDialog';
-import { DeleteConfirmDialog } from './dialogs/DeleteConfirmDialog';
 import { getSmsHistory, SmsRecord } from '@/utils/communicationUtils';
 
 interface LeadActionsProps {
@@ -23,7 +21,6 @@ interface LeadActionsProps {
 
 export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [isCallDialogOpen, setIsCallDialogOpen] = useState(false);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
@@ -80,7 +77,13 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setIsDeleteDialogOpen(true);
+    
+    onDelete(lead.id);
+    
+    toast({
+      title: "Lead deleted",
+      description: `${lead.name} has been removed from your leads.`,
+    });
   };
 
   return (
@@ -221,20 +224,12 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         )}
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <ActionButton 
-          onClick={handleDeleteClick}
-          icon={Trash2}
-          label="Delete Lead"
-          colorClasses="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-        />
-        <DeleteConfirmDialog 
-          lead={lead}
-          isOpen={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onConfirmDelete={onDelete}
-        />
-      </AlertDialog>
+      <ActionButton 
+        onClick={handleDeleteClick}
+        icon={Trash2}
+        label="Delete Lead"
+        colorClasses="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+      />
     </div>
   );
 }
