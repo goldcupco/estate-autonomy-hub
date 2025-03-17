@@ -1,6 +1,6 @@
 
 import { LeadTable } from '@/components/leads/LeadTable';
-import { Lead } from '@/components/leads/types';
+import { Lead, Note } from '@/components/leads/types';
 
 interface LeadTabContentProps {
   data: Lead[];
