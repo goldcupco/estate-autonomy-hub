@@ -34,7 +34,6 @@ export function ActionButton({
             size="icon" 
             onClick={(e) => {
               e.stopPropagation();
-              e.preventDefault();
               onClick(e);
             }}
             className={`h-8 w-8 ${colorClasses}`}

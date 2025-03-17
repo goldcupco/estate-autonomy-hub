@@ -1,6 +1,5 @@
 
 import {
-  AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -33,19 +32,11 @@ export function DeleteConfirmDialog({
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel 
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenChange(false);
-          }}
-        >
+        <AlertDialogCancel onClick={() => onOpenChange(false)}>
           Cancel
         </AlertDialogCancel>
         <AlertDialogAction 
-          onClick={(e) => {
-            e.stopPropagation();
-            onConfirmDelete(e);
-          }} 
+          onClick={onConfirmDelete} 
           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
         >
           Delete
