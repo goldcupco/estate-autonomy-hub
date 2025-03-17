@@ -32,7 +32,11 @@ export function ActionButton({
             type="button"
             variant={variant}
             size="icon" 
-            onClick={onClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClick(e);
+            }}
             className={`h-8 w-8 ${colorClasses}`}
           >
             <Icon className="h-4 w-4" />
