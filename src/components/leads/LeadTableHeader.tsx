@@ -27,10 +27,12 @@ interface LeadTableHeaderProps {
 export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHeaderProps) {
   const [showFilterOptions, setShowFilterOptions] = useState(false);
   const [doNotContactFilter, setDoNotContactFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
 
   const clearFilter = () => {
     setGlobalFilter("");
     setDoNotContactFilter("all");
+    setStatusFilter([]);
   };
 
   const handleDoNotContactFilterChange = (value: string) => {
@@ -47,6 +49,40 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
       newFilter = newFilter ? `${newFilter} doNotContact:true` : "doNotContact:true";
     } else if (value === "cancontact") {
       newFilter = newFilter ? `${newFilter} doNotContact:false` : "doNotContact:false";
+    }
+    
+    // Update the global filter
+    setGlobalFilter(newFilter);
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    let newStatusFilter: string[];
+    
+    // Check if status is already in the filter
+    if (statusFilter.includes(status)) {
+      // If it is, remove it
+      newStatusFilter = statusFilter.filter(s => s !== status);
+    } else {
+      // If it's not, add it
+      newStatusFilter = [...statusFilter, status];
+    }
+    
+    setStatusFilter(newStatusFilter);
+    
+    // Remove any existing status filters from the global filter
+    let newFilter = globalFilter
+      .replace(/status:(New|Contacted|Qualified|Negotiating|Closed|Lost)\s*/g, '')
+      .trim();
+    
+    // Add each selected status to the filter
+    if (newStatusFilter.length > 0) {
+      const statusFilterString = newStatusFilter
+        .map(s => `status:${s}`)
+        .join(' ');
+      
+      newFilter = newFilter 
+        ? `${newFilter} ${statusFilterString}` 
+        : statusFilterString;
     }
     
     // Update the global filter
@@ -93,30 +129,48 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className={statusFilter.length > 0 ? "bg-primary text-primary-foreground" : ""}>
               <Filter className="mr-2 h-4 w-4" />
-              Filter
+              Filter {statusFilter.length > 0 && `(${statusFilter.length})`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('New')}
+              onCheckedChange={() => handleStatusFilterChange('New')}
+            >
               New
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('Contacted')}
+              onCheckedChange={() => handleStatusFilterChange('Contacted')}
+            >
               Contacted
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('Qualified')}
+              onCheckedChange={() => handleStatusFilterChange('Qualified')}
+            >
               Qualified
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('Negotiating')}
+              onCheckedChange={() => handleStatusFilterChange('Negotiating')}
+            >
               Negotiating
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('Closed')}
+              onCheckedChange={() => handleStatusFilterChange('Closed')}
+            >
               Closed
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem 
+              checked={statusFilter.includes('Lost')}
+              onCheckedChange={() => handleStatusFilterChange('Lost')}
+            >
               Lost
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
