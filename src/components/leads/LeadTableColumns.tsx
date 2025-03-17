@@ -2,7 +2,7 @@
 import React from 'react';
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, BanIcon, Flag } from 'lucide-react';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
@@ -14,7 +14,7 @@ interface CreateLeadColumnsProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
-  onDeleteLead?: (leadId: string) => void;
+  onToggleDoNotContact?: (leadId: string) => void;
 }
 
 export const createLeadColumns = ({
@@ -22,7 +22,7 @@ export const createLeadColumns = ({
   onAddNote,
   onMoveToNextStage,
   onFlagLead,
-  onDeleteLead
+  onToggleDoNotContact
 }: CreateLeadColumnsProps): ColumnDef<Lead>[] => [
   {
     accessorKey: "name",
@@ -108,12 +108,12 @@ export const createLeadColumns = ({
       const lead = row.original;
       return (
         <div className="flex items-center gap-2">
-          {onDeleteLead && (
+          {onToggleDoNotContact && (
             <ActionButton 
-              onClick={() => onDeleteLead(lead.id)}
-              icon={Trash2}
-              label="Delete Lead"
-              colorClasses="text-red-600 hover:text-red-700 hover:bg-red-100"
+              onClick={() => onToggleDoNotContact(lead.id)}
+              icon={Flag}
+              label={lead.doNotContact ? "Remove Do Not Contact Flag" : "Flag as Do Not Contact"}
+              colorClasses={lead.doNotContact ? "text-red-600 hover:text-red-700 hover:bg-red-100 fill-red-500" : "text-gray-600 hover:text-gray-700 hover:bg-gray-100"}
             />
           )}
           <LeadActions 

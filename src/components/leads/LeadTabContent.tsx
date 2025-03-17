@@ -9,7 +9,7 @@ interface LeadTabContentProps {
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
-  onDeleteLead: (leadId: string) => void;
+  onToggleDoNotContact: (leadId: string) => void;
 }
 
 export function LeadTabContent({
@@ -19,7 +19,7 @@ export function LeadTabContent({
   onAddNote,
   onFlagLead,
   onMoveToNextStage,
-  onDeleteLead
+  onToggleDoNotContact
 }: LeadTabContentProps) {
   // Filter leads by status
   const filteredLeads = status === 'All' ? data : data.filter(lead => lead.status === status);
@@ -31,7 +31,7 @@ export function LeadTabContent({
       onAddNote={onAddNote}
       onFlagLead={onFlagLead}
       onMoveToNextStage={onMoveToNextStage}
-      onDeleteLead={onDeleteLead}
+      onToggleDoNotContact={onToggleDoNotContact}
     />
   );
 }
