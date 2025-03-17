@@ -8,8 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Lead } from '../types';
 import { SmsRecord } from '@/utils/communicationUtils';
+import { toast } from "sonner";
 
 interface SmsHistoryDialogProps {
   lead: Lead;
@@ -24,6 +27,17 @@ export function SmsHistoryDialog({
   onOpenChange,
   smsHistory
 }: SmsHistoryDialogProps) {
+  const navigate = useNavigate();
+
+  const handleNavigateToLead = (contactName: string) => {
+    // Navigate to the Leads page
+    navigate('/leads');
+    onOpenChange(false);
+    
+    // Show a toast to indicate navigation
+    toast.info(`Navigating to ${contactName}`);
+  };
+
   return (
     <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
@@ -50,7 +64,20 @@ export function SmsHistoryDialog({
                     {new Date(sms.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm">{sms.message}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">{sms.message}</p>
+                  {sms.contactName && sms.direction === 'outgoing' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 h-7 flex items-center gap-1"
+                      onClick={() => handleNavigateToLead(sms.contactName || '')}
+                    >
+                      View Contact
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

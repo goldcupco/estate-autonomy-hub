@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { MessageSquare, Clock, Users, ArrowLeft, Phone, Send, MessageCircle, AlertCircle, Hourglass } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { MessageSquare, Clock, Users, ArrowLeft, Phone, Send, MessageCircle, AlertCircle, Hourglass, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
@@ -82,6 +82,7 @@ const Messages = () => {
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
   const [spintaxError, setSpintaxError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -287,6 +288,11 @@ const Messages = () => {
     }
   };
 
+  const handleNavigateToLead = (contactName: string) => {
+    navigate('/leads');
+    toast.info(`Navigating to ${contactName}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -404,7 +410,18 @@ const Messages = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-medium">{message.contactName || message.phoneNumber}</h3>
+                        {message.contactName ? (
+                          <Button 
+                            variant="link" 
+                            className="font-medium p-0 h-auto flex items-center gap-1 text-primary" 
+                            onClick={() => handleNavigateToLead(message.contactName || '')}
+                          >
+                            {message.contactName}
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        ) : (
+                          <h3 className="font-medium">{message.phoneNumber}</h3>
+                        )}
                         <span className="text-sm text-muted-foreground">
                           {formatTimestamp(message.timestamp)}
                         </span>
