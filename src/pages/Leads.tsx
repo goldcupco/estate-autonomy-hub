@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LeadTable, { Lead, Note } from '@/components/leads/LeadTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserPlus, Phone, MessageSquare, FileText } from 'lucide-react';
+import { UserPlus, Phone, MessageSquare, FileText, Info } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -194,12 +193,25 @@ const initialLeadsData: Lead[] = [
 
 const leadsWithNotes = initialLeadsData.map(lead => ({
   ...lead,
-  notes: lead.notes || []
+  notes: lead.notes || [],
+  flaggedForNextStage: false,
+  readyToMove: false
 }));
 
 const filterLeadsByStatus = (leads: Lead[], status: string) => {
   if (status === 'All') return leads;
   return leads.filter(lead => lead.status === status);
+};
+
+const getNextStage = (currentStatus: Lead['status']): Lead['status'] | null => {
+  const statusFlow: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
+  const currentIndex = statusFlow.indexOf(currentStatus);
+  
+  if (currentIndex === -1 || currentIndex >= statusFlow.length - 2) {
+    return null;
+  }
+  
+  return statusFlow[currentIndex + 1];
 };
 
 export function Leads() {
@@ -213,6 +225,7 @@ export function Leads() {
   const [smsText, setSmsText] = useState('');
   const [letterRecipient, setLetterRecipient] = useState('');
   const [letterContent, setLetterContent] = useState('');
+  const [currentTab, setCurrentTab] = useState('All');
   const { toast } = useToast();
 
   const handleEditLead = (updatedLead: Lead) => {
@@ -323,6 +336,63 @@ export function Leads() {
     setLetterContent('');
   };
 
+  const handleFlagLead = (leadId: string, flagged: boolean) => {
+    setLeadsData(prevLeads =>
+      prevLeads.map(lead => {
+        if (lead.id === leadId) {
+          return {
+            ...lead,
+            flaggedForNextStage: flagged
+          };
+        }
+        return lead;
+      })
+    );
+
+    const lead = leadsData.find(l => l.id === leadId);
+    if (lead) {
+      const nextStage = getNextStage(lead.status);
+      
+      toast({
+        title: flagged ? "Lead flagged" : "Flag removed",
+        description: flagged 
+          ? `${lead.name} is flagged to move to ${nextStage}.` 
+          : `Flag removed from ${lead.name}.`
+      });
+    }
+  };
+
+  const handleMoveToNextStage = (lead: Lead) => {
+    const nextStage = getNextStage(lead.status);
+    
+    if (!nextStage) {
+      toast({
+        title: "Cannot move lead",
+        description: `${lead.name} is already at the final stage.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLeadsData(prevLeads =>
+      prevLeads.map(l => {
+        if (l.id === lead.id) {
+          return {
+            ...l,
+            status: nextStage,
+            flaggedForNextStage: false,
+          };
+        }
+        return l;
+      })
+    );
+    
+    toast({
+      title: "Lead moved",
+      description: `${lead.name} has been moved to ${nextStage}.`
+    });
+  };
+
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -362,6 +432,18 @@ export function Leads() {
             <UserPlus className="h-4 w-4" />
             <span>Add Lead</span>
           </Button>
+        </div>
+      </div>
+      
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 flex items-start gap-3">
+        <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+        <div>
+          <h3 className="font-medium text-blue-800">Lead stage progression</h3>
+          <p className="text-sm text-blue-700 mt-1">
+            Leads that are ready to move to the next stage are lightly highlighted. 
+            You can manually flag leads using the <Flag className="h-3.5 w-3.5 inline mx-1" /> icon, 
+            and move them to the next stage using the <ArrowRight className="h-3.5 w-3.5 inline mx-1" /> icon.
+          </p>
         </div>
       </div>
       
@@ -492,7 +574,11 @@ export function Leads() {
         </DialogContent>
       </Dialog>
       
-      <Tabs defaultValue="All" className="w-full animate-scale-in">
+      <Tabs 
+        defaultValue="All" 
+        className="w-full animate-scale-in"
+        onValueChange={(value) => setCurrentTab(value)}
+      >
         <TabsList className="mb-6">
           <TabsTrigger value="All">All Leads</TabsTrigger>
           <TabsTrigger value="New">New</TabsTrigger>
@@ -509,6 +595,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -518,6 +606,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -527,6 +617,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -536,6 +628,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -545,6 +639,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -554,6 +650,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
         
@@ -563,6 +661,8 @@ export function Leads() {
             onEditLead={handleEditLead}
             onDeleteLead={handleDeleteLead}
             onAddNote={handleAddNote}
+            onFlagLead={handleFlagLead}
+            onMoveToNextStage={handleMoveToNextStage}
           />
         </TabsContent>
       </Tabs>

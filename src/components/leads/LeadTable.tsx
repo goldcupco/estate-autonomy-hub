@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   ColumnDef,
@@ -12,9 +13,11 @@ import {
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Flag, ArrowRight, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LeadActions } from './LeadActions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from "@/hooks/use-toast";
 
 export interface Note {
   id: string;
@@ -33,6 +36,8 @@ export interface Lead {
   dateAdded: string;
   lastContact: string;
   notes?: Note[];
+  flaggedForNextStage?: boolean;
+  readyToMove?: boolean;
 }
 
 interface LeadTableProps {
@@ -40,12 +45,79 @@ interface LeadTableProps {
   onEditLead?: (updatedLead: Lead) => void;
   onDeleteLead?: (id: string) => void;
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
+  onMoveToNextStage?: (lead: Lead) => void;
+  onFlagLead?: (leadId: string, flagged: boolean) => void;
 }
 
-export function LeadTable({ data, onEditLead, onDeleteLead, onAddNote }: LeadTableProps) {
+// Helper to determine the next stage for a lead
+const getNextStage = (currentStatus: Lead['status']): Lead['status'] | null => {
+  const statusFlow: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
+  const currentIndex = statusFlow.indexOf(currentStatus);
+  
+  // If it's the last stage or 'Lost', there's no next stage
+  if (currentIndex === -1 || currentIndex >= statusFlow.length - 2) {
+    return null;
+  }
+  
+  return statusFlow[currentIndex + 1];
+};
+
+// Helper to determine if a lead is ready to move based on its notes
+const isLeadReadyToMove = (lead: Lead): boolean => {
+  if (!lead.notes || lead.notes.length === 0) return false;
+  
+  // Different criteria based on current status
+  switch (lead.status) {
+    case 'New':
+      // New → Contacted: Has at least one communication note
+      return lead.notes.some(note => ['sms', 'call', 'letter'].includes(note.type));
+    case 'Contacted':
+      // Contacted → Qualified: Has at least 2 different types of communications
+      const communicationTypes = new Set(lead.notes
+        .filter(note => ['sms', 'call', 'letter'].includes(note.type))
+        .map(note => note.type));
+      return communicationTypes.size >= 2;
+    case 'Qualified':
+      // Qualified → Negotiating: Has at least one contract note
+      return lead.notes.some(note => note.type === 'contract');
+    case 'Negotiating':
+      // Negotiating → Closed: Has multiple contract notes
+      return lead.notes.filter(note => note.type === 'contract').length >= 2;
+    default:
+      return false;
+  }
+};
+
+export function LeadTable({ 
+  data, 
+  onEditLead, 
+  onDeleteLead, 
+  onAddNote, 
+  onMoveToNextStage,
+  onFlagLead
+}: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const { toast } = useToast();
+
+  // Check each lead for readiness to move
+  const processedData = data.map(lead => ({
+    ...lead,
+    readyToMove: isLeadReadyToMove(lead)
+  }));
+
+  const handleMoveToNextStage = (lead: Lead) => {
+    if (onMoveToNextStage) {
+      onMoveToNextStage(lead);
+    }
+  };
+
+  const handleFlagLead = (leadId: string, flagged: boolean) => {
+    if (onFlagLead) {
+      onFlagLead(leadId, flagged);
+    }
+  };
 
   const columns: ColumnDef<Lead>[] = [
     {
@@ -127,6 +199,61 @@ export function LeadTable({ data, onEditLead, onDeleteLead, onAddNote }: LeadTab
       header: "Last Contact",
     },
     {
+      id: 'nextStage',
+      header: "Next Stage",
+      cell: ({ row }) => {
+        const lead = row.original;
+        const nextStage = getNextStage(lead.status);
+        
+        if (!nextStage) return null;
+        
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{nextStage}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className={`h-7 w-7 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300' : ''}`}
+                    onClick={() => handleFlagLead(lead.id, !lead.flaggedForNextStage)}
+                  >
+                    <Flag className={`h-4 w-4 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
+                    <span className="sr-only">Flag for {nextStage}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{lead.flaggedForNextStage ? 'Unflag' : 'Flag'} for {nextStage}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {(lead.readyToMove || lead.flaggedForNextStage) && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                      onClick={() => handleMoveToNextStage(lead)}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                      <span className="sr-only">Move to {nextStage}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Move to {nextStage}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: '',
       cell: ({ row }) => {
@@ -143,7 +270,7 @@ export function LeadTable({ data, onEditLead, onDeleteLead, onAddNote }: LeadTab
   ];
 
   const table = useReactTable({
-    data,
+    data: processedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -200,24 +327,40 @@ export function LeadTable({ data, onEditLead, onDeleteLead, onAddNote }: LeadTab
             </thead>
             <tbody>
               {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    className="border-b hover:bg-muted/50 transition-colors"
-                    style={{ 
-                      animationDelay: `${i * 50}ms`,
-                    }}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                table.getRowModel().rows.map((row, i) => {
+                  const lead = row.original;
+                  const isReadyToMove = lead.readyToMove;
+                  const isFlagged = lead.flaggedForNextStage;
+                  
+                  // Determine highlighting class based on readiness and flagging
+                  let highlightClass = '';
+                  if (isReadyToMove && !isFlagged) {
+                    // Ready but not flagged - soft highlight
+                    highlightClass = 'bg-blue-50';
+                  } else if (isFlagged) {
+                    // Flagged - stronger highlight
+                    highlightClass = 'bg-amber-50';
+                  }
+                  
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-b hover:bg-muted/50 transition-colors ${highlightClass}`}
+                      style={{ 
+                        animationDelay: `${i * 50}ms`,
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td
