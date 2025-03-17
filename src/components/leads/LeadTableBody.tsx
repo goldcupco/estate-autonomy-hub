@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { flexRender, RowModel, Row } from "@tanstack/react-table";
+import { flexRender, RowModel } from "@tanstack/react-table";
 import { Lead } from './types';
 
 interface LeadTableBodyProps {
@@ -17,8 +17,8 @@ export function LeadTableBody({
       {getRowModel().rows.length ? (
         getRowModel().rows.map((row, i) => {
           const lead = row.original;
-          const isReadyToMove = lead.readyToMove;
-          const isFlagged = lead.flaggedForNextStage;
+          const isReadyToMove = Boolean(lead.readyToMove);
+          const isFlagged = Boolean(lead.flaggedForNextStage);
           
           let highlightClass = '';
           if (isReadyToMove && !isFlagged) {

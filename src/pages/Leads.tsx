@@ -15,6 +15,7 @@ import { LeadQuickActions } from '@/components/leads/quick-actions/LeadQuickActi
 import { LeadInfoBanner } from '@/components/leads/LeadInfoBanner';
 import { initialLeadsData, getNextStage } from '@/components/leads/LeadData';
 
+// Process initial leads data
 const leadsWithNotes = initialLeadsData.map(lead => ({
   ...lead,
   notes: lead.notes || [],
@@ -22,6 +23,7 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   readyToMove: false
 }));
 
+// Helper function to filter leads by status
 const filterLeadsByStatus = (leads: Lead[], status: string) => {
   if (status === 'All') return leads;
   return leads.filter(lead => lead.status === status);
@@ -156,6 +158,20 @@ export function Leads() {
     });
   };
 
+  // Render all tab contents
+  const renderTabContent = (status: string) => (
+    <TabsContent value={status} className="space-y-6 mt-6">
+      <LeadTable 
+        data={filterLeadsByStatus(leadsData, status === 'All' ? 'All' : status)} 
+        onEditLead={handleEditLead}
+        onDeleteLead={handleDeleteLead}
+        onAddNote={handleAddNote}
+        onFlagLead={handleFlagLead}
+        onMoveToNextStage={handleMoveToNextStage}
+      />
+    </TabsContent>
+  );
+
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -214,82 +230,13 @@ export function Leads() {
           <TabsTrigger value="Lost">Lost</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="All" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'All')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="New" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'New')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="Contacted" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'Contacted')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="Qualified" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'Qualified')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="Negotiating" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'Negotiating')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="Closed" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'Closed')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="Lost" className="space-y-6 mt-6">
-          <LeadTable 
-            data={filterLeadsByStatus(leadsData, 'Lost')} 
-            onEditLead={handleEditLead}
-            onDeleteLead={handleDeleteLead}
-            onAddNote={handleAddNote}
-            onFlagLead={handleFlagLead}
-            onMoveToNextStage={handleMoveToNextStage}
-          />
-        </TabsContent>
+        {renderTabContent('All')}
+        {renderTabContent('New')}
+        {renderTabContent('Contacted')}
+        {renderTabContent('Qualified')}
+        {renderTabContent('Negotiating')}
+        {renderTabContent('Closed')}
+        {renderTabContent('Lost')}
       </Tabs>
     </div>
   );

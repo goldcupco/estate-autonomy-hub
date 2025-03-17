@@ -7,7 +7,6 @@ import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
 import { Lead, Note } from './types';
-import { isLeadReadyToMove } from './LeadUtils';
 
 interface CreateLeadColumnsProps {
   onEditLead?: (updatedLead: Lead) => void;
@@ -105,14 +104,14 @@ export const createLeadColumns = ({
     id: 'actions',
     header: '',
     cell: ({ row }) => {
-      return onEditLead && onDeleteLead && onAddNote ? (
+      return (
         <LeadActions 
           lead={row.original} 
-          onEdit={onEditLead} 
-          onDelete={onDeleteLead}
-          onAddNote={onAddNote}
+          onEdit={onEditLead || (() => {})}
+          onDelete={onDeleteLead || (() => {})}
+          onAddNote={onAddNote || (() => {})}
         />
-      ) : null;
+      );
     },
   },
 ];

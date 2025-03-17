@@ -21,7 +21,7 @@ export function LeadStageActions({
   
   if (!nextStage) return null;
 
-  const isReady = lead.readyToMove || isLeadReadyToMove(lead);
+  const isReady = Boolean(lead.readyToMove) || isLeadReadyToMove(lead);
 
   const handleFlagLead = (e: React.MouseEvent) => {
     e.stopPropagation();
