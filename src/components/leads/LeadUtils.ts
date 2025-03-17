@@ -63,12 +63,16 @@ export const getStatusIcon = (status: string): string => {
   }
 };
 
+// Fixed the return type and omitted the notes property from the returned object
 export const formatLeadData = (lead: Lead): Record<string, string | number | boolean> => {
+  // Create a new object without the notes property
+  const { notes, ...leadWithoutNotes } = lead;
+  
   return {
-    ...lead,
+    ...leadWithoutNotes,
     statusLabel: lead.status,
     lastContactFormatted: new Date(lead.lastContact).toLocaleDateString(),
-    hasNotes: lead.notes && lead.notes.length > 0,
-    noteCount: lead.notes?.length || 0,
+    hasNotes: notes && notes.length > 0,
+    noteCount: notes?.length || 0,
   };
 };
