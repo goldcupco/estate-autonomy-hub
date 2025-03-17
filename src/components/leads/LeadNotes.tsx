@@ -26,10 +26,12 @@ import {
   Clock,
   FileText,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Calendar
 } from 'lucide-react';
 import { Lead, Note } from './types';
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface LeadNotesProps {
   lead: Lead;
@@ -134,7 +136,7 @@ export function LeadNotes({ lead, onAddNote }: LeadNotesProps) {
                     )}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
+                    <Calendar className="h-3 w-3 mr-1" />
                     {formatDateTime(note.timestamp)}
                   </div>
                 </CardHeader>
@@ -142,52 +144,130 @@ export function LeadNotes({ lead, onAddNote }: LeadNotesProps) {
                   <p className="text-sm whitespace-pre-line">{note.text}</p>
                   
                   {note.metadata && (
-                    <div className="mt-2 pt-2 border-t text-sm text-muted-foreground">
-                      {note.metadata.recordingUrl && (
-                        <div className="flex items-center mt-1">
-                          <Phone className="h-3 w-3 mr-1" />
-                          <a 
-                            href={note.metadata.recordingUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline flex items-center"
-                          >
-                            Recording <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                          {note.metadata.callDuration && (
-                            <span className="ml-2">({note.metadata.callDuration}s)</span>
-                          )}
-                        </div>
-                      )}
-                      
-                      {note.metadata.letterUrl && (
-                        <div className="flex items-center mt-1">
-                          <Mail className="h-3 w-3 mr-1" />
-                          <a 
-                            href={note.metadata.letterUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline flex items-center"
-                          >
-                            View Letter <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </div>
-                      )}
-                      
-                      {note.metadata.contractUrl && (
-                        <div className="flex items-center mt-1">
-                          <Check className="h-3 w-3 mr-1" />
-                          <a 
-                            href={note.metadata.contractUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline flex items-center"
-                          >
-                            View Contract <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                    <Accordion type="single" collapsible className="w-full mt-2">
+                      <AccordionItem value="details">
+                        <AccordionTrigger className="text-xs text-muted-foreground py-2">
+                          View Details
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="mt-2 pt-2 border-t text-sm text-muted-foreground space-y-2">
+                            {/* SMS Details */}
+                            {note.type === 'sms' && note.metadata?.smsContent && (
+                              <div className="text-xs p-2 bg-gray-50 rounded border">
+                                <p className="font-medium">SMS Content:</p>
+                                <p className="whitespace-pre-line">{note.metadata.smsContent}</p>
+                                {note.metadata.sender && <p className="mt-1">From: {note.metadata.sender}</p>}
+                                {note.metadata.recipient && <p>To: {note.metadata.recipient}</p>}
+                              </div>
+                            )}
+                            
+                            {/* Call Details */}
+                            {note.type === 'call' && (
+                              <div className="space-y-2">
+                                <div className="flex items-center mt-1">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  <span>
+                                    {note.metadata?.callStartTime && `Started: ${formatDateTime(note.metadata.callStartTime)}`}
+                                  </span>
+                                </div>
+                                
+                                {note.metadata?.callDuration && (
+                                  <div className="flex items-center mt-1">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    <span>Duration: {note.metadata.callDuration}s</span>
+                                  </div>
+                                )}
+                                
+                                {note.metadata?.recordingUrl && (
+                                  <div className="flex items-center mt-1">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    <a 
+                                      href={note.metadata.recordingUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center"
+                                    >
+                                      Recording <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Letter Details */}
+                            {note.type === 'letter' && (
+                              <div className="space-y-2">
+                                {note.metadata?.letterContent && (
+                                  <div className="text-xs p-2 bg-gray-50 rounded border">
+                                    <p className="font-medium">Letter Content:</p>
+                                    <p className="whitespace-pre-line">{note.metadata.letterContent}</p>
+                                  </div>
+                                )}
+                                
+                                {note.metadata?.trackingNumber && (
+                                  <div className="flex items-center mt-1">
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    <span>Tracking #: {note.metadata.trackingNumber}</span>
+                                  </div>
+                                )}
+                                
+                                {note.metadata?.letterUrl && (
+                                  <div className="flex items-center mt-1">
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    <a 
+                                      href={note.metadata.letterUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center"
+                                    >
+                                      View Letter <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Contract Details */}
+                            {note.type === 'contract' && (
+                              <div className="space-y-2">
+                                {note.metadata?.contractContent && (
+                                  <div className="text-xs p-2 bg-gray-50 rounded border">
+                                    <p className="font-medium">Contract Details:</p>
+                                    <p className="whitespace-pre-line">{note.metadata.contractContent}</p>
+                                  </div>
+                                )}
+                                
+                                {note.metadata?.contractUrl && (
+                                  <div className="flex items-center mt-1">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    <a 
+                                      href={note.metadata.contractUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline flex items-center"
+                                    >
+                                      View Contract <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Stage Change Details */}
+                            {note.type === 'stage_change' && note.metadata && (
+                              <div className="space-y-2">
+                                <div className="flex items-center">
+                                  <ArrowRight className="h-3 w-3 mr-1" />
+                                  <span>
+                                    Changed from {note.metadata.previousStage || "New"} to {note.metadata.newStage}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   )}
                 </CardContent>
               </Card>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { 
   Dialog,
@@ -61,11 +62,15 @@ export function LetterDialog({
       
       // Add a detailed note for the letter with full letter text
       onAddNote(lead.id, {
-        text: `Letter sent to ${lead.name}\n\nContent: "${letterText}"\n\nTracking #: ${letterRecord.trackingNumber}`,
+        text: `Letter sent to ${lead.name}`,
         type: 'letter',
         timestamp: new Date().toISOString(),
         metadata: {
-          letterUrl: mockLetterUrl
+          letterUrl: mockLetterUrl,
+          letterContent: letterText,
+          trackingNumber: letterRecord.trackingNumber,
+          recipient: lead.name,
+          sender: "Current User"
         }
       });
       

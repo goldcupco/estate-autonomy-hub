@@ -11,6 +11,14 @@ export interface Note {
     previousStage?: string;
     newStage?: string;
     callDuration?: number;
+    smsContent?: string;
+    letterContent?: string;
+    contractContent?: string;
+    trackingNumber?: string;
+    recipient?: string;
+    sender?: string;
+    callStartTime?: string;
+    callEndTime?: string;
   };
 }
 
