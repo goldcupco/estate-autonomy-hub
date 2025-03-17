@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Lead, Note } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
@@ -135,6 +134,22 @@ export function Leads() {
     });
   };
 
+  const handleDeleteLead = (leadId: string) => {
+    console.log("Leads: handleDeleteLead called with:", leadId);
+    
+    // Remove the lead from the state
+    setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+    
+    // Show success toast
+    const lead = leadsData.find(l => l.id === leadId);
+    if (lead) {
+      toast({
+        title: "Lead deleted",
+        description: `${lead.name} has been removed from your leads.`
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 py-8 animate-fade-in">
       <LeadHeader 
@@ -163,6 +178,7 @@ export function Leads() {
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
+        onDeleteLead={handleDeleteLead}
       />
     </div>
   );

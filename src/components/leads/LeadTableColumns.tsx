@@ -1,24 +1,28 @@
+
 import React from 'react';
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadStageActions } from './LeadStageActions';
 import { LeadActions } from './LeadActions';
 import { Lead, Note } from './types';
+import { ActionButton } from './action-buttons/ActionButton';
 
 interface CreateLeadColumnsProps {
   onEditLead?: (updatedLead: Lead) => void;
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
+  onDeleteLead?: (leadId: string) => void;
 }
 
 export const createLeadColumns = ({
   onEditLead,
   onAddNote,
   onMoveToNextStage,
-  onFlagLead
+  onFlagLead,
+  onDeleteLead
 }: CreateLeadColumnsProps): ColumnDef<Lead>[] => [
   {
     accessorKey: "name",
@@ -101,12 +105,23 @@ export const createLeadColumns = ({
     id: 'actions',
     header: '',
     cell: ({ row }) => {
+      const lead = row.original;
       return (
-        <LeadActions 
-          lead={row.original} 
-          onEdit={onEditLead || (() => {})}
-          onAddNote={onAddNote || (() => {})}
-        />
+        <div className="flex items-center gap-2">
+          {onDeleteLead && (
+            <ActionButton 
+              onClick={() => onDeleteLead(lead.id)}
+              icon={Trash2}
+              label="Delete Lead"
+              colorClasses="text-red-600 hover:text-red-700 hover:bg-red-100"
+            />
+          )}
+          <LeadActions 
+            lead={lead} 
+            onEdit={onEditLead || (() => {})}
+            onAddNote={onAddNote || (() => {})}
+          />
+        </div>
       );
     },
   },
