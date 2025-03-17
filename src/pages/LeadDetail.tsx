@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -11,7 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Lead } from '@/components/leads/types';
+import { Lead, Note } from '@/components/leads/types';
 import { LeadStatusBadge } from '@/components/leads/LeadStatusBadge';
 import { LeadNotes } from '@/components/leads/LeadNotes';
 import { LeadActions } from '@/components/leads/LeadActions';
