@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -27,10 +26,8 @@ const LeadDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
 
-  // Mock function to get lead data - would be replaced with API call
   useEffect(() => {
     if (id) {
-      // Find lead by ID from mock data
       const foundLead = initialLeadsData.find(lead => lead.id === id);
       if (foundLead) {
         setLead(foundLead);
@@ -44,7 +41,6 @@ const LeadDetail = () => {
     }
   }, [id, toast]);
 
-  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -56,7 +52,6 @@ const LeadDetail = () => {
     };
   }, []);
 
-  // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
     if (savedState !== null) {
@@ -64,12 +59,17 @@ const LeadDetail = () => {
     }
   }, []);
 
-  // Mock function to handle notes
-  const handleAddNote = () => {
-    // This would be implemented with real functionality
+  const handleAddNote = (leadId: string, note: Omit<Note, 'id'>) => {
     toast({
       title: "Note functionality",
       description: "This would save a note in a real implementation"
+    });
+  };
+
+  const handleEditLead = (updatedLead: Lead) => {
+    toast({
+      title: "Lead updated",
+      description: "Lead details would be updated in a real implementation"
     });
   };
 
@@ -130,7 +130,6 @@ const LeadDetail = () => {
           </div>
           
           <div className="grid gap-6 md:grid-cols-12">
-            {/* Lead Info Card */}
             <Card className="md:col-span-8 glass-card">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
@@ -171,7 +170,6 @@ const LeadDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Actions Card */}
             <Card className="md:col-span-4 glass-card">
               <CardHeader>
                 <CardTitle className="text-lg">Actions</CardTitle>
@@ -180,15 +178,13 @@ const LeadDetail = () => {
                 <div className="space-y-2">
                   <LeadActions 
                     lead={lead} 
-                    onEdit={() => {}} 
+                    onEdit={handleEditLead} 
                     onAddNote={handleAddNote}
-                    showLabels={true}
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Tabs for Notes, Activity, etc. */}
             <Card className="md:col-span-12 glass-card">
               <CardContent className="pt-6">
                 <Tabs defaultValue="notes">
@@ -199,7 +195,10 @@ const LeadDetail = () => {
                   </TabsList>
                   <TabsContent value="notes" className="pt-4">
                     {lead.notes && lead.notes.length > 0 ? (
-                      <LeadNotes notes={lead.notes} />
+                      <LeadNotes 
+                        lead={lead}
+                        onAddNote={handleAddNote}
+                      />
                     ) : (
                       <p className="text-center text-muted-foreground py-8">No notes found for this lead.</p>
                     )}
