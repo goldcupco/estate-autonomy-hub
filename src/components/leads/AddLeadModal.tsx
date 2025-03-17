@@ -15,15 +15,19 @@ interface AddLeadModalProps {
   onLeadAdded?: (lead: Lead) => void;
 }
 
+type LeadFormState = Omit<Lead, 'notes'> & {
+  notes?: string | Note[];
+};
+
 export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalProps) {
-  const [lead, setLead] = useState<Partial<Lead>>({
+  const [lead, setLead] = useState<Partial<LeadFormState>>({
     status: 'New',
     source: 'Website Inquiry',
     dateAdded: new Date().toISOString().split('T')[0],
     lastContact: new Date().toISOString().split('T')[0]
   });
 
-  const handleInputChange = (field: keyof Lead, value: any) => {
+  const handleInputChange = (field: keyof LeadFormState, value: any) => {
     setLead(prev => ({
       ...prev,
       [field]: value
@@ -41,7 +45,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
     if (lead.notes && typeof lead.notes === 'string' && lead.notes.trim() !== '') {
       notes.push({
         id: `note-${Date.now()}`,
-        text: lead.notes as string,
+        text: lead.notes,
         type: 'other',
         timestamp: new Date().toISOString()
       });
