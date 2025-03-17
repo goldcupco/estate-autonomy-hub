@@ -171,7 +171,7 @@ export function SmsDialog({
                   </TooltipTrigger>
                   <TooltipContent className="max-w-sm">
                     <p>Spintax allows you to create message variations.</p>
-                    <p className="mt-1">Example: Hello {"{"}name|friend|there{"}"}, how are you?</p>
+                    <p className="mt-1">Example: {"{Hi|Hello}"}, I am getting in touch about your {"{property|land|acreage}"} at [ADDRESS]</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -181,7 +181,7 @@ export function SmsDialog({
             id="quickSmsText"
             value={smsText}
             onChange={(e) => setSmsText(e.target.value)}
-            placeholder={useSpintax ? "Hi {there|friend}, how {are you|is it going}?" : "Type your message here..."}
+            placeholder={useSpintax ? "{Hi|Hello}, I am getting in touch about your {property|land|acreage} at [ADDRESS]" : "Type your message here..."}
             className="min-h-[120px]"
             disabled={!lead.phone}
             onClick={(e) => e.stopPropagation()}
