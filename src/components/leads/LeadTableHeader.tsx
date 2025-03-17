@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,32 +30,27 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
 
   const clearFilter = () => {
     setGlobalFilter("");
+    setDoNotContactFilter("all");
   };
 
   const handleDoNotContactFilterChange = (value: string) => {
     setDoNotContactFilter(value);
     
+    // Create a new filter string without any previous doNotContact filters
+    let newFilter = globalFilter
+      .replace(/doNotContact:true\s*/g, '')
+      .replace(/doNotContact:false\s*/g, '')
+      .trim();
+    
+    // Add the appropriate filter based on the selected value
     if (value === "donotcontact") {
-      if (globalFilter.includes("doNotContact:true")) {
-        return;
-      }
-      
-      const newFilter = globalFilter ? `${globalFilter} doNotContact:true` : "doNotContact:true";
-      setGlobalFilter(newFilter);
+      newFilter = newFilter ? `${newFilter} doNotContact:true` : "doNotContact:true";
     } else if (value === "cancontact") {
-      if (globalFilter.includes("doNotContact:false")) {
-        return;
-      }
-      
-      const newFilter = globalFilter ? `${globalFilter} doNotContact:false` : "doNotContact:false";
-      setGlobalFilter(newFilter);
-    } else {
-      const newFilter = globalFilter
-        .replace(/doNotContact:true\s*/g, '')
-        .replace(/doNotContact:false\s*/g, '')
-        .trim();
-      setGlobalFilter(newFilter);
+      newFilter = newFilter ? `${newFilter} doNotContact:false` : "doNotContact:false";
     }
+    
+    // Update the global filter
+    setGlobalFilter(newFilter);
   };
 
   return (

@@ -26,7 +26,7 @@ interface LeadTableProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
-  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void; // Renamed from onToggleDoNotCall
+  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void; 
 }
 
 export function LeadTable({ 
@@ -35,7 +35,7 @@ export function LeadTable({
   onAddNote, 
   onMoveToNextStage,
   onFlagLead,
-  onToggleDoNotContact // Renamed from onToggleDoNotCall
+  onToggleDoNotContact 
 }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -45,30 +45,47 @@ export function LeadTable({
   const processedData = data;
 
   // Custom filter function to handle the "Do Not Contact" filter
-  const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const fuzzyFilter: FilterFn<Lead> = (row, columnId, value, addMeta) => {
     // If no value is set, return true for all rows
     if (!value) return true;
 
-    // Handle the custom "Do Not Contact" filter
-    if (value.includes("doNotContact:true") && row.original.doNotContact === true) { // Renamed from doNotCall
-      return true;
-    }
-
-    if (value.includes("doNotContact:false") && row.original.doNotContact === false) { // Renamed from doNotCall
-      return true;
-    }
-
-    // For other filter strings, do a basic text search on all columns
-    const cleanValue = value
-      .replace(/doNotContact:true\s*/g, '') // Renamed from doNotCall:true
-      .replace(/doNotContact:false\s*/g, '') // Renamed from doNotCall:false
-      .trim()
-      .toLowerCase();
-      
-    if (!cleanValue) return true;
+    // Check for doNotContact specific filters
+    const doNotContactTrueFilter = value.includes("doNotContact:true");
+    const doNotContactFalseFilter = value.includes("doNotContact:false");
     
+    if (doNotContactTrueFilter || doNotContactFalseFilter) {
+      const leadDoNotContact = row.original.doNotContact === true;
+      
+      // If we're filtering for doNotContact:true, then we only want records where doNotContact is true
+      if (doNotContactTrueFilter && !leadDoNotContact) {
+        return false;
+      }
+      
+      // If we're filtering for doNotContact:false, then we only want records where doNotContact is false or undefined
+      if (doNotContactFalseFilter && leadDoNotContact) {
+        return false;
+      }
+      
+      // For other filter criteria, continue processing below
+      // First, remove the doNotContact filter parts from the value
+      const cleanValue = value
+        .replace(/doNotContact:true\s*/g, '')
+        .replace(/doNotContact:false\s*/g, '')
+        .trim();
+        
+      if (!cleanValue) {
+        // If there's nothing left in the filter after removing doNotContact parts,
+        // and we passed the doNotContact check above, this row is a match
+        return true;
+      }
+      
+      // If there's more filter criteria, continue with normal text search
+      value = cleanValue;
+    }
+    
+    // For regular text search
     const searchText = String(row.getValue(columnId) || "").toLowerCase();
-    return searchText.includes(cleanValue);
+    return searchText.includes(value.toLowerCase());
   };
 
   // Create table columns
@@ -77,7 +94,7 @@ export function LeadTable({
     onAddNote,
     onMoveToNextStage,
     onFlagLead,
-    onToggleDoNotContact // Renamed from onToggleDoNotCall
+    onToggleDoNotContact
   });
 
   // Initialize table
