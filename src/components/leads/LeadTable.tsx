@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   useReactTable,
@@ -25,7 +26,7 @@ interface LeadTableProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
-  onToggleDoNotCall?: (leadId: string, doNotCall: boolean) => void;
+  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void; // Renamed from onToggleDoNotCall
 }
 
 export function LeadTable({ 
@@ -34,7 +35,7 @@ export function LeadTable({
   onAddNote, 
   onMoveToNextStage,
   onFlagLead,
-  onToggleDoNotCall
+  onToggleDoNotContact // Renamed from onToggleDoNotCall
 }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -43,24 +44,24 @@ export function LeadTable({
   // Simplified data processing - no more complex ready to move calculations
   const processedData = data;
 
-  // Custom filter function to handle the "Do Not Call" filter
+  // Custom filter function to handle the "Do Not Contact" filter
   const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
     // If no value is set, return true for all rows
     if (!value) return true;
 
-    // Handle the custom "Do Not Call" filter
-    if (value.includes("doNotCall:true") && row.original.doNotCall === true) {
+    // Handle the custom "Do Not Contact" filter
+    if (value.includes("doNotContact:true") && row.original.doNotContact === true) { // Renamed from doNotCall
       return true;
     }
 
-    if (value.includes("doNotCall:false") && row.original.doNotCall === false) {
+    if (value.includes("doNotContact:false") && row.original.doNotContact === false) { // Renamed from doNotCall
       return true;
     }
 
     // For other filter strings, do a basic text search on all columns
     const cleanValue = value
-      .replace(/doNotCall:true\s*/g, '')
-      .replace(/doNotCall:false\s*/g, '')
+      .replace(/doNotContact:true\s*/g, '') // Renamed from doNotCall:true
+      .replace(/doNotContact:false\s*/g, '') // Renamed from doNotCall:false
       .trim()
       .toLowerCase();
       
@@ -76,7 +77,7 @@ export function LeadTable({
     onAddNote,
     onMoveToNextStage,
     onFlagLead,
-    onToggleDoNotCall
+    onToggleDoNotContact // Renamed from onToggleDoNotCall
   });
 
   // Initialize table

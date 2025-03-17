@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ interface CreateLeadColumnsProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
-  onToggleDoNotCall?: (leadId: string, doNotCall: boolean) => void;
+  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void;
 }
 
 export const createLeadColumns = ({
@@ -22,7 +21,7 @@ export const createLeadColumns = ({
   onAddNote,
   onMoveToNextStage,
   onFlagLead,
-  onToggleDoNotCall
+  onToggleDoNotContact
 }: CreateLeadColumnsProps): ColumnDef<Lead>[] => [
   {
     accessorKey: "name",
@@ -88,27 +87,27 @@ export const createLeadColumns = ({
     header: "Last Contact",
   },
   {
-    id: 'doNotCall',
-    header: "Do Not Call",
+    id: 'doNotContact',
+    header: "Do Not Contact",
     cell: ({ row }) => {
       const lead = row.original;
-      const doNotCall = lead.doNotCall || false;
+      const doNotContact = lead.doNotContact || false;
       
       return (
         <div className="flex justify-center">
           <Button
             variant="ghost"
             size="icon"
-            className={`w-8 h-8 ${doNotCall ? 'text-red-500' : 'text-gray-400'}`}
+            className={`w-8 h-8 ${doNotContact ? 'text-red-500' : 'text-gray-400'}`}
             onClick={(e) => {
               e.stopPropagation();
-              if (onToggleDoNotCall) {
-                onToggleDoNotCall(lead.id, !doNotCall);
+              if (onToggleDoNotContact) {
+                onToggleDoNotContact(lead.id, !doNotContact);
               }
             }}
-            title={doNotCall ? "Remove Do Not Call flag" : "Mark as Do Not Call"}
+            title={doNotContact ? "Remove Do Not Contact flag" : "Mark as Do Not Contact"}
           >
-            {doNotCall ? (
+            {doNotContact ? (
               <PhoneOff className="h-5 w-5" />
             ) : (
               <Phone className="h-5 w-5" />

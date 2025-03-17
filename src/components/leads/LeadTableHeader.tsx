@@ -25,41 +25,33 @@ interface LeadTableHeaderProps {
 
 export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHeaderProps) {
   const [showFilterOptions, setShowFilterOptions] = useState(false);
-  const [doNotCallFilter, setDoNotCallFilter] = useState<string>("all");
-  
+  const [doNotContactFilter, setDoNotContactFilter] = useState<string>("all");
+
   const clearFilter = () => {
     setGlobalFilter("");
   };
 
-  const handleDoNotCallFilterChange = (value: string) => {
-    setDoNotCallFilter(value);
+  const handleDoNotContactFilterChange = (value: string) => {
+    setDoNotContactFilter(value);
     
-    // Apply filter based on the selected value
-    if (value === "donotcall") {
-      // Check if filter already includes doNotCall:true
-      if (globalFilter.includes("doNotCall:true")) {
-        // If it does, leave it unchanged
+    if (value === "donotcontact") {
+      if (globalFilter.includes("doNotContact:true")) {
         return;
       }
       
-      // Otherwise, add the filter
-      const newFilter = globalFilter ? `${globalFilter} doNotCall:true` : "doNotCall:true";
+      const newFilter = globalFilter ? `${globalFilter} doNotContact:true` : "doNotContact:true";
       setGlobalFilter(newFilter);
-    } else if (value === "cancall") {
-      // Check if filter already includes doNotCall:false
-      if (globalFilter.includes("doNotCall:false")) {
-        // If it does, leave it unchanged
+    } else if (value === "cancontact") {
+      if (globalFilter.includes("doNotContact:false")) {
         return;
       }
       
-      // Otherwise, add the filter
-      const newFilter = globalFilter ? `${globalFilter} doNotCall:false` : "doNotCall:false";
+      const newFilter = globalFilter ? `${globalFilter} doNotContact:false` : "doNotContact:false";
       setGlobalFilter(newFilter);
     } else {
-      // Remove any doNotCall filters when 'all' is selected
       const newFilter = globalFilter
-        .replace(/doNotCall:true\s*/g, '')
-        .replace(/doNotCall:false\s*/g, '')
+        .replace(/doNotContact:true\s*/g, '')
+        .replace(/doNotContact:false\s*/g, '')
         .trim();
       setGlobalFilter(newFilter);
     }
@@ -91,14 +83,14 @@ export function LeadTableHeader({ globalFilter, setGlobalFilter }: LeadTableHead
       <div className="flex items-center gap-2">
         <div className="flex items-center">
           <PhoneOff className="h-4 w-4 mr-2 text-muted-foreground" />
-          <Select value={doNotCallFilter} onValueChange={handleDoNotCallFilterChange}>
+          <Select value={doNotContactFilter} onValueChange={handleDoNotContactFilterChange}>
             <SelectTrigger className="w-36">
-              <SelectValue placeholder="Call Status" />
+              <SelectValue placeholder="Contact Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Leads</SelectItem>
-              <SelectItem value="donotcall">Do Not Call</SelectItem>
-              <SelectItem value="cancall">Can Call</SelectItem>
+              <SelectItem value="donotcontact">Do Not Contact</SelectItem>
+              <SelectItem value="cancontact">Can Contact</SelectItem>
             </SelectContent>
           </Select>
         </div>

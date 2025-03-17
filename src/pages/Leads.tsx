@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Lead, Note } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,7 @@ const leadsWithNotes = initialLeadsData.map(lead => ({
   notes: lead.notes || [],
   flaggedForNextStage: false,
   readyToMove: false,
-  doNotCall: false
+  doNotContact: false // Renamed from doNotCall
 }));
 
 export function Leads() {
@@ -100,13 +99,13 @@ export function Leads() {
     }
   };
 
-  const handleToggleDoNotCall = (leadId: string, doNotCall: boolean) => {
+  const handleToggleDoNotContact = (leadId: string, doNotContact: boolean) => { // Renamed from handleToggleDoNotCall
     setLeadsData(prevLeads =>
       prevLeads.map(lead => {
         if (lead.id === leadId) {
           return {
             ...lead,
-            doNotCall
+            doNotContact // Renamed from doNotCall
           };
         }
         return lead;
@@ -116,10 +115,10 @@ export function Leads() {
     const lead = leadsData.find(l => l.id === leadId);
     if (lead) {
       toast({
-        title: doNotCall ? "Do Not Call flag added" : "Do Not Call flag removed",
-        description: doNotCall
-          ? `${lead.name} has been marked as Do Not Call.`
-          : `${lead.name} can now be called.`
+        title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed", // Updated text
+        description: doNotContact
+          ? `${lead.name} has been marked as Do Not Contact.` // Updated text
+          : `${lead.name} can now be contacted.` // Updated text
       });
     }
   };
@@ -199,7 +198,7 @@ export function Leads() {
         onAddNote={handleAddNote}
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
-        onToggleDoNotCall={handleToggleDoNotCall}
+        onToggleDoNotContact={handleToggleDoNotContact} // Renamed from onToggleDoNotCall
       />
     </div>
   );

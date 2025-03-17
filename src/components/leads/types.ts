@@ -18,5 +18,5 @@ export interface Lead {
   notes?: Note[];
   flaggedForNextStage?: boolean;
   readyToMove?: boolean;
-  doNotCall?: boolean;
+  doNotContact?: boolean; // Renamed from doNotCall
 }
