@@ -77,11 +77,11 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    e.preventDefault();
     
-    // Direct deletion without dialog, similar to the Calls page
+    // Immediately delete the lead (no confirmation dialog)
     onDelete(lead.id);
     
+    // Show a toast notification
     toast({
       title: "Lead deleted",
       description: `${lead.name} has been removed from your leads.`,
@@ -226,12 +226,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         )}
       </Dialog>
 
-      <ActionButton 
+      <button
+        type="button"
         onClick={handleDeleteClick}
-        icon={Trash2}
-        label="Delete Lead"
-        colorClasses="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-      />
+        className="p-2 rounded-full text-destructive hover:text-destructive/90 hover:bg-destructive/10 transition-colors"
+        aria-label="Delete Lead"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }
