@@ -33,7 +33,10 @@ export function SmsDialog({
   const [smsText, setSmsText] = useState('');
   const { toast } = useToast();
 
-  const handleSendSms = () => {
+  const handleSendSms = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!smsText) {
       toast({
         title: "Missing message",
@@ -76,8 +79,20 @@ export function SmsDialog({
     setSmsText('');
   };
 
+  const handleViewHistory = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onViewSmsHistory();
+  };
+  
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onOpenChange(false);
+  };
+
   return (
-    <DialogContent className="sm:max-w-[500px]">
+    <DialogContent className="sm:max-w-[500px]" onClick={(e) => e.stopPropagation()}>
       <DialogHeader>
         <DialogTitle>Send SMS to {lead.name}</DialogTitle>
         <DialogDescription>
@@ -91,7 +106,7 @@ export function SmsDialog({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={onViewSmsHistory}
+            onClick={handleViewHistory}
             disabled={!lead.phone}
           >
             View History
@@ -109,14 +124,19 @@ export function SmsDialog({
             placeholder="Type your message here..."
             className="min-h-[120px]"
             disabled={!lead.phone}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       </div>
       
       <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="outline" type="button">Cancel</Button>
-        </DialogClose>
+        <Button 
+          variant="outline" 
+          type="button"
+          onClick={handleCancel}
+        >
+          Cancel
+        </Button>
         <Button 
           onClick={handleSendSms} 
           disabled={!lead.phone}

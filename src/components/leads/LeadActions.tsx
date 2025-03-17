@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
@@ -61,16 +62,48 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
     setIsSmsHistoryDialogOpen(true);
   };
 
+  const handleCallClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsCallDialogOpen(true);
+  };
+
+  const handleSmsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsSmsDialogOpen(true);
+  };
+
+  const handleLetterClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsLetterDialogOpen(true);
+  };
+
+  const handleNotesClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsNotesDialogOpen(true);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsDeleteDialogOpen(true);
+  };
+
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       {/* Call Button & Dialog */}
       <Dialog open={isCallDialogOpen} onOpenChange={setIsCallDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsCallDialogOpen(true);
-          }}
+          onClick={handleCallClick}
           icon={Phone}
           label="Call Lead"
           colorClasses="text-green-600 hover:text-green-700 hover:bg-green-100"
@@ -86,11 +119,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       {/* SMS Button & Dialog */}
       <Dialog open={isSmsDialogOpen} onOpenChange={setIsSmsDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsSmsDialogOpen(true);
-          }}
+          onClick={handleSmsClick}
           icon={MessageSquare}
           label="Send SMS"
           colorClasses="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
@@ -117,11 +146,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       {/* Letter Button & Dialog */}
       <Dialog open={isLetterDialogOpen} onOpenChange={setIsLetterDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsLetterDialogOpen(true);
-          }}
+          onClick={handleLetterClick}
           icon={FileText}
           label="Send Letter"
           colorClasses="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
@@ -137,19 +162,15 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       {/* Notes Button & Dialog */}
       <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsNotesDialogOpen(true);
-          }}
+          onClick={handleNotesClick}
           icon={MessageSquare}
           label="View Notes"
         />
         
         <div className="contents">
           {isNotesDialogOpen && (
-            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-              <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full">
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={(e) => e.stopPropagation()}>
+              <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full" onClick={(e) => e.stopPropagation()}>
                 <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                   <h2 className="text-lg font-semibold text-foreground">Notes for {lead.name}</h2>
                 </div>
@@ -162,7 +183,11 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
                   <button 
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-                    onClick={() => setIsNotesDialogOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsNotesDialogOpen(false);
+                    }}
                   >
                     Close
                   </button>
@@ -176,18 +201,14 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       {/* Edit Button & Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsEditDialogOpen(true);
-          }}
+          onClick={handleEditClick}
           icon={Pencil}
           label="Edit Lead"
         />
         
         {isEditDialogOpen && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
-            <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full">
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                 <h2 className="text-lg font-semibold text-foreground">Edit Lead</h2>
               </div>
@@ -207,7 +228,11 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
               <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
                 <button 
                   className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-                  onClick={() => setIsEditDialogOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsEditDialogOpen(false);
+                  }}
                 >
                   Cancel
                 </button>
@@ -220,11 +245,7 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
       {/* Delete Button & Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <ActionButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsDeleteDialogOpen(true);
-          }}
+          onClick={handleDeleteClick}
           icon={Trash2}
           label="Delete Lead"
           colorClasses="text-destructive hover:text-destructive/90 hover:bg-destructive/10"

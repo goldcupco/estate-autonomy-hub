@@ -34,7 +34,10 @@ export function LetterDialog({
   const [letterTrackingNumber, setLetterTrackingNumber] = useState('');
   const { toast } = useToast();
 
-  const handleSendLetter = () => {
+  const handleSendLetter = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!letterText) {
       toast({
         title: "Missing content",
@@ -78,9 +81,15 @@ export function LetterDialog({
     setLetterText('');
     setLetterAddress('');
   };
+  
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onOpenChange(false);
+  };
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
+    <DialogContent className="sm:max-w-[600px]" onClick={(e) => e.stopPropagation()}>
       <DialogHeader>
         <DialogTitle>Create Letter for {lead.name}</DialogTitle>
         <DialogDescription>
@@ -100,6 +109,7 @@ export function LetterDialog({
               onChange={(e) => setLetterAddress(e.target.value)}
               placeholder="Enter recipient's mailing address"
               className="mt-2"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
           
@@ -113,6 +123,7 @@ export function LetterDialog({
               onChange={(e) => setLetterText(e.target.value)}
               placeholder="Type your letter content here..."
               className="min-h-[200px] mt-2"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
           
@@ -126,9 +137,13 @@ export function LetterDialog({
       </div>
       
       <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="outline" type="button">Cancel</Button>
-        </DialogClose>
+        <Button 
+          variant="outline" 
+          type="button"
+          onClick={handleCancel}
+        >
+          Cancel
+        </Button>
         <Button 
           onClick={handleSendLetter}
           className="bg-amber-600 hover:bg-amber-700"

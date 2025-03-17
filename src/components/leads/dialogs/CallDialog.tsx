@@ -33,7 +33,10 @@ export function CallDialog({
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  const toggleCallRecording = () => {
+  const toggleCallRecording = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (isRecording) {
       // Stop recording
       if (currentCallId && callStartTime) {
@@ -83,7 +86,6 @@ export function CallDialog({
   };
 
   const handleCall = (e: React.MouseEvent) => {
-    // Add event prevention to stop propagation from the parent
     e.preventDefault();
     e.stopPropagation();
     
@@ -112,8 +114,14 @@ export function CallDialog({
     onOpenChange(false);
   };
 
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onOpenChange(false);
+  };
+
   return (
-    <DialogContent className="sm:max-w-[400px]">
+    <DialogContent className="sm:max-w-[400px]" onClick={(e) => e.stopPropagation()}>
       <DialogHeader>
         <DialogTitle>Call {lead.name}</DialogTitle>
         <DialogDescription>
@@ -148,18 +156,13 @@ export function CallDialog({
       </div>
       
       <DialogFooter>
-        <DialogClose asChild>
-          <Button 
-            variant="outline" 
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            Cancel
-          </Button>
-        </DialogClose>
+        <Button 
+          variant="outline" 
+          type="button"
+          onClick={handleCancel}
+        >
+          Cancel
+        </Button>
         <Button 
           onClick={handleCall} 
           disabled={!lead.phone}
