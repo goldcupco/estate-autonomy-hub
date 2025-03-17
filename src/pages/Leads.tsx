@@ -137,7 +137,7 @@ export function Leads() {
   const handleDeleteLead = (leadId: string) => {
     console.log("Leads: handleDeleteLead called with:", leadId);
     
-    // Remove the lead from the state
+    // Simple approach - just filter out the lead with the given ID
     setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
     
     // Show success toast
