@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   ColumnDef,
@@ -13,7 +12,7 @@ import {
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Search, Flag, ArrowRight, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Flag, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LeadActions } from './LeadActions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -49,12 +48,10 @@ interface LeadTableProps {
   onFlagLead?: (leadId: string, flagged: boolean) => void;
 }
 
-// Helper to determine the next stage for a lead
 const getNextStage = (currentStatus: Lead['status']): Lead['status'] | null => {
   const statusFlow: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
   const currentIndex = statusFlow.indexOf(currentStatus);
   
-  // If it's the last stage or 'Lost', there's no next stage
   if (currentIndex === -1 || currentIndex >= statusFlow.length - 2) {
     return null;
   }
@@ -62,26 +59,20 @@ const getNextStage = (currentStatus: Lead['status']): Lead['status'] | null => {
   return statusFlow[currentIndex + 1];
 };
 
-// Helper to determine if a lead is ready to move based on its notes
 const isLeadReadyToMove = (lead: Lead): boolean => {
   if (!lead.notes || lead.notes.length === 0) return false;
   
-  // Different criteria based on current status
   switch (lead.status) {
     case 'New':
-      // New → Contacted: Has at least one communication note
       return lead.notes.some(note => ['sms', 'call', 'letter'].includes(note.type));
     case 'Contacted':
-      // Contacted → Qualified: Has at least 2 different types of communications
       const communicationTypes = new Set(lead.notes
         .filter(note => ['sms', 'call', 'letter'].includes(note.type))
         .map(note => note.type));
       return communicationTypes.size >= 2;
     case 'Qualified':
-      // Qualified → Negotiating: Has at least one contract note
       return lead.notes.some(note => note.type === 'contract');
     case 'Negotiating':
-      // Negotiating → Closed: Has multiple contract notes
       return lead.notes.filter(note => note.type === 'contract').length >= 2;
     default:
       return false;
@@ -101,21 +92,26 @@ export function LeadTable({
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const { toast } = useToast();
 
-  // Check each lead for readiness to move
   const processedData = data.map(lead => ({
     ...lead,
     readyToMove: isLeadReadyToMove(lead)
   }));
 
   const handleMoveToNextStage = (lead: Lead) => {
+    console.log("LeadTable: handleMoveToNextStage", lead);
     if (onMoveToNextStage) {
       onMoveToNextStage(lead);
+    } else {
+      console.error("onMoveToNextStage callback is not provided");
     }
   };
 
   const handleFlagLead = (leadId: string, flagged: boolean) => {
+    console.log("LeadTable: handleFlagLead", leadId, flagged);
     if (onFlagLead) {
       onFlagLead(leadId, flagged);
+    } else {
+      console.error("onFlagLead callback is not provided");
     }
   };
 
@@ -217,7 +213,10 @@ export function LeadTable({
                     variant="outline" 
                     size="icon" 
                     className={`h-7 w-7 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300' : ''}`}
-                    onClick={() => handleFlagLead(lead.id, !lead.flaggedForNextStage)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFlagLead(lead.id, !lead.flaggedForNextStage);
+                    }}
                   >
                     <Flag className={`h-4 w-4 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
                     <span className="sr-only">Flag for {nextStage}</span>
@@ -237,7 +236,10 @@ export function LeadTable({
                       variant="outline" 
                       size="icon" 
                       className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
-                      onClick={() => handleMoveToNextStage(lead)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMoveToNextStage(lead);
+                      }}
                     >
                       <ArrowRight className="h-4 w-4" />
                       <span className="sr-only">Move to {nextStage}</span>
@@ -332,13 +334,10 @@ export function LeadTable({
                   const isReadyToMove = lead.readyToMove;
                   const isFlagged = lead.flaggedForNextStage;
                   
-                  // Determine highlighting class based on readiness and flagging
                   let highlightClass = '';
                   if (isReadyToMove && !isFlagged) {
-                    // Ready but not flagged - soft highlight
                     highlightClass = 'bg-blue-50';
                   } else if (isFlagged) {
-                    // Flagged - stronger highlight
                     highlightClass = 'bg-amber-50';
                   }
                   
