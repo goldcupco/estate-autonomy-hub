@@ -38,7 +38,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
 
     // Create initial note if notes text exists
     const notes: Note[] = [];
-    if (lead.notes && typeof lead.notes === 'string' && lead.notes.length > 0) {
+    if (lead.notes && typeof lead.notes === 'string' && lead.notes.trim() !== '') {
       notes.push({
         id: `note-${Date.now()}`,
         text: lead.notes as string,
