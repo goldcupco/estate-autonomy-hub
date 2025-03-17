@@ -72,10 +72,10 @@ export function CommunicationSettings() {
     setIsSaving(true);
     
     try {
-      // Build configuration object
+      // Build configuration object with properly typed provider values
       const config = {
-        defaultCallProvider: twilioConfig.isDefault ? 'twilio' : callrailConfig.isDefault ? 'callrail' : undefined,
-        defaultSmsProvider: twilioConfig.isDefault ? 'twilio' : undefined, // Only Twilio supports SMS in our implementation
+        defaultCallProvider: twilioConfig.isDefault ? 'twilio' as const : callrailConfig.isDefault ? 'callrail' as const : undefined,
+        defaultSmsProvider: twilioConfig.isDefault ? 'twilio' as const : undefined, // Only Twilio supports SMS
         providerConfig: {
           twilio: {
             accountSid: twilioConfig.accountSid,

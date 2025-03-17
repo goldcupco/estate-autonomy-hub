@@ -1,4 +1,3 @@
-
 /**
  * Communication Service
  * Manages communication providers and provides a unified interface for calls and SMS
@@ -20,7 +19,7 @@ import {
   CallRailProvider 
 } from './communicationProviders';
 
-// Communication service configuration
+// Communication service configuration with proper literal types
 interface CommunicationServiceConfig {
   defaultCallProvider?: 'twilio' | 'callrail';
   defaultSmsProvider?: 'twilio';

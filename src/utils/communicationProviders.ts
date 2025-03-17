@@ -1,4 +1,3 @@
-
 /**
  * Communication Providers for Twilio and CallRail
  * This file manages integrations with communication service providers
@@ -28,7 +27,7 @@ export interface SmsProvider extends CommunicationProvider {
 // Implementation for Twilio provider
 export class TwilioProvider implements CallProvider, SmsProvider {
   name = 'Twilio';
-  type = 'twilio';
+  type: 'twilio' = 'twilio';
   accountSid?: string;
   authToken?: string;
   twilioNumber?: string;
@@ -152,7 +151,7 @@ export class TwilioProvider implements CallProvider, SmsProvider {
 // Implementation for CallRail provider
 export class CallRailProvider implements CallProvider {
   name = 'CallRail';
-  type = 'callrail';
+  type: 'callrail' = 'callrail';
   apiKey?: string;
   accountId?: string;
   
