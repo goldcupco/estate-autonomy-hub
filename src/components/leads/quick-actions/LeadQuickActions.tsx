@@ -15,7 +15,11 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onOpenCall}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onOpenCall();
+        }}
         className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-100 border-green-200"
       >
         <Phone className="h-4 w-4" />
@@ -24,7 +28,11 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onOpenSms}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onOpenSms();
+        }}
         className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 border-blue-200"
       >
         <MessageSquare className="h-4 w-4" />
@@ -33,7 +41,11 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onOpenLetter}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onOpenLetter();
+        }}
         className="flex items-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-100 border-amber-200"
       >
         <FileText className="h-4 w-4" />

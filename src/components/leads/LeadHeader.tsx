@@ -33,7 +33,11 @@ export function LeadHeader({
           />
           <Button 
             className="flex items-center gap-2 animate-scale-in"
-            onClick={() => setAddLeadModalOpen(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setAddLeadModalOpen(true);
+            }}
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Lead</span>

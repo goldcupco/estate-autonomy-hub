@@ -16,7 +16,10 @@ export function QuickLetterDialog({ open, onOpenChange }: QuickLetterDialogProps
   const [letterContent, setLetterContent] = useState('');
   const { toast } = useToast();
 
-  const handleQuickLetter = () => {
+  const handleQuickLetter = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!letterRecipient || !letterContent) {
       toast({
         title: "Missing information",
@@ -71,10 +74,20 @@ export function QuickLetterDialog({ open, onOpenChange }: QuickLetterDialogProps
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenChange(false);
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleQuickLetter} className="bg-amber-600 hover:bg-amber-700">
+          <Button 
+            onClick={handleQuickLetter} 
+            className="bg-amber-600 hover:bg-amber-700"
+          >
             Send Letter
           </Button>
         </DialogFooter>

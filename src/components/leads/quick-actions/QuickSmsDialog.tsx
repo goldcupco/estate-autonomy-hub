@@ -16,7 +16,10 @@ export function QuickSmsDialog({ open, onOpenChange }: QuickSmsDialogProps) {
   const [smsText, setSmsText] = useState('');
   const { toast } = useToast();
 
-  const handleQuickSms = () => {
+  const handleQuickSms = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!smsRecipient || !smsText) {
       toast({
         title: "Missing information",
@@ -72,10 +75,20 @@ export function QuickSmsDialog({ open, onOpenChange }: QuickSmsDialogProps) {
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenChange(false);
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleQuickSms} className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            onClick={handleQuickSms} 
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             Send Message
           </Button>
         </DialogFooter>

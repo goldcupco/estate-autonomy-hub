@@ -14,7 +14,10 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const { toast } = useToast();
 
-  const handleQuickCall = () => {
+  const handleQuickCall = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!phoneNumber) {
       toast({
         title: "Missing information",
@@ -58,10 +61,20 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenChange(false);
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleQuickCall} className="bg-green-600 hover:bg-green-700">
+          <Button 
+            onClick={handleQuickCall} 
+            className="bg-green-600 hover:bg-green-700"
+          >
             Call Now
           </Button>
         </DialogFooter>

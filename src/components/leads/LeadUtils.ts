@@ -1,5 +1,5 @@
 
-import { Lead, Note } from './LeadTable';
+import { Lead, Note } from './types';
 
 export const getNextStage = (currentStatus: Lead['status']): Lead['status'] | null => {
   const statusFlow: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
