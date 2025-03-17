@@ -12,7 +12,13 @@ import {
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Search, Flag, ArrowRight } from 'lucide-react';
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  Search, 
+  Flag, 
+  ArrowRight 
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LeadActions } from './LeadActions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
