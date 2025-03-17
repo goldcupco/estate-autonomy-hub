@@ -28,7 +28,6 @@ export function DeleteConfirmDialog({
   
   const handleDelete = () => {
     // Call the delete function with just the ID parameter
-    // similar to how it's done in CallList.tsx
     onConfirmDelete(lead.id);
     
     // Close the dialog

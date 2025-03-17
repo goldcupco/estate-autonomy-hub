@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Pencil, Trash2, MessageSquare, Phone, Mail, FileText } from 'lucide-react';
 import { Dialog } from "@/components/ui/dialog";
@@ -32,20 +31,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
   const [isSmsHistoryDialogOpen, setIsSmsHistoryDialogOpen] = useState(false);
   const [smsHistory, setSmsHistory] = useState<SmsRecord[]>([]);
   const { toast } = useToast();
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    console.log("LeadActions: handleDelete called", lead.id);
-    onDelete(lead.id);
-    setIsDeleteDialogOpen(false);
-    
-    toast({
-      title: "Lead deleted",
-      description: `${lead.name} has been removed from your leads.`,
-    });
-  };
 
   const handleViewSmsHistory = () => {
     if (!lead.phone) {
@@ -100,7 +85,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-      {/* Call Button & Dialog */}
       <Dialog open={isCallDialogOpen} onOpenChange={setIsCallDialogOpen}>
         <ActionButton 
           onClick={handleCallClick}
@@ -116,7 +100,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         />
       </Dialog>
       
-      {/* SMS Button & Dialog */}
       <Dialog open={isSmsDialogOpen} onOpenChange={setIsSmsDialogOpen}>
         <ActionButton 
           onClick={handleSmsClick}
@@ -133,7 +116,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         />
       </Dialog>
 
-      {/* SMS History Dialog */}
       <Dialog open={isSmsHistoryDialogOpen} onOpenChange={setIsSmsHistoryDialogOpen}>
         <SmsHistoryDialog 
           lead={lead}
@@ -143,7 +125,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         />
       </Dialog>
 
-      {/* Letter Button & Dialog */}
       <Dialog open={isLetterDialogOpen} onOpenChange={setIsLetterDialogOpen}>
         <ActionButton 
           onClick={handleLetterClick}
@@ -159,7 +140,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         />
       </Dialog>
 
-      {/* Notes Button & Dialog */}
       <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
         <ActionButton 
           onClick={handleNotesClick}
@@ -198,7 +178,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         </div>
       </Dialog>
 
-      {/* Edit Button & Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <ActionButton 
           onClick={handleEditClick}
@@ -242,7 +221,6 @@ export function LeadActions({ lead, onEdit, onDelete, onAddNote }: LeadActionsPr
         )}
       </Dialog>
 
-      {/* Delete Button & Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <ActionButton 
           onClick={handleDeleteClick}
