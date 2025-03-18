@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Clock, User, ArrowLeft, PhoneCall, MessageSquare, Mic, MicOff } from 'lucide-react';
@@ -6,6 +7,41 @@ import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
 import CallList from '@/components/calls/CallList';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from '@/components/ui/breadcrumb';
+import { logSmsMessage } from '@/utils/communicationUtils';
+
+// Add functions that are missing
+const startCallRecording = (phoneNumber: string, contactName: string): string => {
+  // Mock implementation
+  console.log(`Starting call recording to ${phoneNumber} (${contactName})`);
+  return `call-${Date.now()}`;
+};
+
+const endCallRecording = (callId: string, duration: number) => {
+  // Mock implementation
+  console.log(`Ending call recording ${callId} (${duration} seconds)`);
+  return {
+    id: callId,
+    duration
+  };
+};
 
 const Calls = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
