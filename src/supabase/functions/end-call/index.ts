@@ -1,5 +1,7 @@
 
 // This file would be deployed as a Supabase Edge Function
+// NOTE: This file uses Deno-specific imports which will not resolve in the browser or Node.js environment.
+// Deploy this directly to Supabase Edge Functions for proper functionality.
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'

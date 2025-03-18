@@ -55,7 +55,7 @@ serve(async (req) => {
     const twilio = new Twilio(accountSid, authToken)
 
     // Send the SMS
-    const message = await twilio.messages.create({
+    const twilioMessage = await twilio.messages.create({
       body: message,
       to: phoneNumber,
       from: twilioNumber
@@ -63,7 +63,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      smsId: message.sid
+      smsId: twilioMessage.sid
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

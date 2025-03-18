@@ -1,8 +1,11 @@
 
-import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
+import { supabase, DbCommunicationProvider as SupabaseDbProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CallRecord, SmsRecord } from './communicationUtils';
 import { useToast } from "@/hooks/use-toast";
+
+// Re-export the DbCommunicationProvider type so it can be used elsewhere
+export type DbCommunicationProvider = SupabaseDbProvider;
 
 // Service to interact with Supabase for communication functionality
 export class SupabaseCommunicationService {
