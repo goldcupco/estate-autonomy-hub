@@ -46,7 +46,7 @@ const initializeApplication = async () => {
         duration: 10000 // Show longer for an important error
       });
       
-      // Add a visible console message with instructions for manual table creation
+      // Provide comprehensive debugging information with multiple SQL creation commands
       console.error('=== DATABASE SETUP FAILURE ===');
       console.error('Tables could not be created automatically.');
       console.error('Please manually create the required tables in the Supabase Dashboard:');
@@ -105,6 +105,14 @@ CREATE TABLE IF NOT EXISTS letter_records (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );`);
       console.error('============================');
+      
+      // Show an additional toast with link to Supabase
+      toast({
+        title: 'Manual Setup Required',
+        description: 'Please visit the Supabase Dashboard to create tables manually.',
+        variant: 'default',
+        duration: 15000
+      });
     }
   } catch (error) {
     console.error('Failed to initialize application:', error);

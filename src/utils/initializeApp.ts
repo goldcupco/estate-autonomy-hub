@@ -2,6 +2,10 @@
 import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 
+// Define Supabase URL and key constants (same values used to initialize the client)
+const SUPABASE_URL = 'https://gdxzktqieasxxcocwsjh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHprdHFpZWFzeHhjb2N3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjc1MTEsImV4cCI6MjA1NzkwMzUxMX0.EKFCdp3mGjHsBalEWUcIApkHtcmbzR8876N8F3OhlKY';
+
 // SQL creation statements for each table
 export const CREATE_TABLES_SQL = {
   communication_providers: `
@@ -130,12 +134,12 @@ async function forceCreateTables() {
       } else {
         // Try REST API insert as a last resort
         try {
-          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/${tableName}`, {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'apikey': supabase.supabaseKey,
-              'Authorization': `Bearer ${supabase.supabaseKey}`,
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
               'Prefer': 'return=minimal'
             },
             body: JSON.stringify(dummyRecord)
@@ -190,11 +194,11 @@ async function checkTableExists(tableName: string): Promise<boolean> {
     
     // Try direct REST API as fallback
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/${tableName}?limit=1`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?limit=1`, {
         method: 'GET',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         }
       });
       
