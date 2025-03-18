@@ -63,7 +63,7 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<Layout><Index /></Layout>} />
       <Route path="/login" element={<Login />} />
       <Route 
         path="/dashboard" 

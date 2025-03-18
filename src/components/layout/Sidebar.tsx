@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -29,65 +28,16 @@ type SidebarProps = {
   onClose: () => void;
 };
 
-// Create a global state for sidebar visibility that persists across page navigation
-let globalSidebarState = true;
-
-// Create a global event to notify all components about sidebar state changes
-export const sidebarStateChangeEvent = new CustomEvent('sidebarStateChange', { 
-  detail: globalSidebarState,
-  bubbles: true 
-});
-
-// Update the global sidebar state and dispatch the event
-export const toggleSidebar = () => {
-  globalSidebarState = !globalSidebarState;
-  
-  // Update the event detail with the new state
-  const event = new CustomEvent('sidebarStateChange', { 
-    detail: globalSidebarState,
-    bubbles: true 
-  });
-  
-  window.dispatchEvent(event);
-  
-  // Store sidebar state in localStorage for persistence across page refreshes
-  localStorage.setItem('sidebarState', globalSidebarState.toString());
-};
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(globalSidebarState);
   const { currentUser, isAdmin } = useAuth();
   
-  // On first mount, check localStorage for saved state
+  // On first mount
   useEffect(() => {
-    const savedState = localStorage.getItem('sidebarState');
-    if (savedState !== null) {
-      globalSidebarState = savedState === 'true';
-      setSidebarOpen(globalSidebarState);
-    }
     setMounted(true);
   }, []);
   
-  // Subscribe to global sidebar state changes
-  useEffect(() => {
-    const listener = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setSidebarOpen(customEvent.detail);
-    };
-    
-    window.addEventListener('sidebarStateChange', listener as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', listener as EventListener);
-    };
-  }, []);
-
-  // Sync local state with prop
-  useEffect(() => {
-    setSidebarOpen(isOpen);
-  }, [isOpen]);
-
   // Close sidebar on route change on mobile
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -101,7 +51,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <>
       {/* Mobile overlay */}
-      {sidebarOpen && (
+      {isOpen && (
         <div 
           className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in"
           onClick={onClose}
@@ -112,7 +62,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 border-r border-border bg-card shadow-sm transition-all duration-300 ease-in-out",
-          sidebarOpen ? "w-64" : "w-16",
+          isOpen ? "w-64" : "w-16",
           mounted ? "transform-gpu" : ""
         )}
       >
@@ -124,7 +74,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 GC
               </div>
               <span className={cn("transition-opacity duration-300", 
-                sidebarOpen ? "opacity-100" : "opacity-0 hidden md:block"
+                isOpen ? "opacity-100" : "opacity-0 hidden md:block"
               )}>Goldcup RE</span>
             </Link>
             <Button 
@@ -140,10 +90,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleSidebar}
+              onClick={() => {
+                // Create and dispatch custom event
+                const newState = !isOpen;
+                const event = new CustomEvent('sidebarStateChange', { 
+                  detail: newState,
+                  bubbles: true 
+                });
+                window.dispatchEvent(event);
+                
+                // Store sidebar state in localStorage
+                localStorage.setItem('sidebarState', newState.toString());
+              }}
               className="ml-auto hidden md:flex"
             >
-              {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {isOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>
           
@@ -155,28 +116,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 icon={BarChart3} 
                 label="Dashboard" 
                 active={location.pathname === '/dashboard'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               <NavItem 
                 to="/properties" 
                 icon={Building} 
                 label="Properties" 
                 active={location.pathname === '/properties'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               <NavItem 
                 to="/leads" 
                 icon={Users} 
                 label="Leads" 
                 active={location.pathname === '/leads'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               <NavItem 
                 to="/lists" 
                 icon={ClipboardList} 
                 label="Lists" 
                 active={location.pathname === '/lists'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               {shouldShowCampaigns && (
                 <NavItem 
@@ -184,7 +145,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   icon={Target} 
                   label="Campaigns" 
                   active={location.pathname === '/campaigns'} 
-                  collapsed={!sidebarOpen}
+                  collapsed={!isOpen}
                 />
               )}
               <NavItem 
@@ -192,21 +153,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 icon={Phone} 
                 label="Calls" 
                 active={location.pathname === '/calls'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               <NavItem 
                 to="/messages" 
                 icon={MessageSquare} 
                 label="Messages" 
                 active={location.pathname === '/messages'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               <NavItem 
                 to="/documents" 
                 icon={FileText} 
                 label="Documents" 
                 active={location.pathname === '/documents'} 
-                collapsed={!sidebarOpen}
+                collapsed={!isOpen}
               />
               {isAdmin && (
                 <>
@@ -215,14 +176,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     icon={ShieldCheck} 
                     label="Manage Access" 
                     active={location.pathname === '/access-management'} 
-                    collapsed={!sidebarOpen}
+                    collapsed={!isOpen}
                   />
                   <NavItem 
                     to="/phone-number-management" 
                     icon={PhoneCall} 
                     label="Phone Numbers" 
                     active={location.pathname === '/phone-number-management'} 
-                    collapsed={!sidebarOpen}
+                    collapsed={!isOpen}
                   />
                 </>
               )}
@@ -236,7 +197,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               icon={Settings} 
               label="Settings" 
               active={location.pathname === '/settings'} 
-              collapsed={!sidebarOpen}
+              collapsed={!isOpen}
             />
           </div>
         </div>

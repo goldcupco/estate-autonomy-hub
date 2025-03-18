@@ -26,14 +26,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar toggleSidebar={handleToggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className={`pt-16 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
-        <div className="container px-4 py-4 mx-auto">
-          {children}
-        </div>
-      </main>
+      <div className="flex flex-1 relative">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <main className={`pt-16 flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
+          <div className="container px-4 py-4 mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

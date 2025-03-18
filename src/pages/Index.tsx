@@ -3,7 +3,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layout } from "@/components/layout/Layout";
 import { MapPin, Users, Phone, FileText, BarChart3, User, List, FileStack, Settings } from "lucide-react";
 
 // Define Home here before using it in the features array
@@ -96,33 +95,31 @@ const features = [
 
 export default function Index() {
   return (
-    <Layout>
-      <div className="space-y-6 py-8 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-4">Welcome to Goldcup RE</h1>
-          <p className="text-muted-foreground">
-            Manage your properties, clients, and business from one central dashboard.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {features.map((feature) => (
-            <Link to={feature.path} key={feature.name}>
-              <Card className="h-full transition-colors hover:bg-muted/50 cursor-pointer">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <feature.icon className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">{feature.name}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+    <div className="space-y-6 py-8 animate-fade-in">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight mb-4">Welcome to Goldcup RE</h1>
+        <p className="text-muted-foreground">
+          Manage your properties, clients, and business from one central dashboard.
+        </p>
       </div>
-    </Layout>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {features.map((feature) => (
+          <Link to={feature.path} key={feature.name}>
+            <Card className="h-full transition-colors hover:bg-muted/50 cursor-pointer">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <feature.icon className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">{feature.name}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
