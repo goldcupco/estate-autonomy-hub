@@ -1,3 +1,4 @@
+
 import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 
@@ -62,56 +63,96 @@ export const CREATE_TABLES_SQL = {
 
 // Directly create tables with raw SQL
 async function forceCreateTables() {
-  console.log('Force creating tables via direct SQL insertion...');
+  console.log('Force creating tables via direct SQL execution...');
+  
+  // First attempt: Try to create all tables with one combined SQL statement
+  try {
+    console.log('Attempting to create all tables with combined SQL...');
+    const combinedSql = Object.values(CREATE_TABLES_SQL).join('\n');
+    
+    const result = await executeSql(combinedSql);
+    if (result.success) {
+      console.log('Successfully created all tables with combined SQL');
+      return { success: true, results: [{ table: 'all', success: true }] };
+    }
+    
+    console.log('Combined SQL approach failed, trying individual tables...');
+  } catch (error) {
+    console.error('Combined SQL execution failed:', error);
+  }
+  
+  // Second attempt: Try each table individually
   const results = [];
   
   for (const [tableName, sql] of Object.entries(CREATE_TABLES_SQL)) {
     try {
       console.log(`Creating table ${tableName}...`);
       
-      // First try to create via SQL
+      // Try to create table via SQL
       const result = await executeSql(sql);
-      console.log(`SQL execution result for ${tableName}:`, result);
       
-      if (!result.success) {
-        // If SQL failed, try direct insertion
-        console.log(`SQL creation failed for ${tableName}, trying direct insert...`);
-        
-        const dummyRecord = {
-          id: '00000000-0000-0000-0000-000000000000',
-          user_id: 'system',
-          name: tableName === 'communication_providers' ? 'System' : undefined,
-          type: tableName === 'communication_providers' ? 'twilio' : undefined,
-          call_id: tableName === 'call_records' ? 'system-test' : undefined,
-          sms_id: tableName === 'sms_records' ? 'system-test' : undefined,
-          phone_number: (tableName === 'call_records' || tableName === 'sms_records') ? '+10000000000' : undefined,
-          contact_name: (tableName === 'call_records' || tableName === 'sms_records') ? 'System Test' : undefined,
-          recipient: tableName === 'letter_records' ? 'System Test' : undefined,
-          message: tableName === 'sms_records' ? 'System test' : undefined,
-          direction: tableName === 'sms_records' ? 'outgoing' : undefined,
-          content: tableName === 'letter_records' ? 'System test' : undefined,
-          status: tableName === 'letter_records' ? 'draft' : undefined,
-          provider_id: (tableName === 'call_records' || tableName === 'sms_records') ? 'system' : undefined,
-          provider_type: tableName === 'call_records' ? 'twilio' : undefined,
-          timestamp: new Date().toISOString()
-        };
-        
-        console.log(`Inserting dummy record for ${tableName}:`, dummyRecord);
-        
-        const { error } = await supabase
-          .from(tableName)
-          .upsert(dummyRecord);
-          
-        if (error && error.code !== '23505') { // Ignore duplicate key error
-          console.error(`Error inserting dummy record for ${tableName}:`, error);
-          results.push({ table: tableName, success: false, error });
-        } else {
-          console.log(`Successfully created table ${tableName} via direct insert`);
-          results.push({ table: tableName, success: true });
-        }
-      } else {
+      if (result.success) {
         console.log(`Successfully created table ${tableName} via SQL`);
         results.push({ table: tableName, success: true });
+        continue;
+      }
+      
+      console.log(`SQL creation failed for ${tableName}, trying direct insert...`);
+      
+      // Try direct insertion as fallback
+      const dummyRecord = {
+        id: '00000000-0000-0000-0000-000000000000',
+        user_id: 'system',
+        name: tableName === 'communication_providers' ? 'System Default' : undefined,
+        type: tableName === 'communication_providers' ? 'twilio' : undefined,
+        call_id: tableName === 'call_records' ? 'system-test' : undefined,
+        sms_id: tableName === 'sms_records' ? 'system-test' : undefined,
+        phone_number: (tableName === 'call_records' || tableName === 'sms_records') ? '+10000000000' : undefined,
+        contact_name: (tableName === 'call_records' || tableName === 'sms_records') ? 'System Test' : undefined,
+        recipient: tableName === 'letter_records' ? 'System Test' : undefined,
+        message: tableName === 'sms_records' ? 'System test' : undefined,
+        direction: tableName === 'sms_records' ? 'outgoing' : undefined,
+        content: tableName === 'letter_records' ? 'System test' : undefined,
+        status: tableName === 'letter_records' ? 'draft' : undefined,
+        provider_id: (tableName === 'call_records' || tableName === 'sms_records') ? 'system' : undefined,
+        provider_type: tableName === 'call_records' ? 'twilio' : undefined,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Try supabase client insert
+      const { error } = await supabase
+        .from(tableName)
+        .upsert(dummyRecord);
+        
+      if (!error || error.code === '23505') { // Ignore duplicate key error
+        console.log(`Successfully created table ${tableName} via direct insert`);
+        results.push({ table: tableName, success: true });
+      } else {
+        // Try REST API insert as a last resort
+        try {
+          const response = await fetch(`${supabase.supabaseUrl}/rest/v1/${tableName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabase.supabaseKey,
+              'Authorization': `Bearer ${supabase.supabaseKey}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(dummyRecord)
+          });
+          
+          if (response.ok) {
+            console.log(`Successfully created table ${tableName} via REST API`);
+            results.push({ table: tableName, success: true });
+          } else {
+            console.error(`Failed to create table ${tableName} via REST API:`, 
+              response.status, await response.text());
+            results.push({ table: tableName, success: false, error: `REST API error: ${response.status}` });
+          }
+        } catch (restError) {
+          console.error(`Error creating table ${tableName} via REST API:`, restError);
+          results.push({ table: tableName, success: false, error: restError });
+        }
       }
     } catch (error) {
       console.error(`Error creating table ${tableName}:`, error);
@@ -133,21 +174,47 @@ async function checkTableExists(tableName: string): Promise<boolean> {
   try {
     console.log(`Checking if table ${tableName} exists...`);
     
-    const { error } = await supabase
+    // First try with the Supabase client
+    const { error: clientError } = await supabase
       .from(tableName)
       .select('*', { head: true, count: 'exact' });
     
-    if (error) {
-      if (error.code === '42P01') { // Table doesn't exist
-        console.log(`Table ${tableName} does not exist`);
-        return false;
-      }
-      console.error(`Error checking table ${tableName}:`, error);
-      return false;
+    if (!clientError) {
+      console.log(`Table ${tableName} exists (verified via client)`);
+      return true;
     }
     
-    console.log(`Table ${tableName} exists`);
-    return true;
+    if (clientError.code !== '42P01') { // '42P01' means relation doesn't exist
+      console.log(`Unexpected error checking table ${tableName}:`, clientError);
+    }
+    
+    // Try direct REST API as fallback
+    try {
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/${tableName}?limit=1`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        }
+      });
+      
+      if (response.ok) {
+        console.log(`Table ${tableName} exists (verified via REST API)`);
+        return true;
+      }
+      
+      if (response.status === 404) {
+        console.log(`Table ${tableName} does not exist (REST API returned 404)`);
+        return false;
+      }
+      
+      console.log(`Unexpected status checking table ${tableName}: ${response.status}`);
+    } catch (restError) {
+      console.error(`REST API error checking table ${tableName}:`, restError);
+    }
+    
+    console.log(`Table ${tableName} does not exist`);
+    return false;
   } catch (error) {
     console.error(`Error checking if ${tableName} exists:`, error);
     return false;
@@ -197,8 +264,8 @@ export async function initializeApp() {
     const missingTables = tables.filter((_, index) => !tableChecks[index]);
     console.log(`Missing tables that need to be created: ${missingTables.join(', ')}`);
     
-    // Step 3: Try to create tables by force
-    console.log('Creating missing tables...');
+    // Step 3: Try to create tables with improved creation logic
+    console.log('Creating missing tables with enhanced table creation...');
     const forceResult = await forceCreateTables();
     
     if (forceResult.success) {
@@ -231,18 +298,15 @@ export async function initializeApp() {
     
     toast({
       title: 'Database Setup Issue',
-      description: `Unable to create required tables. Please check Supabase permissions and setup in the dashboard.`,
+      description: `Unable to create required tables. Manual setup may be required.`,
       variant: 'destructive'
     });
     
     // Create a more visible error in the console for debugging
     console.error('=== DATABASE SETUP FAILURE ===');
     console.error(`Missing tables: ${stillMissingTables.join(', ')}`);
-    console.error('This could be due to:');
-    console.error('1. Insufficient permissions in Supabase');
-    console.error('2. SQL execution being blocked');
-    console.error('3. Network connectivity issues');
-    console.error('Please check your Supabase dashboard and ensure the tables exist.');
+    console.error('Please create these tables manually in the Supabase dashboard:');
+    console.error('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
     console.error('============================');
     
     return false;

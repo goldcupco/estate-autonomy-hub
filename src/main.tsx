@@ -37,50 +37,74 @@ const initializeApplication = async () => {
     const success = await initializeApp();
     console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
     
-    // If initialization failed, try again after 3 seconds
+    // If initialization failed, show diagnostic information and instructions
     if (!success) {
-      console.log('Trying initialization again in 3 seconds...');
+      toast({
+        title: 'Database Setup Issue',
+        description: 'Tables could not be created automatically. Please check console for more information.',
+        variant: 'destructive',
+        duration: 10000 // Show longer for an important error
+      });
       
-      setTimeout(async () => {
-        try {
-          toast({
-            title: 'Retrying Initialization',
-            description: 'Making another attempt to set up the database...',
-            variant: 'default'
-          });
-          
-          const retrySuccess = await initializeApp();
-          
-          console.log('Retry initialization completed with status:', retrySuccess ? 'SUCCESS' : 'FAILURE');
-          
-          if (!retrySuccess) {
-            // If still failing, show a more detailed error message with instructions
-            toast({
-              title: 'Database Setup Failed',
-              description: 'Please check your Supabase project and ensure you have permission to create tables.',
-              variant: 'destructive'
-            });
-            
-            // Add a visible console message for debugging
-            console.error('=== DATABASE SETUP FAILURE ===');
-            console.error('Tables could not be created after multiple attempts.');
-            console.error('Please check your Supabase project at:');
-            console.error('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/');
-            console.error('1. Ensure your project exists and is active');
-            console.error('2. Check if you have permission to create tables');
-            console.error('3. Try creating the tables manually in the SQL editor');
-            console.error('============================');
-          }
-        } catch (retryError) {
-          console.error('Failed retry initialization:', retryError);
-          
-          toast({
-            title: 'Initialization Error',
-            description: 'Failed to connect to database. Please check console for details.',
-            variant: 'destructive'
-          });
-        }
-      }, 3000);
+      // Add a visible console message with instructions for manual table creation
+      console.error('=== DATABASE SETUP FAILURE ===');
+      console.error('Tables could not be created automatically.');
+      console.error('Please manually create the required tables in the Supabase Dashboard:');
+      console.error('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
+      console.error('');
+      console.error('Copy and run these SQL commands in the SQL Editor:');
+      console.error('');
+      console.error(`CREATE TABLE IF NOT EXISTS communication_providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT false,
+  config JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS call_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  provider_type TEXT NOT NULL,
+  call_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  duration INTEGER DEFAULT 0,
+  recording_url TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sms_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  sms_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  message TEXT NOT NULL,
+  direction TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS letter_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  recipient TEXT NOT NULL,
+  address TEXT,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  content TEXT NOT NULL,
+  status TEXT NOT NULL,
+  tracking_number TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);`);
+      console.error('============================');
     }
   } catch (error) {
     console.error('Failed to initialize application:', error);
