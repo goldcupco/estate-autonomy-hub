@@ -2,7 +2,8 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { initializeApp } from './utils/initializeApp'
+import { verifyTablesExist } from './utils/databaseVerification'
+import { supabase, executeSql } from './utils/supabaseClient'
 import { Toaster } from './components/ui/toaster'
 import { toast } from '@/hooks/use-toast'
 import { ToastAction } from './components/ui/toast'
@@ -23,19 +24,9 @@ createRoot(rootElement).render(
   </>
 );
 
-// Immediate initialization function to avoid race conditions
-const initializeApplication = async () => {
-  console.log('Starting database initialization...');
-  
-  try {
-    // Skip automatic table creation - show manual setup instructions instead
-    console.error('=== IMPORTANT: MANUAL DATABASE SETUP REQUIRED ===');
-    console.error('The application cannot create tables automatically. Please follow these steps:');
-    console.error('1. Go to: https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
-    console.error('2. Click on "SQL Editor" in the left sidebar');
-    console.error('3. Create a new query and paste ALL of the following SQL:');
-    console.error('');
-    console.error(`-- Run this entire SQL block at once
+// SQL statements for creating the tables
+const CREATE_TABLES_SQL = `
+-- Run this entire SQL block at once
 CREATE TABLE IF NOT EXISTS communication_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
@@ -96,39 +87,72 @@ VALUES (
   'twilio',
   true,
   '{"accountSid": "ACexample", "authToken": "example-token", "twilioNumber": "+15555555555"}'
-) ON CONFLICT (id) DO NOTHING;`);
-    console.error('');
-    console.error('4. Click "Run" and ensure you see "Success, no rows returned"');
-    console.error('5. Refresh this application');
-    console.error('==============================================');
+) ON CONFLICT (id) DO NOTHING;
+`;
+
+// Immediate initialization function to create tables directly
+const initializeApplication = async () => {
+  console.log('Starting database initialization...');
+  
+  try {
+    // First check if tables already exist
+    const { success, tableStatus } = await verifyTablesExist();
     
-    // Display more prominent toasts with instructions
-    toast({
-      title: 'Manual Setup Instructions',
-      description: 'Please check the console (F12) for step-by-step instructions.',
-      variant: 'destructive',
-      duration: 20000
-    });
-    
-    // Display URL for SQL editor
-    setTimeout(() => {
+    if (success) {
+      console.log('All tables already exist, no setup needed');
       toast({
-        title: 'Supabase SQL Editor',
-        description: 'Open SQL Editor to create tables manually',
-        variant: 'default',
+        title: 'Database Ready',
+        description: 'Connected to database successfully',
+        variant: 'default'
+      });
+      return true;
+    }
+    
+    // Tables don't exist, try to create them directly
+    console.log('Tables missing, attempting to create them directly...');
+    
+    // Execute the SQL directly
+    const result = await executeSql(CREATE_TABLES_SQL);
+    
+    if (result.success) {
+      console.log('Successfully created all database tables');
+      toast({
+        title: 'Database Setup Complete',
+        description: 'All required tables have been created successfully',
+        variant: 'default'
+      });
+      return true;
+    } else {
+      console.error('Failed to create tables automatically:', result.error);
+      
+      // Show manual setup instructions as fallback
+      console.error('=== MANUAL DATABASE SETUP REQUIRED ===');
+      console.error('Please follow these steps to set up the database manually:');
+      console.error('1. Go to: https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
+      console.error('2. Click on "SQL Editor" in the left sidebar');
+      console.error('3. Create a new query and paste the SQL below:');
+      console.error(CREATE_TABLES_SQL);
+      console.error('4. Click "Run" to execute the SQL');
+      console.error('5. Refresh this application');
+      
+      // Display toast with SQL editor link
+      toast({
+        title: 'Database Setup Failed',
+        description: 'Manual setup is required. Click to open SQL Editor.',
+        variant: 'destructive',
         action: (
           <ToastAction 
-            altText="Open SQL Editor"
+            altText="Open SQL Editor" 
             onClick={() => window.open('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/sql/new', '_blank')}
           >
-            Open Editor
+            Open SQL Editor
           </ToastAction>
         ),
         duration: 30000
       });
-    }, 2000);
-    
-    return false;
+      
+      return false;
+    }
   } catch (error) {
     console.error('Failed to initialize application:', error);
     
