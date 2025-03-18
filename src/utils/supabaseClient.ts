@@ -16,66 +16,67 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Enhanced SQL execution function for table creation
+// Enhanced SQL execution function for table creation with better error handling
 export async function executeSql(sql: string) {
   console.log('Executing SQL:', sql);
   
   try {
-    // First try using the built-in RPC method if available
-    const { data: rpcData, error: rpcError } = await supabase.rpc('exec_sql', { sql_query: sql });
-    
-    if (!rpcError) {
-      console.log('SQL execution via RPC successful');
-      return { success: true, data: rpcData };
+    // First try using the supabase.rpc method
+    try {
+      console.log('Trying SQL execution via RPC...');
+      const { data: rpcData, error: rpcError } = await supabase.rpc('exec_sql', { sql_query: sql });
+      
+      if (!rpcError) {
+        console.log('SQL execution via RPC successful');
+        return { success: true, data: rpcData };
+      }
+      
+      console.log('RPC failed with error:', rpcError.message);
+    } catch (rpcError) {
+      console.log('RPC method failed with exception:', rpcError);
     }
     
-    console.log('RPC failed with error:', rpcError.message);
     console.log('Trying direct REST API approach...');
     
-    // Get the current session for auth
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Execute SQL directly through REST API
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
-        'apikey': supabaseAnonKey,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({ query: sql })
-    });
-    
-    if (!response.ok) {
-      // Try a third approach with the SQL endpoint
-      console.log('Direct REST API failed, trying SQL endpoint...');
-      
-      const sqlResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
+    // Try direct fetch to the REST API endpoint
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
-          'apikey': supabaseAnonKey
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`
         },
         body: JSON.stringify({ sql_query: sql })
       });
       
-      if (!sqlResponse.ok) {
-        console.error('All SQL execution approaches failed', await sqlResponse.text());
-        return { 
-          success: false, 
-          error: `Failed to execute SQL: ${await sqlResponse.text()}` 
-        };
+      if (response.ok) {
+        console.log('SQL execution via direct REST API successful');
+        return { success: true, data: await response.json() };
       }
       
-      return { success: true, data: await sqlResponse.json() };
+      console.log('Direct REST API failed with status:', response.status);
+      console.log('Error response:', await response.text());
+    } catch (fetchError) {
+      console.error('Fetch to REST API failed:', fetchError);
     }
     
-    console.log('SQL execution via REST API successful');
-    return { success: true, data: await response.json() };
+    // Last resort: try to use the query method
+    console.log('Trying Supabase query method...');
+    const { data: queryData, error: queryError } = await supabase.from('_temp_query').rpc('exec_sql', { sql_query: sql });
+    
+    if (queryError) {
+      console.error('All SQL execution approaches failed:', queryError);
+      return { 
+        success: false, 
+        error: `Failed to execute SQL: ${queryError.message}` 
+      };
+    }
+    
+    console.log('SQL execution via query method successful');
+    return { success: true, data: queryData };
   } catch (error) {
-    console.error('Error executing SQL:', error);
+    console.error('Fatal error executing SQL:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error executing SQL'

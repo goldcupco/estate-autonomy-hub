@@ -21,31 +21,26 @@ createRoot(rootElement).render(
   </>
 );
 
-// Start the database initialization process with a longer delay
-window.addEventListener('load', () => {
-  console.log('Window loaded, initializing app in 3 seconds...');
-  // Longer delay to ensure everything is fully loaded
-  setTimeout(() => {
-    initializeApp()
-      .then(success => {
-        console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
-        
-        // If initialization failed, try again after 5 seconds
-        if (!success) {
-          console.log('Trying initialization again in 5 seconds...');
-          setTimeout(() => {
-            initializeApp()
-              .then(retrySuccess => {
-                console.log('Retry initialization completed with status:', retrySuccess ? 'SUCCESS' : 'FAILURE');
-              })
-              .catch(error => {
-                console.error('Failed retry initialization:', error);
-              });
-          }, 5000);
-        }
-      })
-      .catch(error => {
-        console.error('Failed to initialize application:', error);
-      });
-  }, 3000);
-});
+// Start the database initialization process immediately
+console.log('Starting database initialization...');
+initializeApp()
+  .then(success => {
+    console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
+    
+    // If initialization failed, try again after 3 seconds
+    if (!success) {
+      console.log('Trying initialization again in 3 seconds...');
+      setTimeout(() => {
+        initializeApp()
+          .then(retrySuccess => {
+            console.log('Retry initialization completed with status:', retrySuccess ? 'SUCCESS' : 'FAILURE');
+          })
+          .catch(error => {
+            console.error('Failed retry initialization:', error);
+          });
+      }, 3000);
+    }
+  })
+  .catch(error => {
+    console.error('Failed to initialize application:', error);
+  });
