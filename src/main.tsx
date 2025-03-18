@@ -29,32 +29,21 @@ const initializeApplication = async () => {
   try {
     // Show a toast to let the user know initialization is happening
     toast({
-      title: 'Initializing Application',
-      description: 'Setting up the database connection...',
-      variant: 'default'
+      title: 'Database Connection Issue',
+      description: 'The application cannot create tables automatically. Manual setup is required.',
+      variant: 'destructive',
+      duration: 10000
     });
     
-    const success = await initializeApp();
-    console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
-    
-    // If initialization failed, show diagnostic information and instructions
-    if (!success) {
-      toast({
-        title: 'Database Setup Issue',
-        description: 'Tables could not be created automatically. Please check console for more information.',
-        variant: 'destructive',
-        duration: 10000 // Show longer for an important error
-      });
-      
-      // Provide comprehensive debugging information with multiple SQL creation commands
-      console.error('=== DATABASE SETUP FAILURE ===');
-      console.error('Tables could not be created automatically.');
-      console.error('Please manually create the required tables in the Supabase Dashboard:');
-      console.error('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
-      console.error('');
-      console.error('Copy and run these SQL commands in the SQL Editor:');
-      console.error('');
-      console.error(`CREATE TABLE IF NOT EXISTS communication_providers (
+    // Skip automatic table creation - show manual setup instructions instead
+    console.error('=== IMPORTANT: MANUAL DATABASE SETUP REQUIRED ===');
+    console.error('The application cannot create tables automatically. Please follow these steps:');
+    console.error('1. Go to: https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/database/tables');
+    console.error('2. Click on "SQL Editor" in the left sidebar');
+    console.error('3. Create a new query and paste ALL of the following SQL:');
+    console.error('');
+    console.error(`-- Run this entire SQL block at once
+CREATE TABLE IF NOT EXISTS communication_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
@@ -103,27 +92,58 @@ CREATE TABLE IF NOT EXISTS letter_records (
   status TEXT NOT NULL,
   tracking_number TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
-);`);
-      console.error('============================');
-      
-      // Show an additional toast with link to Supabase
+);
+
+-- Insert example data to verify tables work
+INSERT INTO communication_providers (id, user_id, name, type, is_default, config)
+VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  'system',
+  'Example Twilio',
+  'twilio',
+  true,
+  '{"accountSid": "ACexample", "authToken": "example-token", "twilioNumber": "+15555555555"}'
+) ON CONFLICT (id) DO NOTHING;`);
+    console.error('');
+    console.error('4. Click "Run" and ensure you see "Success, no rows returned"');
+    console.error('5. Refresh this application');
+    console.error('==============================================');
+    
+    // Display more prominent toasts with instructions
+    toast({
+      title: 'Manual Setup Instructions',
+      description: 'Please check the console (F12) for step-by-step instructions.',
+      variant: 'destructive',
+      duration: 20000
+    });
+    
+    // Display URL for SQL editor
+    setTimeout(() => {
       toast({
-        title: 'Manual Setup Required',
-        description: 'Please visit the Supabase Dashboard to create tables manually.',
+        title: 'Supabase SQL Editor',
+        description: 'Open SQL Editor to create tables manually',
         variant: 'default',
-        duration: 15000
+        action: {
+          label: 'Open Editor',
+          onClick: () => window.open('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/sql/new', '_blank')
+        },
+        duration: 30000
       });
-    }
+    }, 2000);
+    
+    return false;
   } catch (error) {
     console.error('Failed to initialize application:', error);
     
     toast({
-      title: 'Initialization Error',
-      description: 'An unexpected error occurred. Please check console for details.',
+      title: 'Critical Error',
+      description: 'The application cannot start properly. Please contact support.',
       variant: 'destructive'
     });
+    
+    return false;
   }
 };
 
-// Start the database initialization process immediately
+// Start the initialization process immediately
 initializeApplication();
