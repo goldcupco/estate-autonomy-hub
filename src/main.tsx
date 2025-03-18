@@ -21,14 +21,17 @@ createRoot(rootElement).render(
   </>
 );
 
-// Initialize the application (database, etc.) after rendering
-// This ensures the toast notifications will be visible
-setTimeout(() => {
-  initializeApp()
-    .then(success => {
-      console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
-    })
-    .catch(error => {
-      console.error('Failed to initialize application:', error);
-    });
-}, 500);
+// Start the database initialization process
+window.addEventListener('load', () => {
+  console.log('Window loaded, initializing app in 1 second...');
+  // Delay initialization to ensure DOM is fully loaded
+  setTimeout(() => {
+    initializeApp()
+      .then(success => {
+        console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
+      })
+      .catch(error => {
+        console.error('Failed to initialize application:', error);
+      });
+  }, 1000);
+});

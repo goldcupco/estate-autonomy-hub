@@ -16,6 +16,38 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Helper function to execute raw SQL
+export async function executeSql(sql: string) {
+  console.log('Executing SQL:', sql);
+  const { data, error } = await supabase.rpc('exec_sql', { sql_query: sql });
+  
+  if (error) {
+    // Fallback to direct query if RPC fails
+    console.log('RPC failed, trying direct query');
+    const directResult = await supabase.auth.getSession().then(({ data: { session } }) => 
+      fetch(`${supabaseUrl}/rest/v1/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
+          'apikey': supabaseAnonKey,
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({ query: sql })
+      })
+    );
+    
+    if (!directResult.ok) {
+      console.error('Direct SQL execution failed', await directResult.text());
+      return { success: false, error: await directResult.text() };
+    }
+    
+    return { success: true, data: await directResult.json() };
+  }
+  
+  return { success: true, data };
+}
+
 // Type definitions for our database tables
 export type ProviderType = 'twilio' | 'callrail';
 
