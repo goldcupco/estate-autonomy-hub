@@ -4,10 +4,14 @@ import App from './App.tsx'
 import './index.css'
 import { initializeApp } from './utils/initializeApp'
 
-// Initialize the application (database, etc.)
-initializeApp().catch(error => {
-  console.error('Failed to initialize application:', error);
-});
+// Initialize the application (database, etc.) immediately and handle errors
+initializeApp()
+  .then(success => {
+    console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
+  })
+  .catch(error => {
+    console.error('Failed to initialize application:', error);
+  });
 
 // Get the root element
 const rootElement = document.getElementById("root");

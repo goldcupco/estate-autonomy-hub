@@ -36,28 +36,42 @@ export async function setupSupabaseTables() {
 async function createCommunicationProvidersTable() {
   console.log('Creating communication_providers table...');
   try {
-    // Attempt to insert a test record - this will create the table if needed
-    const { error } = await supabase
-      .from('communication_providers')
-      .insert({
-        id: '00000000-0000-0000-0000-000000000000',
-        user_id: 'setup-test',
-        name: 'Test Provider',
-        type: 'twilio',
-        is_default: false,
-        config: {}
-      });
+    // Use RPC function to check if table exists first
+    const { error: rpcError } = await supabase.rpc('create_communication_providers_if_not_exists');
     
-    if (error && !error.message.includes('already exists')) {
-      console.error('Failed to create communication_providers table:', error);
-    } else {
-      // Delete the test record
-      await supabase
-        .from('communication_providers')
-        .delete()
-        .eq('id', '00000000-0000-0000-0000-000000000000');
+    if (rpcError) {
+      console.log('RPC not available, using direct insert method');
       
-      console.log('Communication providers table created or already exists');
+      // Attempt to insert a test record - this will create the table if needed
+      const { error } = await supabase
+        .from('communication_providers')
+        .insert({
+          id: '00000000-0000-0000-0000-000000000000',
+          user_id: 'setup-test',
+          name: 'Test Provider',
+          type: 'twilio',
+          is_default: false,
+          config: {}
+        });
+      
+      // Safely check error message
+      if (error) {
+        // If the error doesn't contain "already exists", it's a different error
+        if (error.message && !error.message.includes('already exists')) {
+          console.error('Failed to create communication_providers table:', error);
+        } else {
+          console.log('Communication providers table already exists or was created');
+        }
+      } else {
+        console.log('Test record inserted, deleting it now');
+        // Delete the test record
+        await supabase
+          .from('communication_providers')
+          .delete()
+          .eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    } else {
+      console.log('Table created or already exists via RPC');
     }
   } catch (err) {
     console.error('Error creating communication_providers table:', err);
@@ -67,30 +81,44 @@ async function createCommunicationProvidersTable() {
 async function createCallRecordsTable() {
   console.log('Creating call_records table...');
   try {
-    // Attempt to insert a test record
-    const { error } = await supabase
-      .from('call_records')
-      .insert({
-        id: '00000000-0000-0000-0000-000000000000',
-        user_id: 'setup-test',
-        provider_id: 'test',
-        provider_type: 'twilio',
-        call_id: 'setup-test',
-        phone_number: '+10000000000',
-        contact_name: 'Test Contact',
-        duration: 0
-      });
+    // Use RPC function to check if table exists first
+    const { error: rpcError } = await supabase.rpc('create_call_records_if_not_exists');
     
-    if (error && !error.message.includes('already exists')) {
-      console.error('Failed to create call_records table:', error);
-    } else {
-      // Delete the test record
-      await supabase
-        .from('call_records')
-        .delete()
-        .eq('id', '00000000-0000-0000-0000-000000000000');
+    if (rpcError) {
+      console.log('RPC not available, using direct insert method');
       
-      console.log('Call records table created or already exists');
+      // Attempt to insert a test record
+      const { error } = await supabase
+        .from('call_records')
+        .insert({
+          id: '00000000-0000-0000-0000-000000000000',
+          user_id: 'setup-test',
+          provider_id: 'test',
+          provider_type: 'twilio',
+          call_id: 'setup-test',
+          phone_number: '+10000000000',
+          contact_name: 'Test Contact',
+          duration: 0
+        });
+      
+      // Safely check error message
+      if (error) {
+        // If the error doesn't contain "already exists", it's a different error
+        if (error.message && !error.message.includes('already exists')) {
+          console.error('Failed to create call_records table:', error);
+        } else {
+          console.log('Call records table already exists or was created');
+        }
+      } else {
+        console.log('Test record inserted, deleting it now');
+        // Delete the test record
+        await supabase
+          .from('call_records')
+          .delete()
+          .eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    } else {
+      console.log('Table created or already exists via RPC');
     }
   } catch (err) {
     console.error('Error creating call_records table:', err);
@@ -100,29 +128,43 @@ async function createCallRecordsTable() {
 async function createSmsRecordsTable() {
   console.log('Creating sms_records table...');
   try {
-    // Attempt to insert a test record
-    const { error } = await supabase
-      .from('sms_records')
-      .insert({
-        id: '00000000-0000-0000-0000-000000000000',
-        user_id: 'setup-test',
-        provider_id: 'test',
-        sms_id: 'setup-test',
-        phone_number: '+10000000000',
-        message: 'Test message',
-        direction: 'outgoing'
-      });
+    // Use RPC function to check if table exists first
+    const { error: rpcError } = await supabase.rpc('create_sms_records_if_not_exists');
     
-    if (error && !error.message.includes('already exists')) {
-      console.error('Failed to create sms_records table:', error);
-    } else {
-      // Delete the test record
-      await supabase
-        .from('sms_records')
-        .delete()
-        .eq('id', '00000000-0000-0000-0000-000000000000');
+    if (rpcError) {
+      console.log('RPC not available, using direct insert method');
       
-      console.log('SMS records table created or already exists');
+      // Attempt to insert a test record
+      const { error } = await supabase
+        .from('sms_records')
+        .insert({
+          id: '00000000-0000-0000-0000-000000000000',
+          user_id: 'setup-test',
+          provider_id: 'test',
+          sms_id: 'setup-test',
+          phone_number: '+10000000000',
+          message: 'Test message',
+          direction: 'outgoing'
+        });
+      
+      // Safely check error message
+      if (error) {
+        // If the error doesn't contain "already exists", it's a different error
+        if (error.message && !error.message.includes('already exists')) {
+          console.error('Failed to create sms_records table:', error);
+        } else {
+          console.log('SMS records table already exists or was created');
+        }
+      } else {
+        console.log('Test record inserted, deleting it now');
+        // Delete the test record
+        await supabase
+          .from('sms_records')
+          .delete()
+          .eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    } else {
+      console.log('Table created or already exists via RPC');
     }
   } catch (err) {
     console.error('Error creating sms_records table:', err);
@@ -132,27 +174,41 @@ async function createSmsRecordsTable() {
 async function createLetterRecordsTable() {
   console.log('Creating letter_records table...');
   try {
-    // Attempt to insert a test record
-    const { error } = await supabase
-      .from('letter_records')
-      .insert({
-        id: '00000000-0000-0000-0000-000000000000',
-        user_id: 'setup-test',
-        recipient: 'Test Recipient',
-        content: 'Test content',
-        status: 'draft'
-      });
+    // Use RPC function to check if table exists first
+    const { error: rpcError } = await supabase.rpc('create_letter_records_if_not_exists');
     
-    if (error && !error.message.includes('already exists')) {
-      console.error('Failed to create letter_records table:', error);
-    } else {
-      // Delete the test record
-      await supabase
-        .from('letter_records')
-        .delete()
-        .eq('id', '00000000-0000-0000-0000-000000000000');
+    if (rpcError) {
+      console.log('RPC not available, using direct insert method');
       
-      console.log('Letter records table created or already exists');
+      // Attempt to insert a test record
+      const { error } = await supabase
+        .from('letter_records')
+        .insert({
+          id: '00000000-0000-0000-0000-000000000000',
+          user_id: 'setup-test',
+          recipient: 'Test Recipient',
+          content: 'Test content',
+          status: 'draft'
+        });
+      
+      // Safely check error message
+      if (error) {
+        // If the error doesn't contain "already exists", it's a different error
+        if (error.message && !error.message.includes('already exists')) {
+          console.error('Failed to create letter_records table:', error);
+        } else {
+          console.log('Letter records table already exists or was created');
+        }
+      } else {
+        console.log('Test record inserted, deleting it now');
+        // Delete the test record
+        await supabase
+          .from('letter_records')
+          .delete()
+          .eq('id', '00000000-0000-0000-0000-000000000000');
+      }
+    } else {
+      console.log('Table created or already exists via RPC');
     }
   } catch (err) {
     console.error('Error creating letter_records table:', err);
@@ -164,11 +220,26 @@ export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
   
   try {
+    // Try to create tables directly with SQL if they don't exist
+    const { error: sqlError } = await supabase.rpc('create_tables_if_not_exist');
+    
+    if (sqlError) {
+      console.log('Direct SQL table creation not available, checking manually');
+    } else {
+      console.log('Tables created or verified via SQL function');
+    }
+    
     // Check if tables exist by trying to fetch data from each
     const providerCheck = await supabase.from('communication_providers').select('id').limit(1);
     const callCheck = await supabase.from('call_records').select('id').limit(1);
     const smsCheck = await supabase.from('sms_records').select('id').limit(1);
     const letterCheck = await supabase.from('letter_records').select('id').limit(1);
+    
+    // Log the errors to see what's happening
+    if (providerCheck.error) console.log('Provider check error:', providerCheck.error);
+    if (callCheck.error) console.log('Call check error:', callCheck.error);
+    if (smsCheck.error) console.log('SMS check error:', smsCheck.error);
+    if (letterCheck.error) console.log('Letter check error:', letterCheck.error);
     
     const tablesExist = [
       !providerCheck.error,
@@ -196,6 +267,12 @@ export async function verifyDatabaseSetup() {
       const updatedCallCheck = await supabase.from('call_records').select('id').limit(1);
       const updatedSmsCheck = await supabase.from('sms_records').select('id').limit(1);
       const updatedLetterCheck = await supabase.from('letter_records').select('id').limit(1);
+      
+      // Log updated errors
+      if (updatedProviderCheck.error) console.log('Updated provider check error:', updatedProviderCheck.error);
+      if (updatedCallCheck.error) console.log('Updated call check error:', updatedCallCheck.error);
+      if (updatedSmsCheck.error) console.log('Updated SMS check error:', updatedSmsCheck.error);
+      if (updatedLetterCheck.error) console.log('Updated letter check error:', updatedLetterCheck.error);
       
       const updatedTablesExist = [
         !updatedProviderCheck.error,
