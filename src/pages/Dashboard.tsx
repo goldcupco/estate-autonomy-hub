@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
@@ -6,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import PropertyCard from '@/components/dashboard/PropertyCard';
 import LeadTable, { Lead } from '@/components/leads/LeadTable';
-import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { toggleSidebar } from '@/utils/sidebarUtils';
 import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 import { AddLeadModal } from '@/components/leads/AddLeadModal';
 import { ScheduleCallModal } from '@/components/calls/ScheduleCallModal';

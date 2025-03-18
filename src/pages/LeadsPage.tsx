@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { toggleSidebar } from '@/utils/sidebarUtils';
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -8,8 +8,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import CampaignTracker from '@/components/campaigns/CampaignTracker';
 import { Badge } from '@/components/ui/badge';
-import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { toggleSidebar } from '@/utils/sidebarUtils';
 
 export function Lists() {
   const { toast } = useToast();

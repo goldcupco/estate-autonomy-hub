@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -8,8 +7,9 @@ import { DataUploader } from '@/components/ui/DataUploader';
 import { MLSImporter } from '@/components/property/MLSImporter';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { toggleSidebar } from '@/utils/sidebarUtils';
 
 export const propertiesData = [
   {
@@ -229,7 +229,6 @@ export function Properties() {
   const [showImporter, setShowImporter] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -241,7 +240,6 @@ export function Properties() {
     };
   }, []);
 
-  // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
     if (savedState !== null) {

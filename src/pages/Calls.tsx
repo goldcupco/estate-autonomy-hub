@@ -1,35 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Clock, User, ArrowLeft, PhoneCall, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Sidebar, { toggleSidebar } from '@/components/layout/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import { toggleSidebar } from '@/utils/sidebarUtils';
 import CallList from '@/components/calls/CallList';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  startCallRecording, 
-  endCallRecording, 
-  logSmsMessage,
-  getSmsHistory
-} from '@/utils/communicationUtils';
 
 const Calls = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -45,7 +21,6 @@ const Calls = () => {
   const [callTimerInterval, setCallTimerInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -57,7 +32,6 @@ const Calls = () => {
     };
   }, []);
 
-  // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
     if (savedState !== null) {
@@ -65,7 +39,6 @@ const Calls = () => {
     }
   }, []);
 
-  // Timer for call duration
   useEffect(() => {
     if (isRecording && callStartTime) {
       const intervalId = window.setInterval(() => {
@@ -92,7 +65,6 @@ const Calls = () => {
 
   const toggleCallRecording = () => {
     if (isRecording) {
-      // Stop recording
       if (currentCallId && callStartTime) {
         const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
         try {
@@ -111,7 +83,6 @@ const Calls = () => {
       setCallStartTime(null);
       setCallDuration(0);
     } else {
-      // Start recording
       if (!phoneNumber) {
         toast({
           title: "Missing information",
@@ -152,7 +123,6 @@ const Calls = () => {
       return;
     }
     
-    // In a real app, this would integrate with a phone API
     window.location.href = `tel:${phoneNumber}`;
     
     toast({
@@ -160,7 +130,6 @@ const Calls = () => {
       description: `Calling ${phoneNumber}`,
     });
     
-    // Don't close the dialog if recording is active
     if (!isRecording) {
       setQuickCallDialogOpen(false);
       setPhoneNumber('');
@@ -177,7 +146,6 @@ const Calls = () => {
       return;
     }
     
-    // Log the SMS
     try {
       const smsRecord = logSmsMessage(
         smsRecipient, 
@@ -251,7 +219,6 @@ const Calls = () => {
           </div>
           
           <div className="grid gap-6 md:grid-cols-3 mb-8">
-            {/* Scheduled Calls Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Scheduled</h2>
@@ -263,7 +230,6 @@ const Calls = () => {
               <p className="text-muted-foreground">Upcoming calls</p>
             </div>
             
-            {/* Completed Calls Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Completed</h2>
@@ -275,7 +241,6 @@ const Calls = () => {
               <p className="text-muted-foreground">Calls this week</p>
             </div>
             
-            {/* Contacts Card */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Contacts</h2>
@@ -294,9 +259,7 @@ const Calls = () => {
         </main>
       </div>
       
-      {/* Quick Call Dialog */}
       <Dialog open={quickCallDialogOpen} onOpenChange={(open) => {
-        // Only allow closing if not recording
         if (!isRecording || !open) {
           setQuickCallDialogOpen(open);
         }
@@ -358,7 +321,6 @@ const Calls = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Quick SMS Dialog */}
       <Dialog open={quickSmsDialogOpen} onOpenChange={setQuickSmsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
