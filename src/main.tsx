@@ -5,13 +5,16 @@ import './index.css'
 import { initializeApp } from './utils/initializeApp'
 
 // Initialize the application (database, etc.) immediately and handle errors
-initializeApp()
-  .then(success => {
-    console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
-  })
-  .catch(error => {
-    console.error('Failed to initialize application:', error);
-  });
+// Wrap in a delay to ensure DOM is fully loaded
+setTimeout(() => {
+  initializeApp()
+    .then(success => {
+      console.log('Application initialization completed with status:', success ? 'SUCCESS' : 'FAILURE');
+    })
+    .catch(error => {
+      console.error('Failed to initialize application:', error);
+    });
+}, 1000);
 
 // Get the root element
 const rootElement = document.getElementById("root");
