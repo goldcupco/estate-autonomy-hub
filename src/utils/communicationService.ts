@@ -1,6 +1,7 @@
 
 import { useSupabaseCommunication } from './supabaseCommunicationService';
 import { useToast } from "@/hooks/use-toast";
+import { ProviderType } from './supabaseClient';
 
 // Configuration interface to match what's used in the CommunicationSettings component
 export interface CommunicationServiceConfig {
@@ -52,8 +53,8 @@ export function getCommunicationService(): CommunicationServiceConfig | null {
 export function useCommunication() {
   const { 
     getProviders, 
-    makeCall, 
-    endCall, 
+    makeCall: makeSupabaseCall, 
+    endCall: endSupabaseCall, 
     getCallHistory, 
     sendSms, 
     getSmsHistory 
@@ -68,6 +69,53 @@ export function useCommunication() {
     } catch (error) {
       console.error('Error checking for providers:', error);
       return false;
+    }
+  };
+
+  // Wrapped makeCall function to handle provider selection and adapt parameters
+  const makeCall = async (
+    phoneNumber: string, 
+    contactName: string, 
+    notes: string = '',
+    providerId?: string
+  ): Promise<string> => {
+    try {
+      // If no providerId is specified, get the first available provider
+      if (!providerId) {
+        const providers = await getProviders();
+        if (providers.length === 0) {
+          throw new Error('No call providers configured');
+        }
+        
+        providerId = providers[0].id;
+        const providerType = providers[0].type as ProviderType;
+        
+        // Now make the call with the selected provider
+        return await makeSupabaseCall(providerId, providerType, phoneNumber, contactName);
+      } else {
+        // Get the provider type for the specified providerId
+        const providers = await getProviders();
+        const provider = providers.find(p => p.id === providerId);
+        
+        if (!provider) {
+          throw new Error('Selected provider not found');
+        }
+        
+        return await makeSupabaseCall(providerId, provider.type as ProviderType, phoneNumber, contactName);
+      }
+    } catch (error) {
+      console.error('Error making call:', error);
+      throw error;
+    }
+  };
+
+  // Wrapped endCall function
+  const endCall = async (callId: string, duration: number) => {
+    try {
+      return await endSupabaseCall(callId, duration);
+    } catch (error) {
+      console.error('Error ending call:', error);
+      throw error;
     }
   };
 

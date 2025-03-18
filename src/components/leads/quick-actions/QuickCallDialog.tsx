@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
   const { toast } = useToast();
   const { makeCall, endCall, hasConfiguredCallProvider } = useCommunication();
 
-  // Check if call providers are available when dialog opens
   useEffect(() => {
     if (open) {
       hasConfiguredCallProvider()
@@ -39,7 +37,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
     }
   }, [open, hasConfiguredCallProvider]);
 
-  // Timer for call duration
   useEffect(() => {
     if (isRecording && callStartTime) {
       const intervalId = window.setInterval(() => {
@@ -69,7 +66,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
     e.stopPropagation();
     
     if (isRecording) {
-      // Stop recording
       if (currentCallId && callStartTime) {
         setIsLoading(true);
         const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
@@ -96,7 +92,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
       setCallStartTime(null);
       setCallDuration(0);
     } else {
-      // Start recording
       if (!phoneNumber) {
         toast({
           title: "Missing information",
@@ -108,14 +103,11 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
       
       setIsLoading(true);
       try {
-        // Check if we have providers
         const hasProvider = await hasConfiguredCallProvider();
         if (!hasProvider) {
           throw new Error("No call provider configured. Please add one in Settings.");
         }
         
-        // Make the call with the first provider
-        // Passing 'Quick Call' as contact name and empty string as notes
         const callId = await makeCall(phoneNumber, 'Quick Call', '', '');
         setCurrentCallId(callId);
         setCallStartTime(new Date());
@@ -151,7 +143,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
       return;
     }
     
-    // In a real app, this would integrate with a phone API
     window.location.href = `tel:${phoneNumber}`;
     
     toast({
@@ -159,7 +150,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
       description: `Calling ${phoneNumber}`,
     });
     
-    // Don't close the dialog if recording is active
     if (!isRecording) {
       onOpenChange(false);
       setPhoneNumber('');
@@ -168,7 +158,6 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
-      // Only allow closing if not recording
       if (!isRecording || !newOpen) {
         onOpenChange(newOpen);
       }
