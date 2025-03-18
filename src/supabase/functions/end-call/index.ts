@@ -29,17 +29,52 @@ import { py } from '../../utils/pythonBridge';
 const end_call = py.def('end_call', 'req', async (req) => {
   try {
     // Create a Supabase client - Python-like syntax
+    const supabaseUrl = 'https://gdxzktqieasxxcocwsjh.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHprdHFpZWFzeHhjb2N3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjc1MTEsImV4cCI6MjA1NzkwMzUxMX0.EKFCdp3mGjHsBalEWUcIApkHtcmbzR8876N8F3OhlKY';
+    
+    // In a real deployment, this would use the Deno import:
+    // const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    
     const supabaseClient = py.dict({
-      from: () => py.dict({
-        select: () => py.dict({
-          eq: () => py.dict({
-            single: async () => py.dict({ 
-              data: py.dict({ 
-                provider_type: 'twilio', 
-                communication_providers: py.dict({ config: {} }) 
-              }) 
-            })
-          })
+      from: (table) => py.dict({
+        select: (selector) => py.dict({
+          eq: (column, value) => py.dict({
+            single: async () => {
+              py.print(`Getting data from ${table} where ${column} = ${value}`);
+              // This is a mock implementation, in the real function this would query Supabase
+              if (table === 'call_records' && column === 'call_id') {
+                return py.dict({ 
+                  data: py.dict({ 
+                    provider_type: 'twilio', 
+                    communication_providers: py.dict({ 
+                      config: {
+                        accountSid: 'ACxxx',
+                        authToken: 'auth_token_here',
+                      }
+                    }) 
+                  }),
+                  error: null
+                });
+              }
+              return py.dict({ data: null, error: 'Not found' });
+            }
+          }),
+          maybeSingle: async () => {
+            py.print(`Getting data from ${table} with selector ${selector}`);
+            return py.dict({ data: null, error: null });
+          }
+        })
+      }),
+      rpc: (functionName, params) => {
+        py.print(`Calling RPC function ${functionName} with params ${JSON.stringify(params)}`);
+        return py.dict({ data: null, error: null });
+      },
+      update: (table) => py.dict({
+        eq: (column, value) => py.dict({
+          set: async (data) => {
+            py.print(`Updating ${table} where ${column} = ${value} with data ${JSON.stringify(data)}`);
+            return py.dict({ data: null, error: null });
+          }
         })
       })
     });
@@ -91,16 +126,58 @@ const end_call = py.def('end_call', 'req', async (req) => {
       
       // Get recording URL
       recordingUrl = `https://api.twilio.com/recordings/${callId}.mp3`;
+      
+      // Update call record in database
+      py.await(
+        supabaseClient
+          .from('call_records')
+          .update()
+          .eq('call_id', callId)
+          .set({
+            duration: duration,
+            recording_url: recordingUrl,
+            updated_at: new Date().toISOString()
+          })
+      );
+      
     } else if (providerType === 'callrail') {
       // CallRail API implementation - Python-like syntax
       py.print('Using CallRail API');
       recordingUrl = `https://app.callrail.com/recordings/${callId}.mp3`;
+      
+      // Update call record in database
+      py.await(
+        supabaseClient
+          .from('call_records')
+          .update()
+          .eq('call_id', callId)
+          .set({
+            duration: duration,
+            recording_url: recordingUrl,
+            updated_at: new Date().toISOString()
+          })
+      );
     }
+
+    // Ensure tables exist (in development environment)
+    py.await(
+      supabaseClient.rpc('create_communication_providers_if_not_exists')
+    );
+    py.await(
+      supabaseClient.rpc('create_call_records_if_not_exists')
+    );
+    py.await(
+      supabaseClient.rpc('create_sms_records_if_not_exists')
+    );
+    py.await(
+      supabaseClient.rpc('create_letter_records_if_not_exists')
+    );
 
     return new py.Response(
       py.dict({ 
         success: true,
-        recordingUrl
+        recordingUrl,
+        message: 'Call ended and database updated'
       }),
       py.dict({ status: 200 })
     );

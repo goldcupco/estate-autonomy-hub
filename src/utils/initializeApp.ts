@@ -6,6 +6,9 @@ export async function initializeApp() {
   console.log('Initializing application...');
   
   try {
+    // Call this function immediately
+    initializeDatabase();
+    
     // Verify and set up database tables and indexes
     const result = await verifyDatabaseSetup();
     
@@ -32,3 +35,21 @@ export async function initializeApp() {
     return false;
   }
 }
+
+// Function to ensure database is initialized
+export async function initializeDatabase() {
+  console.log('Setting up database tables...');
+  try {
+    const result = await verifyDatabaseSetup();
+    console.log('Database setup result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error setting up database:', error);
+    return { success: false, error };
+  }
+}
+
+// Automatically initialize database when this module is imported
+initializeDatabase().catch(error => {
+  console.error('Failed to initialize database on import:', error);
+});
