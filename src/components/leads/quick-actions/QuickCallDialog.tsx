@@ -19,9 +19,25 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [callTimerInterval, setCallTimerInterval] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
   const { makeCall, endCall, hasConfiguredCallProvider } = useCommunication();
+
+  // Check if call providers are available when dialog opens
+  useEffect(() => {
+    if (open) {
+      hasConfiguredCallProvider()
+        .then(hasProvider => {
+          if (!hasProvider) {
+            console.log('No call providers configured');
+          }
+        })
+        .catch(error => {
+          console.error('Error checking call providers:', error);
+        });
+    }
+  }, [open, hasConfiguredCallProvider]);
 
   // Timer for call duration
   useEffect(() => {
@@ -48,27 +64,31 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const toggleCallRecording = (e: React.MouseEvent) => {
+  const toggleCallRecording = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (isRecording) {
       // Stop recording
       if (currentCallId && callStartTime) {
+        setIsLoading(true);
         const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
         try {
-          endCall(currentCallId, duration)
-            .then(callRecord => {
-              toast({
-                title: "Call recorded",
-                description: `Call recording saved (${formatCallDuration(duration)})`,
-              });
-            })
-            .catch(error => {
-              console.error('Error ending call recording:', error);
-            });
+          const callRecord = await endCall(currentCallId, duration);
+          
+          toast({
+            title: "Call recorded",
+            description: `Call recording saved (${formatCallDuration(duration)})`,
+          });
         } catch (error) {
           console.error('Error ending call recording:', error);
+          toast({
+            title: "Error saving recording",
+            description: error instanceof Error ? error.message : "Unknown error",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
         }
       }
       setIsRecording(false);
@@ -86,28 +106,33 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
         return;
       }
       
+      setIsLoading(true);
       try {
-        makeCall(phoneNumber, 'Quick Call')
-          .then(callId => {
-            setCurrentCallId(callId);
-            setCallStartTime(new Date());
-            setIsRecording(true);
-            
-            toast({
-              title: "Recording started",
-              description: `Recording call to ${phoneNumber}`,
-            });
-          })
-          .catch(error => {
-            console.error('Error starting call recording:', error);
-            toast({
-              title: "Recording failed",
-              description: "Failed to start call recording",
-              variant: "destructive"
-            });
-          });
+        // Check if we have providers
+        const hasProvider = await hasConfiguredCallProvider();
+        if (!hasProvider) {
+          throw new Error("No call provider configured. Please add one in Settings.");
+        }
+        
+        // Make the call with the first provider
+        const callId = await makeCall(phoneNumber, 'Quick Call');
+        setCurrentCallId(callId);
+        setCallStartTime(new Date());
+        setIsRecording(true);
+        
+        toast({
+          title: "Recording started",
+          description: `Recording call to ${phoneNumber}`,
+        });
       } catch (error) {
         console.error('Error starting call recording:', error);
+        toast({
+          title: "Recording failed",
+          description: error instanceof Error ? error.message : "Failed to start call recording",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -151,9 +176,7 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
         <DialogHeader>
           <DialogTitle>Make a Quick Call</DialogTitle>
           <DialogDescription>
-            {hasConfiguredCallProvider() 
-              ? "Calls can be recorded for quality and training purposes." 
-              : "Call recording is available once you configure a call provider in Settings."}
+            Calls can be recorded for quality and training purposes.
           </DialogDescription>
         </DialogHeader>
         
@@ -188,7 +211,7 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
             variant={isRecording ? "destructive" : "outline"} 
             onClick={toggleCallRecording}
             className="gap-1"
-            disabled={!hasConfiguredCallProvider() && !isRecording}
+            disabled={isLoading}
           >
             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             {isRecording ? "Stop Recording" : "Record Call"}
@@ -204,7 +227,10 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
                 Cancel
               </Button>
             )}
-            <Button onClick={handleQuickCall}>
+            <Button 
+              onClick={handleQuickCall}
+              disabled={isLoading}
+            >
               <Phone className="mr-2 h-4 w-4" />
               Call Now
             </Button>

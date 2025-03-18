@@ -1,7 +1,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/hooks/use-toast";
 
+// Types matching what's defined in supabaseClient.ts
 export interface CallRecord {
   id: string;
   phoneNumber: string;
@@ -18,138 +18,101 @@ export interface SmsRecord {
   contactName: string;
   timestamp: string;
   message: string;
-  direction: 'outgoing' | 'incoming';
+  direction: 'incoming' | 'outgoing';
 }
 
 export interface LetterRecord {
   id: string;
   recipient: string;
-  address?: string;
-  timestamp: string;
   content: string;
-  status: 'draft' | 'sent' | 'delivered';
+  timestamp: string;
   trackingNumber?: string;
+  status: 'draft' | 'sent' | 'delivered';
+  address?: string;
 }
 
-// In-memory storage for demo purposes
-// In a real app, this would be stored in a database
-let callRecords: CallRecord[] = [];
-let smsRecords: SmsRecord[] = [];
-let letterRecords: LetterRecord[] = [];
+// These functions will be used when the user hasn't set up Supabase providers yet
+// They provide a fallback for demo/testing purposes
 
-export const startCallRecording = (phoneNumber: string, contactName: string = 'Unknown'): string => {
-  console.log(`Started recording call with ${contactName} at ${phoneNumber}`);
+// Store records in memory (would normally be stored in Supabase)
+const callRecords: CallRecord[] = [];
+const smsRecords: SmsRecord[] = [];
+const letterRecords: LetterRecord[] = [];
+
+export function startCallRecording(phoneNumber: string, contactName: string): string {
+  const id = uuidv4();
+  console.log(`Starting call recording to ${phoneNumber} (${contactName})`);
+  return id;
+}
+
+export function endCallRecording(callId: string, duration: number): CallRecord {
+  console.log(`Ending call recording ${callId}, duration: ${duration}s`);
   
-  // In a real app, this would initialize actual call recording
-  // For demo purposes, we just create a record
-  const callId = uuidv4();
-  const timestamp = new Date().toISOString();
-  
-  callRecords.push({
+  const callRecord: CallRecord = {
     id: callId,
-    phoneNumber,
-    contactName,
-    timestamp,
-    duration: 0, // Will be updated when call ends
-    notes: 'Call in progress...'
-  });
+    phoneNumber: '555-123-4567', // Mock data
+    contactName: 'Mock Contact',
+    timestamp: new Date().toISOString(),
+    duration,
+    recordingUrl: `https://example.com/recordings/${callId}.mp3`
+  };
   
-  return callId;
-};
+  callRecords.push(callRecord);
+  return callRecord;
+}
 
-export const endCallRecording = (callId: string, duration: number): CallRecord => {
-  // Find and update the call record
-  const callIndex = callRecords.findIndex(call => call.id === callId);
-  
-  if (callIndex >= 0) {
-    callRecords[callIndex] = {
-      ...callRecords[callIndex],
-      duration,
-      notes: 'Call completed',
-      recordingUrl: `https://example.com/recordings/${callId}.mp3` // Simulated URL
-    };
-    
-    console.log(`Ended recording for call ${callId}. Duration: ${duration} seconds`);
-    return callRecords[callIndex];
-  }
-  
-  throw new Error('Call record not found');
-};
-
-export const getCallRecordings = (): CallRecord[] => {
-  return [...callRecords];
-};
-
-export const logSmsMessage = (
+export function logSmsMessage(
   phoneNumber: string, 
   message: string, 
-  direction: 'outgoing' | 'incoming',
+  direction: 'incoming' | 'outgoing',
   contactName: string = 'Unknown'
-): SmsRecord => {
-  const smsId = uuidv4();
-  const timestamp = new Date().toISOString();
+): SmsRecord {
+  console.log(`Logging ${direction} SMS to/from ${phoneNumber}: ${message}`);
   
   const smsRecord: SmsRecord = {
-    id: smsId,
+    id: uuidv4(),
     phoneNumber,
     contactName,
-    timestamp,
+    timestamp: new Date().toISOString(),
     message,
     direction
   };
   
   smsRecords.push(smsRecord);
-  console.log(`Logged ${direction} SMS to ${contactName}: ${message}`);
-  
   return smsRecord;
-};
+}
 
-export const getSmsHistory = (phoneNumber?: string): SmsRecord[] => {
+export function getSmsHistory(phoneNumber?: string): SmsRecord[] {
   if (phoneNumber) {
     return smsRecords.filter(record => record.phoneNumber === phoneNumber);
   }
   return [...smsRecords];
-};
+}
 
-export const trackLetterSending = (
+export function trackLetterSending(
   recipient: string,
   content: string,
   address?: string
-): LetterRecord => {
-  const letterId = uuidv4();
-  const timestamp = new Date().toISOString();
+): LetterRecord {
+  console.log(`Tracking letter to ${recipient}${address ? ` at ${address}` : ''}`);
   
   const letterRecord: LetterRecord = {
-    id: letterId,
+    id: uuidv4(),
     recipient,
-    address,
-    timestamp,
     content,
+    timestamp: new Date().toISOString(),
+    trackingNumber: `LTR-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
     status: 'sent',
-    trackingNumber: `LTR-${Math.floor(100000 + Math.random() * 900000)}` // Simulated tracking number
+    address
   };
   
   letterRecords.push(letterRecord);
-  console.log(`Tracked letter to ${recipient}. Tracking #: ${letterRecord.trackingNumber}`);
-  
   return letterRecord;
-};
+}
 
-export const getLetterRecords = (): LetterRecord[] => {
-  return [...letterRecords];
-};
-
-export const updateLetterStatus = (id: string, status: 'draft' | 'sent' | 'delivered'): LetterRecord => {
-  const letterIndex = letterRecords.findIndex(letter => letter.id === id);
-  
-  if (letterIndex >= 0) {
-    letterRecords[letterIndex] = {
-      ...letterRecords[letterIndex],
-      status
-    };
-    
-    return letterRecords[letterIndex];
+export function getLetterHistory(recipient?: string): LetterRecord[] {
+  if (recipient) {
+    return letterRecords.filter(record => record.recipient === recipient);
   }
-  
-  throw new Error('Letter record not found');
-};
+  return [...letterRecords];
+}
