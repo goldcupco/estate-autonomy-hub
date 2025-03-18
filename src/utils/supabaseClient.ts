@@ -16,36 +16,71 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Helper function to execute raw SQL
+// Enhanced SQL execution function for table creation
 export async function executeSql(sql: string) {
   console.log('Executing SQL:', sql);
-  const { data, error } = await supabase.rpc('exec_sql', { sql_query: sql });
   
-  if (error) {
-    // Fallback to direct query if RPC fails
-    console.log('RPC failed, trying direct query');
-    const directResult = await supabase.auth.getSession().then(({ data: { session } }) => 
-      fetch(`${supabaseUrl}/rest/v1/`, {
+  try {
+    // First try using the built-in RPC method if available
+    const { data: rpcData, error: rpcError } = await supabase.rpc('exec_sql', { sql_query: sql });
+    
+    if (!rpcError) {
+      console.log('SQL execution via RPC successful');
+      return { success: true, data: rpcData };
+    }
+    
+    console.log('RPC failed with error:', rpcError.message);
+    console.log('Trying direct REST API approach...');
+    
+    // Get the current session for auth
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Execute SQL directly through REST API
+    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
+        'apikey': supabaseAnonKey,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ query: sql })
+    });
+    
+    if (!response.ok) {
+      // Try a third approach with the SQL endpoint
+      console.log('Direct REST API failed, trying SQL endpoint...');
+      
+      const sqlResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
-          'apikey': supabaseAnonKey,
-          'Prefer': 'resolution=merge-duplicates'
+          'apikey': supabaseAnonKey
         },
-        body: JSON.stringify({ query: sql })
-      })
-    );
-    
-    if (!directResult.ok) {
-      console.error('Direct SQL execution failed', await directResult.text());
-      return { success: false, error: await directResult.text() };
+        body: JSON.stringify({ sql_query: sql })
+      });
+      
+      if (!sqlResponse.ok) {
+        console.error('All SQL execution approaches failed', await sqlResponse.text());
+        return { 
+          success: false, 
+          error: `Failed to execute SQL: ${await sqlResponse.text()}` 
+        };
+      }
+      
+      return { success: true, data: await sqlResponse.json() };
     }
     
-    return { success: true, data: await directResult.json() };
+    console.log('SQL execution via REST API successful');
+    return { success: true, data: await response.json() };
+  } catch (error) {
+    console.error('Error executing SQL:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error executing SQL'
+    };
   }
-  
-  return { success: true, data };
 }
 
 // Type definitions for our database tables

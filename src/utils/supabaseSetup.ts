@@ -1,8 +1,9 @@
 
-import { supabase } from './supabaseClient';
+import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
+import { CREATE_TABLES_SQL } from './initializeApp';
 
-// This is now a much simpler verification function that checks if our tables exist
+// This function verifies database setup by checking if tables exist
 export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
   
@@ -46,74 +47,109 @@ export async function verifyDatabaseSetup() {
   }
 }
 
-// This function is now simpler and just uses the upsert method to create tables
+// This function creates tables with direct SQL and sample data
 export async function setupSupabaseTables() {
   console.log('Setting up Supabase tables...');
   try {
-    const { success } = await verifyDatabaseSetup();
+    const { success, missingTables } = await verifyDatabaseSetup();
     
     if (success) {
       console.log('All tables already exist, no setup needed');
       return { success: true };
     }
     
-    // Create a UUID for our test records
-    const testId = '00000000-0000-0000-0000-000000000000';
+    console.log('Missing tables, trying to create them with direct SQL...');
     
-    // Create tables by upserting test records
-    try {
-      console.log('Creating communication_providers table...');
-      await supabase.from('communication_providers').upsert({
-        id: testId,
-        user_id: 'system',
-        name: 'System Default',
-        type: 'twilio',
-        is_default: true,
-        config: {}
-      }, { onConflict: 'id' });
-      
-      console.log('Creating call_records table...');
-      await supabase.from('call_records').upsert({
-        id: testId,
-        user_id: 'system',
-        provider_id: 'system',
-        provider_type: 'twilio',
-        call_id: 'system-test',
-        phone_number: '+10000000000',
-        contact_name: 'System Test',
-        timestamp: new Date().toISOString(),
-        duration: 0
-      }, { onConflict: 'id' });
-      
-      console.log('Creating sms_records table...');
-      await supabase.from('sms_records').upsert({
-        id: testId,
-        user_id: 'system',
-        provider_id: 'system',
-        sms_id: 'system-test',
-        phone_number: '+10000000000',
-        contact_name: 'System Test',
-        timestamp: new Date().toISOString(),
-        message: 'System test',
-        direction: 'outgoing'
-      }, { onConflict: 'id' });
-      
-      console.log('Creating letter_records table...');
-      await supabase.from('letter_records').upsert({
-        id: testId,
-        user_id: 'system',
-        recipient: 'System Test',
-        timestamp: new Date().toISOString(),
-        content: 'System test',
-        status: 'draft'
-      }, { onConflict: 'id' });
-      
-      console.log('All tables created successfully');
-      return { success: true };
-    } catch (error) {
-      console.error('Error creating tables:', error);
-      return { success: false, error };
+    // Try to create the missing tables with direct SQL
+    for (const table of missingTables) {
+      if (CREATE_TABLES_SQL[table]) {
+        console.log(`Creating ${table} with direct SQL...`);
+        await executeSql(CREATE_TABLES_SQL[table]);
+      }
     }
+    
+    // Verify table creation
+    const { success: verifySuccess, missingTables: stillMissing } = await verifyDatabaseSetup();
+    
+    if (verifySuccess) {
+      console.log('All tables created successfully with direct SQL');
+      return { success: true };
+    }
+    
+    if (stillMissing.length > 0) {
+      console.log('Some tables still missing after SQL creation, trying data insertion...');
+      // Create a UUID for our test records
+      const testId = '00000000-0000-0000-0000-000000000000';
+      
+      // Create tables by upserting test records
+      try {
+        if (stillMissing.includes('communication_providers')) {
+          console.log('Creating communication_providers table...');
+          await supabase.from('communication_providers').upsert({
+            id: testId,
+            user_id: 'system',
+            name: 'System Default',
+            type: 'twilio',
+            is_default: true,
+            config: {}
+          }, { onConflict: 'id' });
+        }
+        
+        if (stillMissing.includes('call_records')) {
+          console.log('Creating call_records table...');
+          await supabase.from('call_records').upsert({
+            id: testId,
+            user_id: 'system',
+            provider_id: 'system',
+            provider_type: 'twilio',
+            call_id: 'system-test',
+            phone_number: '+10000000000',
+            contact_name: 'System Test',
+            timestamp: new Date().toISOString(),
+            duration: 0
+          }, { onConflict: 'id' });
+        }
+        
+        if (stillMissing.includes('sms_records')) {
+          console.log('Creating sms_records table...');
+          await supabase.from('sms_records').upsert({
+            id: testId,
+            user_id: 'system',
+            provider_id: 'system',
+            sms_id: 'system-test',
+            phone_number: '+10000000000',
+            contact_name: 'System Test',
+            timestamp: new Date().toISOString(),
+            message: 'System test',
+            direction: 'outgoing'
+          }, { onConflict: 'id' });
+        }
+        
+        if (stillMissing.includes('letter_records')) {
+          console.log('Creating letter_records table...');
+          await supabase.from('letter_records').upsert({
+            id: testId,
+            user_id: 'system',
+            recipient: 'System Test',
+            timestamp: new Date().toISOString(),
+            content: 'System test',
+            status: 'draft'
+          }, { onConflict: 'id' });
+        }
+        
+        // Final verification
+        const { success: finalSuccess } = await verifyDatabaseSetup();
+        if (finalSuccess) {
+          console.log('All tables created successfully after multiple attempts');
+          return { success: true };
+        }
+      } catch (error) {
+        console.error('Error creating tables with data insertion:', error);
+      }
+    }
+    
+    console.error('Failed to create tables after multiple attempts');
+    return { success: false, error: 'Failed to create required tables' };
   } catch (error) {
     console.error('Error setting up tables:', error);
     toast({
