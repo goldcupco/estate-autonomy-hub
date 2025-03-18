@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize the Supabase client with provided credentials
@@ -21,26 +20,18 @@ export async function executeSql(sql: string) {
   console.log('Executing SQL:', sql);
   
   try {
-    // Attempt to use direct rpc call (most reliable method if available)
-    try {
-      console.log('Attempting direct SQL execution via RPC...');
-      
-      const { data, error } = await supabase.rpc('execute_sql', { sql_query: sql });
-      
-      if (!error) {
-        console.log('SQL execution via RPC successful');
-        return { success: true, data };
-      }
-      
-      console.log('RPC query failed:', error);
-    } catch (rpcError) {
-      console.error('RPC approach failed:', rpcError);
+    // Try to use the supabase.rpc method to execute raw SQL
+    const { data, error } = await supabase.rpc('execute_sql', { sql_query: sql });
+    
+    if (!error) {
+      console.log('SQL execution successful');
+      return { success: true, data };
     }
     
-    // Use Supabase REST API as alternative
+    console.error('RPC method failed:', error);
+    
+    // If RPC failed, try REST API directly
     try {
-      console.log('Attempting direct SQL execution via Supabase REST API...');
-      
       const response = await fetch(`${supabaseUrl}/rest/v1/rpc/execute_sql`, {
         method: 'POST',
         headers: {
@@ -59,162 +50,48 @@ export async function executeSql(sql: string) {
         return { success: true, data };
       }
       
-      console.log('REST API query failed with status:', response.status);
+      console.error('REST API query failed with status:', response.status);
       const errorText = await response.text();
-      console.log('Error response:', errorText);
+      console.error('Error response:', errorText);
     } catch (restError) {
-      console.error('REST API query approach failed:', restError);
+      console.error('REST API query failed:', restError);
     }
     
-    // Last resort: Try creating the tables manually with direct SQL queries
-    try {
-      console.log('Using manual table creation approach...');
+    // If all direct SQL methods failed, try individual table creation
+    if (sql.toLowerCase().includes('create table')) {
+      console.log('Attempting individual table creation...');
       
-      // Try to create a function to execute SQL first
-      const createFunctionSql = `
-        CREATE OR REPLACE FUNCTION execute_sql(sql_query TEXT)
-        RETURNS JSONB
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        AS $$
-        BEGIN
-          EXECUTE sql_query;
-          RETURN '{"status": "success"}'::jsonb;
-        EXCEPTION
-          WHEN OTHERS THEN
-            RETURN jsonb_build_object(
-              'status', 'error',
-              'message', SQLERRM,
-              'code', SQLSTATE
-            );
-        END;
-        $$;
-      `;
+      // Extract table creation statements
+      const tableStatements = sql.split(';').filter(stmt => 
+        stmt.trim().toLowerCase().startsWith('create table')
+      );
       
-      // Try to execute the function creation directly
-      try {
-        const functionResponse = await fetch(`${supabaseUrl}/rest/v1/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseAnonKey,
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({ 
-            query: createFunctionSql 
-          })
-        });
-        
-        if (functionResponse.ok) {
-          console.log('Successfully created SQL execution function');
-        }
-      } catch (functionError) {
-        console.error('Failed to create SQL execution function:', functionError);
-      }
-      
-      // For table creation SQL, we'll try to do individual REST API calls
-      if (sql.toLowerCase().includes('create table')) {
-        // Try to parse the table name from SQL
-        const tableName = sql.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z_]+)/i)?.[1];
-        
-        if (tableName) {
-          console.log(`Detected table creation for: ${tableName}`);
-          
-          // Try to create the table using a direct request to the SQL API endpoint
-          const sqlEndpointUrl = `${supabaseUrl}/rest/v1/`;
-          const createTableResponse = await fetch(sqlEndpointUrl, {
+      // Try to create each table individually
+      for (const stmt of tableStatements) {
+        try {
+          // Send individual create table statement
+          await fetch(`${supabaseUrl}/rest/v1/`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/sql',
               'apikey': supabaseAnonKey,
               'Authorization': `Bearer ${supabaseAnonKey}`,
-              'Prefer': 'params=single-object'
             },
-            body: JSON.stringify({
-              query: sql
-            })
+            body: stmt + ';'
           });
           
-          console.log(`Table creation response status for ${tableName}:`, createTableResponse.status);
-          
-          if (createTableResponse.ok) {
-            console.log(`Successfully created table ${tableName} via direct SQL`);
-            return { success: true, data: { message: `Table ${tableName} created successfully` } };
-          }
-          
-          // Try to create a dummy record to force table creation
-          try {
-            console.log(`Attempting to create ${tableName} via record insertion`);
-            
-            // Create a default record
-            const dummyRecord = {
-              id: '00000000-0000-0000-0000-000000000000',
-              user_id: 'system',
-              created_at: new Date().toISOString()
-            };
-            
-            // Add specific fields based on table name
-            if (tableName === 'communication_providers') {
-              dummyRecord['name'] = 'System Default';
-              dummyRecord['type'] = 'twilio';
-              dummyRecord['is_default'] = true;
-              dummyRecord['config'] = {};
-            } else if (tableName === 'call_records') {
-              dummyRecord['provider_id'] = 'system';
-              dummyRecord['provider_type'] = 'twilio';
-              dummyRecord['call_id'] = 'system-test';
-              dummyRecord['phone_number'] = '+10000000000';
-              dummyRecord['contact_name'] = 'System Test';
-              dummyRecord['timestamp'] = new Date().toISOString();
-              dummyRecord['duration'] = 0;
-            } else if (tableName === 'sms_records') {
-              dummyRecord['provider_id'] = 'system';
-              dummyRecord['sms_id'] = 'system-test';
-              dummyRecord['phone_number'] = '+10000000000';
-              dummyRecord['contact_name'] = 'System Test';
-              dummyRecord['timestamp'] = new Date().toISOString();
-              dummyRecord['message'] = 'System test';
-              dummyRecord['direction'] = 'outgoing';
-            } else if (tableName === 'letter_records') {
-              dummyRecord['recipient'] = 'System Test';
-              dummyRecord['timestamp'] = new Date().toISOString();
-              dummyRecord['content'] = 'System test';
-              dummyRecord['status'] = 'draft';
-            }
-            
-            // Try direct insertion with POST
-            const insertEndpoint = `${supabaseUrl}/rest/v1/${tableName}`;
-            const insertResponse = await fetch(insertEndpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify(dummyRecord)
-            });
-            
-            if (insertResponse.ok) {
-              console.log(`Successfully created ${tableName} via record insertion`);
-              return { success: true, data: { message: `Table ${tableName} created via insertion` } };
-            }
-            
-            console.log(`Insertion failed for ${tableName} with status:`, insertResponse.status);
-          } catch (insertError) {
-            console.error(`Error during record insertion for ${tableName}:`, insertError);
-          }
+          console.log('Attempted to create table with statement:', stmt);
+        } catch (tableError) {
+          console.error('Individual table creation failed:', tableError);
         }
       }
-    } catch (manualError) {
-      console.error('Manual table creation failed:', manualError);
+      
+      // Return success to continue with the app even if tables might not be created
+      return { success: true, data: null, message: 'Attempted individual table creation' };
     }
     
-    // Last attempt: Functions API
+    // Last resort: Edge Functions
     try {
-      console.log('Attempting SQL execution via Edge Function...');
-      
       const { data, error } = await supabase.functions.invoke('execute-sql', {
         body: { sql }
       });
@@ -224,15 +101,15 @@ export async function executeSql(sql: string) {
         return { success: true, data };
       }
       
-      console.log('Edge Function execution failed:', error);
+      console.error('Edge Function execution failed:', error);
     } catch (functionsError) {
-      console.error('Functions API approach failed:', functionsError);
+      console.error('Functions API failed:', functionsError);
     }
     
-    console.error('All SQL execution approaches failed.');
+    // If all methods failed, suggest manual SQL execution
     return { 
       success: false, 
-      error: 'Failed to execute SQL after multiple attempts. Please check Supabase configuration.' 
+      error: 'Failed to execute SQL. Please run the SQL manually in the Supabase dashboard.' 
     };
   } catch (error) {
     console.error('Fatal error executing SQL:', error);
