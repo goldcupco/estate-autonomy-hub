@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Layout } from "./components/layout/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Properties from "./pages/Properties";
@@ -30,7 +31,7 @@ import { CampaignProvider } from "./contexts/CampaignContext";
 
 const queryClient = new QueryClient();
 
-// Protected route component
+// Protected route component with Layout wrapper
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
@@ -39,10 +40,10 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  return children;
+  return <Layout>{children}</Layout>;
 };
 
-// Admin-only route component
+// Admin-only route component with Layout wrapper
 const AdminRoute = ({ children }: { children: JSX.Element }) => {
   const { isAdmin, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -55,7 +56,7 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
     return <Navigate to="/dashboard" replace />;
   }
   
-  return children;
+  return <Layout>{children}</Layout>;
 };
 
 // App Routes component that has access to auth context

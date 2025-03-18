@@ -19,18 +19,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
   
   const handleToggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
+    const newState = !sidebarOpen;
+    setSidebarOpen(newState);
+    // Save to localStorage
+    localStorage.setItem('sidebarState', String(newState));
   };
   
   return (
     <div className="min-h-screen bg-background">
       <Navbar toggleSidebar={handleToggleSidebar} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="pt-16 md:pl-64 transition-all duration-300 ease-in-out">
+      <main className={`pt-16 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-64' : 'md:pl-0'}`}>
         <div className="container px-4 py-4 mx-auto">
           {children}
         </div>
       </main>
     </div>
   );
-};
+}
