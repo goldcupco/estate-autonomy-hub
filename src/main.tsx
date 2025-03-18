@@ -28,14 +28,6 @@ const initializeApplication = async () => {
   console.log('Starting database initialization...');
   
   try {
-    // Show a toast to let the user know initialization is happening
-    toast({
-      title: 'Database Connection Issue',
-      description: 'The application cannot create tables automatically. Manual setup is required.',
-      variant: 'destructive',
-      duration: 10000
-    });
-    
     // Skip automatic table creation - show manual setup instructions instead
     console.error('=== IMPORTANT: MANUAL DATABASE SETUP REQUIRED ===');
     console.error('The application cannot create tables automatically. Please follow these steps:');
