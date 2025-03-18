@@ -3,7 +3,7 @@ import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 
 // SQL creation statements for each table
-const CREATE_TABLES_SQL = {
+export const CREATE_TABLES_SQL = {
   communication_providers: `
     CREATE TABLE IF NOT EXISTS communication_providers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
