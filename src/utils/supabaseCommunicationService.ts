@@ -1,4 +1,5 @@
-import { supabase, DbCommunicationProvider as SupabaseDbProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
+
+import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CallRecord, SmsRecord } from './communicationUtils';
 import { useToast } from "@/hooks/use-toast";
