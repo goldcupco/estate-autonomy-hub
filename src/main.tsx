@@ -2,6 +2,12 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { initializeApp } from './utils/initializeApp'
+
+// Initialize the application (database, etc.)
+initializeApp().catch(error => {
+  console.error('Failed to initialize application:', error);
+});
 
 // Get the root element
 const rootElement = document.getElementById("root");

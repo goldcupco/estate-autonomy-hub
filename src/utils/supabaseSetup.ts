@@ -5,21 +5,32 @@ import { toast } from '@/hooks/use-toast';
 export async function setupSupabaseTables() {
   console.log('Setting up Supabase tables...');
   try {
-    // Create communication_providers table if it doesn't exist
-    const { error: providerError } = await supabase.rpc('create_communication_providers_if_not_exists');
-    if (providerError) throw providerError;
+    // Try to use RPC functions to create tables
+    try {
+      // Create communication_providers table if it doesn't exist
+      const { error: providerError } = await supabase.rpc('create_communication_providers_if_not_exists');
+      if (providerError) console.warn('RPC error:', providerError);
+      
+      // Create call_records table if it doesn't exist
+      const { error: callRecordsError } = await supabase.rpc('create_call_records_if_not_exists');
+      if (callRecordsError) console.warn('RPC error:', callRecordsError);
+      
+      // Create sms_records table if it doesn't exist
+      const { error: smsRecordsError } = await supabase.rpc('create_sms_records_if_not_exists');
+      if (smsRecordsError) console.warn('RPC error:', smsRecordsError);
+      
+      // Create letter_records table if it doesn't exist
+      const { error: letterRecordsError } = await supabase.rpc('create_letter_records_if_not_exists');
+      if (letterRecordsError) console.warn('RPC error:', letterRecordsError);
+    } catch (rpcError) {
+      console.warn('Failed to create tables using RPC methods:', rpcError);
+    }
     
-    // Create call_records table if it doesn't exist
-    const { error: callRecordsError } = await supabase.rpc('create_call_records_if_not_exists');
-    if (callRecordsError) throw callRecordsError;
+    // Even if RPC methods fail, try to create tables directly using SQL
+    console.log('Directly creating tables using SQL...');
     
-    // Create sms_records table if it doesn't exist
-    const { error: smsRecordsError } = await supabase.rpc('create_sms_records_if_not_exists');
-    if (smsRecordsError) throw smsRecordsError;
-    
-    // Create letter_records table if it doesn't exist
-    const { error: letterRecordsError } = await supabase.rpc('create_letter_records_if_not_exists');
-    if (letterRecordsError) throw letterRecordsError;
+    // Create the tables directly using raw SQL
+    await createTablesDirectly();
     
     console.log('All tables set up successfully!');
     return { success: true };
@@ -34,23 +45,140 @@ export async function setupSupabaseTables() {
   }
 }
 
+async function createTablesDirectly() {
+  // Communication providers table
+  await supabase.rpc('execute_sql', {
+    sql_query: `
+      CREATE TABLE IF NOT EXISTS communication_providers (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_default BOOLEAN DEFAULT FALSE,
+        config JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `
+  });
+  
+  // Call records table
+  await supabase.rpc('execute_sql', {
+    sql_query: `
+      CREATE TABLE IF NOT EXISTS call_records (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        provider_type TEXT NOT NULL,
+        call_id TEXT NOT NULL UNIQUE,
+        phone_number TEXT NOT NULL,
+        contact_name TEXT,
+        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        duration INTEGER DEFAULT 0,
+        recording_url TEXT,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `
+  });
+  
+  // SMS records table
+  await supabase.rpc('execute_sql', {
+    sql_query: `
+      CREATE TABLE IF NOT EXISTS sms_records (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        sms_id TEXT NOT NULL UNIQUE,
+        phone_number TEXT NOT NULL,
+        contact_name TEXT,
+        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        message TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `
+  });
+  
+  // Letter records table
+  await supabase.rpc('execute_sql', {
+    sql_query: `
+      CREATE TABLE IF NOT EXISTS letter_records (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id TEXT NOT NULL,
+        recipient TEXT NOT NULL,
+        address TEXT,
+        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        content TEXT NOT NULL,
+        status TEXT NOT NULL,
+        tracking_number TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `
+  });
+}
+
 // Execute this function to verify table setup
 export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
   
   try {
-    // Check if tables exist
-    const { data: tables, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .in('table_name', ['communication_providers', 'call_records', 'sms_records', 'letter_records'])
-      .eq('table_schema', 'public');
+    // Check if tables exist using SQL query since the information_schema approach might not work
+    const { data: tableList, error: tableListError } = await supabase.rpc('execute_sql', {
+      sql_query: `
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('communication_providers', 'call_records', 'sms_records', 'letter_records')
+      `
+    });
     
-    if (tablesError) throw tablesError;
+    if (tableListError) {
+      console.error('Error getting table list:', tableListError);
+      // Fallback to the previous method if RPC fails
+      const { data: tables, error: tablesError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .in('table_name', ['communication_providers', 'call_records', 'sms_records', 'letter_records'])
+        .eq('table_schema', 'public');
+      
+      if (tablesError) throw tablesError;
+      
+      const existingTables = tables.map(t => t.table_name);
+      console.log('Existing tables:', existingTables);
+      
+      if (existingTables.length < 4) {
+        console.warn('Missing tables, trying to create them...');
+        await setupSupabaseTables();
+      }
+      
+      return { success: existingTables.length === 4, tables: existingTables };
+    }
     
-    const existingTables = tables.map(t => t.table_name);
+    const existingTables = tableList.map(row => row.table_name);
     console.log('Existing tables:', existingTables);
     
+    if (existingTables.length < 4) {
+      console.warn('Missing tables, trying to create them...');
+      await setupSupabaseTables();
+      
+      // Check again after creating tables
+      const { data: updatedTables } = await supabase.rpc('execute_sql', {
+        sql_query: `
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name IN ('communication_providers', 'call_records', 'sms_records', 'letter_records')
+        `
+      });
+      
+      const updatedTableList = updatedTables.map(row => row.table_name);
+      console.log('Updated table list:', updatedTableList);
+      
+      return { success: updatedTableList.length === 4, tables: updatedTableList };
+    }
+    
+    // Create missing tables if needed
     const missingTables = [
       'communication_providers', 
       'call_records', 
@@ -60,8 +188,6 @@ export async function verifyDatabaseSetup() {
     
     if (missingTables.length > 0) {
       console.warn('Missing tables:', missingTables);
-      
-      // If RPC functions are not available, create tables directly
       await createMissingTables(missingTables);
     } else {
       console.log('All required tables exist');

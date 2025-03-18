@@ -1,21 +1,28 @@
-
-import { verifyDatabaseSetup } from './supabaseSetup';
+import { setupSupabaseTables, verifyDatabaseSetup } from './supabaseSetup';
 import { toast } from '@/hooks/use-toast';
 
 export async function initializeApp() {
   console.log('Initializing application...');
   
   try {
-    // Call this function immediately
-    initializeDatabase();
+    // First verify and set up database tables and indexes
+    console.log('Setting up database tables...');
+    const setupResult = await setupSupabaseTables();
     
-    // Verify and set up database tables and indexes
-    const result = await verifyDatabaseSetup();
-    
-    if (result.success) {
-      console.log('Database initialized successfully');
+    if (setupResult.success) {
+      console.log('Database tables created successfully');
     } else {
-      console.error('Database initialization failed:', result.error);
+      console.error('Database table creation failed:', setupResult.error);
+    }
+    
+    // Then verify the setup was successful
+    const verifyResult = await verifyDatabaseSetup();
+    
+    if (verifyResult.success) {
+      console.log('Database initialized successfully');
+      console.log('Available tables:', verifyResult.tables);
+    } else {
+      console.error('Database initialization failed:', verifyResult.error);
       toast({
         title: 'Database Setup Issue',
         description: 'There was a problem setting up the database. Some features may not work correctly.',
@@ -23,7 +30,7 @@ export async function initializeApp() {
       });
     }
     
-    return result.success;
+    return verifyResult.success;
   } catch (error) {
     console.error('Error during app initialization:', error);
     toast({
@@ -36,20 +43,8 @@ export async function initializeApp() {
   }
 }
 
-// Function to ensure database is initialized
+// We no longer need this function as we're doing everything in initializeApp
+// but keep it for backward compatibility
 export async function initializeDatabase() {
-  console.log('Setting up database tables...');
-  try {
-    const result = await verifyDatabaseSetup();
-    console.log('Database setup result:', result);
-    return result;
-  } catch (error) {
-    console.error('Error setting up database:', error);
-    return { success: false, error };
-  }
+  return initializeApp();
 }
-
-// Automatically initialize database when this module is imported
-initializeDatabase().catch(error => {
-  console.error('Failed to initialize database on import:', error);
-});
