@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Clock, Users, ArrowLeft, Phone, Send, MessageCircle, AlertCircle, Hourglass, ExternalLink } from 'lucide-react';
@@ -101,7 +102,8 @@ const Messages = () => {
       setSidebarOpen(savedState === 'true');
     }
     
-    const history = getSmsHistory();
+    // Fix: Provide a default phone number to getSmsHistory
+    const history = getSmsHistory('(555) 123-4567');
     setMessageHistory(history);
   }, []);
 
