@@ -1,4 +1,3 @@
-
 import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CallRecord, SmsRecord } from './communicationUtils';
@@ -7,9 +6,19 @@ import { useToast } from "@/hooks/use-toast";
 // Re-export the DbCommunicationProvider type so it can be used elsewhere
 export type { DbCommunicationProvider } from './supabaseClient';
 
+// Check if Supabase is properly configured
+const isSupabaseConfigured = () => {
+  return !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+};
+
 // Service to interact with Supabase for communication functionality
 export class SupabaseCommunicationService {
   async getProviders(userId: string): Promise<DbCommunicationProvider[]> {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured. Returning mock data.');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('communication_providers')
       .select('*')
@@ -20,6 +29,11 @@ export class SupabaseCommunicationService {
   }
 
   async saveProvider(userId: string, provider: Omit<DbCommunicationProvider, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<string> {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured. Cannot save provider.');
+      return 'mock-id';
+    }
+    
     const newProvider = {
       ...provider,
       id: uuidv4(),
@@ -38,6 +52,11 @@ export class SupabaseCommunicationService {
   }
 
   async updateProvider(id: string, updates: Partial<DbCommunicationProvider>): Promise<void> {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured. Cannot update provider.');
+      return;
+    }
+    
     const { error } = await supabase
       .from('communication_providers')
       .update({
@@ -50,6 +69,11 @@ export class SupabaseCommunicationService {
   }
 
   async deleteProvider(id: string): Promise<void> {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured. Cannot delete provider.');
+      return;
+    }
+    
     const { error } = await supabase
       .from('communication_providers')
       .delete()
@@ -214,6 +238,10 @@ export function useSupabaseCommunication() {
   
   // Get the current user's ID
   const getUserId = async (): Promise<string> => {
+    if (!isSupabaseConfigured()) {
+      return 'mock-user-id';
+    }
+    
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw new Error('User not authenticated');
     return data.user.id;
@@ -231,6 +259,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return [];
+        }
+        
         throw error;
       }
     },
@@ -246,6 +279,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return 'mock-id';
+        }
+        
         throw error;
       }
     },
@@ -260,6 +298,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return;
+        }
+        
         throw error;
       }
     },
@@ -274,6 +317,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return;
+        }
+        
         throw error;
       }
     },
@@ -289,6 +337,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return 'mock-call-id';
+        }
+        
         throw error;
       }
     },
@@ -303,6 +356,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return;
+        }
+        
         throw error;
       }
     },
@@ -318,6 +376,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return [];
+        }
+        
         return [];
       }
     },
@@ -333,6 +396,18 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return {
+            id: 'mock-sms-id',
+            phoneNumber,
+            contactName: contactName || 'Unknown',
+            timestamp: new Date().toISOString(),
+            message,
+            direction: 'outgoing'
+          };
+        }
+        
         throw error;
       }
     },
@@ -348,6 +423,11 @@ export function useSupabaseCommunication() {
           description: error instanceof Error ? error.message : 'Unknown error',
           variant: 'destructive'
         });
+        
+        if (!isSupabaseConfigured()) {
+          return [];
+        }
+        
         return [];
       }
     }
