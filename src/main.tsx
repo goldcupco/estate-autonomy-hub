@@ -24,12 +24,12 @@ createRoot(rootElement).render(
   </>
 );
 
-// Immediately try to create tables using the improved method
+// Try to create tables and provide clear feedback to the user
 (async () => {
   console.log('Starting database initialization...');
   
   try {
-    // Check if tables already exist by trying to query communication_providers
+    // First check if tables already exist by trying to query one of them
     const { data, error } = await supabase
       .from('communication_providers')
       .select('count(*)', { count: 'exact', head: true });
@@ -44,9 +44,9 @@ createRoot(rootElement).render(
       return;
     }
     
-    console.log('Tables do not exist, creating them now...');
+    console.log('Tables do not exist, attempting to create them...');
     
-    // Try to create tables using the improved direct method
+    // Try to create tables using the improved function
     const result = await createTablesDirectly();
     
     if (result.success) {
@@ -58,10 +58,10 @@ createRoot(rootElement).render(
     } else {
       console.error('Tables creation failed:', result.error || 'Unknown error');
       
-      // Show error toast with detailed explanation
+      // Show clearer error toast with exact instructions
       toast({
-        title: 'Table Creation Failed',
-        description: 'Please go to the Supabase dashboard and create the tables manually.',
+        title: 'Please Create Tables Manually',
+        description: 'Automatic table creation failed. Please go to Supabase and create the tables manually.',
         variant: 'destructive',
         action: (
           <ToastAction 
@@ -73,8 +73,81 @@ createRoot(rootElement).render(
         ),
       });
       
-      // Log helpful SQL to console for manual creation
-      console.error('=== SQL FOR MANUAL TABLE CREATION ===');
+      // Add a delay and then show a second toast with more detailed instructions
+      setTimeout(() => {
+        toast({
+          title: 'SQL for Table Creation',
+          description: 'Run the SQL statements shown in the browser console to create all required tables.',
+          action: (
+            <ToastAction 
+              altText="Copy SQL"
+              onClick={() => {
+                const sql = `
+CREATE TABLE public.communication_providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT false,
+  config JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.call_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  provider_type TEXT NOT NULL,
+  call_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  duration INTEGER DEFAULT 0,
+  recording_url TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.sms_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  sms_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  message TEXT NOT NULL,
+  direction TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.letter_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  recipient TEXT NOT NULL,
+  address TEXT,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  content TEXT NOT NULL,
+  status TEXT NOT NULL,
+  tracking_number TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);`;
+                navigator.clipboard.writeText(sql);
+                toast({
+                  title: 'SQL Copied',
+                  description: 'The SQL statements have been copied to your clipboard.'
+                });
+              }}
+            >
+              Copy SQL
+            </ToastAction>
+          ),
+        });
+      }, 1000);
+      
+      // Log the SQL more cleanly in the console for reference
+      console.error('=== SQL TO CREATE TABLES ===');
       console.error(`
 CREATE TABLE public.communication_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -125,14 +198,13 @@ CREATE TABLE public.letter_records (
   status TEXT NOT NULL,
   tracking_number TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
-);
-`);
+);`);
     }
   } catch (error) {
     console.error('Error initializing database:', error);
     toast({
       title: 'Database Error',
-      description: 'Failed to initialize database tables.',
+      description: 'Failed to initialize database tables. See console for details.',
       variant: 'destructive'
     });
   }
