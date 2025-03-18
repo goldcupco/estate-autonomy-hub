@@ -63,3 +63,16 @@ export function validateSpintax(text: string): { isValid: boolean; error: string
   // All checks passed
   return { isValid: true, error: null };
 }
+
+/**
+ * Generate a random delay within a specified range
+ * @param minSeconds Minimum delay in seconds
+ * @param maxSeconds Maximum delay in seconds
+ * @returns Delay in milliseconds
+ */
+export function getRandomDelay(minSeconds: number, maxSeconds: number): number {
+  // Convert to milliseconds and calculate a random value in the range
+  const minMs = minSeconds * 1000;
+  const maxMs = maxSeconds * 1000;
+  return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+}

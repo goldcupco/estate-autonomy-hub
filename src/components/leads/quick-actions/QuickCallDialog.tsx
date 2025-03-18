@@ -115,7 +115,8 @@ export function QuickCallDialog({ open, onOpenChange }: QuickCallDialogProps) {
         }
         
         // Make the call with the first provider
-        const callId = await makeCall(phoneNumber, 'Quick Call');
+        // Passing 'Quick Call' as contact name and empty string as notes
+        const callId = await makeCall(phoneNumber, 'Quick Call', '', '');
         setCurrentCallId(callId);
         setCallStartTime(new Date());
         setIsRecording(true);
