@@ -61,20 +61,44 @@ export async function executeSql(sql: string) {
       console.error('Fetch to REST API failed:', fetchError);
     }
     
-    // Last resort: try to use the query method
-    console.log('Trying Supabase query method...');
-    const { data: queryData, error: queryError } = await supabase.from('_temp_query').rpc('exec_sql', { sql_query: sql });
-    
-    if (queryError) {
-      console.error('All SQL execution approaches failed:', queryError);
-      return { 
-        success: false, 
-        error: `Failed to execute SQL: ${queryError.message}` 
-      };
+    // Last resort: try to use a direct query
+    // Note: We've changed this approach since rpc is not available on the from() method
+    console.log('Trying direct query approach...');
+    try {
+      // Execute a simple query to test database connectivity
+      const { data: queryData, error: queryError } = await supabase
+        .from('_dummy_table_check')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      
+      if (queryError && queryError.code !== '42P01') { // Ignore "relation does not exist" error
+        console.error('Database connectivity test failed:', queryError);
+      } else {
+        console.log('Database connection is working');
+      }
+      
+      // Use direct rpc method instead of from()._temp_query.rpc
+      const { data: directRpcData, error: directRpcError } = await supabase.rpc('exec_sql', { sql_query: sql });
+      
+      if (directRpcError) {
+        console.error('Direct RPC call failed:', directRpcError);
+        return { 
+          success: false, 
+          error: `Failed to execute SQL: ${directRpcError.message}` 
+        };
+      }
+      
+      console.log('SQL execution via direct RPC successful');
+      return { success: true, data: directRpcData };
+    } catch (error) {
+      console.error('Direct query approach failed:', error);
     }
     
-    console.log('SQL execution via query method successful');
-    return { success: true, data: queryData };
+    return { 
+      success: false, 
+      error: 'All SQL execution approaches failed' 
+    };
   } catch (error) {
     console.error('Fatal error executing SQL:', error);
     return { 
