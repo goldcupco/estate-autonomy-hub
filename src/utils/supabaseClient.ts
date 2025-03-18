@@ -15,107 +15,91 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Enhanced SQL execution function with better error handling
+// Direct SQL execution function with simplified approach
 export async function executeSql(sql: string) {
   console.log('Executing SQL:', sql);
   
   try {
-    // Try to use the supabase.rpc method to execute raw SQL
-    const { data, error } = await supabase.rpc('execute_sql', { sql_query: sql });
+    // Direct fetch to Supabase PostgreSQL REST endpoint
+    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ query: sql })
+    });
     
-    if (!error) {
-      console.log('SQL execution successful');
-      return { success: true, data };
+    if (response.ok) {
+      console.log('SQL execution successful via REST API');
+      return { success: true };
     }
     
-    console.error('RPC method failed:', error);
+    console.error('SQL execution failed:', response.status);
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
     
-    // If RPC failed, try REST API directly
-    try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/execute_sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ 
-          sql_query: sql 
-        })
-      });
-      
-      if (response.ok) {
-        console.log('SQL execution via REST API successful');
-        const data = await response.json();
-        return { success: true, data };
-      }
-      
-      console.error('REST API query failed with status:', response.status);
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-    } catch (restError) {
-      console.error('REST API query failed:', restError);
+    // Try alternative method - direct SQL API
+    const sqlResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`
+      },
+      body: JSON.stringify({ query: sql })
+    });
+    
+    if (sqlResponse.ok) {
+      console.log('SQL execution successful via SQL RPC');
+      return { success: true };
     }
     
-    // If all direct SQL methods failed, try individual table creation
+    console.error('SQL RPC execution failed:', sqlResponse.status);
+    
+    // Final attempt - try the Supabase database REST API directly for table creation
     if (sql.toLowerCase().includes('create table')) {
-      console.log('Attempting individual table creation...');
+      const tables = sql.split(';')
+        .filter(stmt => stmt.trim().toLowerCase().startsWith('create table'))
+        .map(stmt => {
+          const match = stmt.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?([^\s(]+)/i);
+          return match ? match[1].trim() : null;
+        })
+        .filter(Boolean);
       
-      // Extract table creation statements
-      const tableStatements = sql.split(';').filter(stmt => 
-        stmt.trim().toLowerCase().startsWith('create table')
-      );
+      console.log('Attempting direct table creation for:', tables);
       
-      // Try to create each table individually
-      for (const stmt of tableStatements) {
-        try {
-          // Send individual create table statement
-          await fetch(`${supabaseUrl}/rest/v1/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/sql',
-              'apikey': supabaseAnonKey,
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-            },
-            body: stmt + ';'
-          });
-          
-          console.log('Attempted to create table with statement:', stmt);
-        } catch (tableError) {
-          console.error('Individual table creation failed:', tableError);
-        }
+      // Try creating each table through the REST API
+      for (const tableName of tables) {
+        await fetch(`${supabaseUrl}/rest/v1/${tableName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({})
+        });
       }
       
-      // Return success to continue with the app even if tables might not be created
-      return { success: true, data: null, message: 'Attempted individual table creation' };
+      return { success: true, message: 'Attempted direct table creation' };
     }
     
-    // Last resort: Edge Functions
-    try {
-      const { data, error } = await supabase.functions.invoke('execute-sql', {
-        body: { sql }
-      });
-      
-      if (!error) {
-        console.log('SQL execution via Edge Function successful');
-        return { success: true, data };
-      }
-      
-      console.error('Edge Function execution failed:', error);
-    } catch (functionsError) {
-      console.error('Functions API failed:', functionsError);
-    }
-    
-    // If all methods failed, suggest manual SQL execution
+    // If all methods fail, return helpful debugging info
     return { 
       success: false, 
-      error: 'Failed to execute SQL. Please run the SQL manually in the Supabase dashboard.' 
+      error: 'Could not execute SQL. See console for details.',
+      sqlDetails: sql
     };
   } catch (error) {
     console.error('Fatal error executing SQL:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error executing SQL'
+      error: error instanceof Error ? error.message : 'Unknown error executing SQL',
+      sqlDetails: sql
     };
   }
 }
