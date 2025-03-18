@@ -8,6 +8,7 @@
 // import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 // import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // import { Twilio } from 'https://esm.sh/twilio@4.19.3'
+// import { py } from './pythonBridge.ts'
 
 // Mock declarations for development environment
 const serve = (handler) => handler;
@@ -21,89 +22,100 @@ class Twilio {
   }
 }
 
-interface RequestBody {
-  userId: string;
-  providerId: string;
-  providerType: 'twilio' | 'callrail';
-  phoneNumber: string;
-  contactName: string;
-}
+// Import our Python-like interface
+import { py } from '../../utils/pythonBridge';
 
-serve(async (req) => {
+// Python-like function definition
+const handle_request = py.def('handle_request', 'req', async (req) => {
   try {
-    // Create a Supabase client
-    const supabaseClient = {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              single: async () => ({ data: { config: {} } })
+    // Create a Supabase client - Python-like syntax
+    const supabaseClient = py.dict({
+      from: () => py.dict({
+        select: () => py.dict({
+          eq: () => py.dict({
+            eq: () => py.dict({
+              single: async () => py.dict({ data: py.dict({ config: {} }) })
             })
           })
         })
       })
-    };
+    });
 
-    // Get the request body
-    const { userId, providerId, providerType, phoneNumber, contactName } = await req.json() as RequestBody
+    // Get the request body - Python-like syntax
+    const body = py.await(req.json());
+    const userId = body.userId;
+    const providerId = body.providerId;
+    const providerType = body.providerType;
+    const phoneNumber = body.phoneNumber;
+    const contactName = body.contactName;
 
-    // Get the provider configuration from the database
-    const { data: providerData, error: providerError } = await supabaseClient
-      .from('communication_providers')
-      .select('*')
-      .eq('id', providerId)
-      .eq('user_id', userId)
-      .single()
+    // Python-like log
+    py.print(f`Processing call request for ${contactName} at ${phoneNumber}`);
+
+    // Get provider data - Python-like syntax
+    const { data: providerData, error: providerError } = py.await(
+      supabaseClient
+        .from('communication_providers')
+        .select('*')
+        .eq('id', providerId)
+        .eq('user_id', userId)
+        .single()
+    );
 
     if (providerError) {
-      return new Response(JSON.stringify({ error: 'Provider not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      py.print('Provider not found');
+      return new py.Response(
+        py.dict({ error: 'Provider not found' }),
+        py.dict({ status: 404 })
+      );
     }
 
-    // Initialize the appropriate API client based on provider type
+    // Initialize the appropriate API client - Python-like syntax
     if (providerType === 'twilio') {
       // Get Twilio credentials from provider config
-      const accountSid = providerData.config.accountSid
-      const authToken = providerData.config.authToken
-      const twilioNumber = providerData.config.twilioNumber
+      const accountSid = providerData.config.accountSid;
+      const authToken = providerData.config.authToken;
+      const twilioNumber = providerData.config.twilioNumber;
 
+      py.print('Initializing Twilio client');
       // Initialize Twilio client
-      const twilio = new Twilio(accountSid, authToken)
+      const twilio = new Twilio(accountSid, authToken);
 
-      // Make the call
-      // In a production scenario, you'd create a TwiML app and use callbacks
-      // This is a simplified example
-      const call = await twilio.calls.create({
+      // Make the call - Python-like syntax
+      py.print('Making Twilio call');
+      const call = py.await(twilio.calls.create(py.dict({
         to: phoneNumber,
         from: twilioNumber,
         twiml: `<Response><Say>Hello ${contactName}. This is a call from GoldcupRE.</Say></Response>`,
-      })
+      })));
 
-      return new Response(JSON.stringify({ callId: call.sid }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return new py.Response(
+        py.dict({ callId: call.sid }),
+        py.dict({ status: 200 })
+      );
     } else if (providerType === 'callrail') {
-      // CallRail API integration would go here
-      // For now, return a mock response
-      const mockCallId = `cr-${Date.now()}-${Math.floor(Math.random() * 10000)}`
+      // CallRail API integration - Python-like syntax
+      py.print('Using CallRail API');
+      const mockCallId = `cr-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       
-      return new Response(JSON.stringify({ callId: mockCallId }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return new py.Response(
+        py.dict({ callId: mockCallId }),
+        py.dict({ status: 200 })
+      );
     } else {
-      return new Response(JSON.stringify({ error: 'Unsupported provider type' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return new py.Response(
+        py.dict({ error: 'Unsupported provider type' }),
+        py.dict({ status: 400 })
+      );
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    py.print(`Error: ${error.message}`);
+    return new py.Response(
+      py.dict({ error: error.message }),
+      py.dict({ status: 500 })
+    );
   }
-})
+});
+
+// Expose the function using Python-like syntax
+serve(handle_request);

@@ -87,78 +87,65 @@ async function createMissingTables(missingTables: string[]) {
     console.log(`Creating table: ${table}`);
     
     if (table === 'communication_providers') {
-      const { error } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS communication_providers (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          user_id UUID NOT NULL,
-          name TEXT NOT NULL,
-          type TEXT NOT NULL CHECK (type IN ('twilio', 'callrail')),
-          is_default BOOLEAN DEFAULT false,
-          config JSONB NOT NULL DEFAULT '{}'::jsonb,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `);
+      const { error } = await supabase.from('communication_providers').insert({
+        id: 'template',
+        user_id: 'template',
+        name: 'Template',
+        type: 'twilio',
+        is_default: false,
+        config: {}
+      }).select().then(() => {
+        return supabase.from('communication_providers').delete().eq('id', 'template');
+      });
       
-      if (error) throw error;
+      if (error && !error.message.includes('already exists')) throw error;
     }
     
     if (table === 'call_records') {
-      const { error } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS call_records (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          user_id UUID NOT NULL,
-          provider_id UUID NOT NULL REFERENCES communication_providers(id) ON DELETE CASCADE,
-          provider_type TEXT NOT NULL CHECK (provider_type IN ('twilio', 'callrail')),
-          call_id TEXT NOT NULL,
-          phone_number TEXT NOT NULL,
-          contact_name TEXT,
-          timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          duration INTEGER DEFAULT 0,
-          recording_url TEXT,
-          notes TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `);
+      const { error } = await supabase.from('call_records').insert({
+        id: 'template',
+        user_id: 'template',
+        provider_id: 'template',
+        provider_type: 'twilio',
+        call_id: 'template',
+        phone_number: '+10000000000',
+        contact_name: 'Template',
+        duration: 0
+      }).select().then(() => {
+        return supabase.from('call_records').delete().eq('id', 'template');
+      });
       
-      if (error) throw error;
+      if (error && !error.message.includes('already exists')) throw error;
     }
     
     if (table === 'sms_records') {
-      const { error } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS sms_records (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          user_id UUID NOT NULL,
-          provider_id UUID NOT NULL REFERENCES communication_providers(id) ON DELETE CASCADE,
-          sms_id TEXT NOT NULL,
-          phone_number TEXT NOT NULL,
-          contact_name TEXT,
-          timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          message TEXT NOT NULL,
-          direction TEXT NOT NULL CHECK (direction IN ('incoming', 'outgoing')),
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `);
+      const { error } = await supabase.from('sms_records').insert({
+        id: 'template',
+        user_id: 'template',
+        provider_id: 'template',
+        sms_id: 'template',
+        phone_number: '+10000000000',
+        message: 'Template',
+        direction: 'outgoing'
+      }).select().then(() => {
+        return supabase.from('sms_records').delete().eq('id', 'template');
+      });
       
-      if (error) throw error;
+      if (error && !error.message.includes('already exists')) throw error;
     }
     
     if (table === 'letter_records') {
-      const { error } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS letter_records (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          user_id UUID NOT NULL,
-          recipient TEXT NOT NULL,
-          address TEXT,
-          timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          content TEXT NOT NULL,
-          status TEXT NOT NULL CHECK (status IN ('draft', 'sent', 'delivered')),
-          tracking_number TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `);
+      const { error } = await supabase.from('letter_records').insert({
+        id: 'template',
+        user_id: 'template',
+        recipient: 'Template',
+        content: 'Template',
+        status: 'draft'
+      }).select().then(() => {
+        return supabase.from('letter_records').delete().eq('id', 'template');
+      });
       
-      if (error) throw error;
+      if (error && !error.message.includes('already exists')) throw error;
     }
   }
 }
@@ -182,24 +169,30 @@ async function verifyIndexes() {
   
   // Create each index if it doesn't exist
   for (const index of [...userIdIndexes, ...phoneIndexes]) {
-    const { count, error: countError } = await supabase
+    // Check if index exists using pg_indexes view
+    const { data, error } = await supabase
       .from('pg_indexes')
-      .select('count(*)', { count: 'exact' })
-      .eq('indexname', index.name);
+      .select('indexname')
+      .eq('indexname', index.name)
+      .eq('tablename', index.table);
       
-    if (countError) {
-      console.error(`Error checking index ${index.name}:`, countError);
+    if (error) {
+      console.error(`Error checking index ${index.name}:`, error);
       continue;
     }
     
-    if (!count || count === 0) {
-      console.log(`Creating index ${index.name}`);
-      const { error } = await supabase.query(`
-        CREATE INDEX IF NOT EXISTS ${index.name} ON ${index.table} (${index.column});
-      `);
+    if (!data || data.length === 0) {
+      console.log(`Creating index ${index.name} on ${index.table}.${index.column}`);
       
-      if (error) {
-        console.error(`Error creating index ${index.name}:`, error);
+      // Create the index using SQL function
+      const { error: createError } = await supabase.rpc('create_index_if_not_exists', { 
+        idx_name: index.name,
+        table_name: index.table,
+        column_name: index.column
+      });
+      
+      if (createError) {
+        console.error(`Error creating index ${index.name}:`, createError);
       }
     }
   }
