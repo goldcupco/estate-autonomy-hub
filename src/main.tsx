@@ -5,6 +5,7 @@ import './index.css'
 import { initializeApp } from './utils/initializeApp'
 import { Toaster } from './components/ui/toaster'
 import { toast } from '@/hooks/use-toast'
+import { ToastAction } from './components/ui/toast'
 
 // Get the root element
 const rootElement = document.getElementById("root");
@@ -123,10 +124,14 @@ VALUES (
         title: 'Supabase SQL Editor',
         description: 'Open SQL Editor to create tables manually',
         variant: 'default',
-        action: {
-          label: 'Open Editor',
-          onClick: () => window.open('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/sql/new', '_blank')
-        },
+        action: (
+          <ToastAction 
+            altText="Open SQL Editor"
+            onClick={() => window.open('https://supabase.com/dashboard/project/gdxzktqieasxxcocwsjh/sql/new', '_blank')}
+          >
+            Open Editor
+          </ToastAction>
+        ),
         duration: 30000
       });
     }, 2000);
