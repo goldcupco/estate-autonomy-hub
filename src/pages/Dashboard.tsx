@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
@@ -28,7 +27,7 @@ interface Property {
   sqft: number;
   status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
   imageUrl: string;
-  propertyType?: string;
+  propertyType?: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
 }
 
 export function Dashboard() {
@@ -85,7 +84,8 @@ export function Dashboard() {
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'
+            imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
           setProperties(formattedProperties);
@@ -198,7 +198,8 @@ export function Dashboard() {
           bathrooms: data[0].bathrooms || 0,
           sqft: data[0].square_feet || 0,
           status: (data[0].status as Property['status']) || 'For Sale',
-          imageUrl: data[0].image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'
+          imageUrl: data[0].image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          propertyType: (data[0].property_type as Property['propertyType']) || 'House'
         };
         
         setProperties(prev => [formattedProperty, ...prev].slice(0, 4));

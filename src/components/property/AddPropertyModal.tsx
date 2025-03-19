@@ -302,7 +302,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                 <Label htmlFor="propertyType">Property Type</Label>
                 <Select
                   value={property.propertyType}
-                  onValueChange={value => handleInputChange('propertyType', value)}
+                  onValueChange={value => handleInputChange('propertyType', value as Property['propertyType'])}
                 >
                   <SelectTrigger id="propertyType">
                     <SelectValue placeholder="Select property type" />

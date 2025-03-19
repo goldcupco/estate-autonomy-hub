@@ -25,7 +25,7 @@ interface Property {
   sqft: number;
   status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
   imageUrl: string;
-  propertyType?: 'House' | 'Land' | 'Condo' | 'Apartment' | 'Commercial';
+  propertyType: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
 }
 
 interface PropertyGridProps {
@@ -41,7 +41,6 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     const matchesSearch = searchTerm === '' || 
       property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,22 +53,18 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
     return matchesSearch && matchesStatus && matchesPropertyType;
   });
 
-  // Sort properties
   const sortedProperties = [...filteredProperties].sort((a, b) => {
     if (sortOrder === 'price-asc') return a.price - b.price;
     if (sortOrder === 'price-desc') return b.price - a.price;
-    // For demo, we'll just use the ID as a proxy for "newest" since we don't have date fields
     if (sortOrder === 'newest') return b.id.localeCompare(a.id);
     return 0;
   });
 
-  // Count properties by status
   const statusCounts = properties.reduce((acc, property) => {
     acc[property.status] = (acc[property.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // Count properties by type
   const typeCounts = properties.reduce((acc, property) => {
     const type = property.propertyType || 'House';
     acc[type] = (acc[type] || 0) + 1;
@@ -83,7 +78,7 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
   };
 
   const handlePropertyEdit = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the card click
+    e.stopPropagation();
     if (onPropertyEdit) {
       onPropertyEdit(id);
     }
@@ -91,7 +86,6 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Status filter pills */}
       <div className="flex flex-wrap gap-2 mb-6">
         <Button 
           variant={statusFilter === 'all' ? "default" : "outline"} 
@@ -155,7 +149,6 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
         </div>
         
         <div className="flex flex-wrap justify-end gap-2">
-          {/* Status filter dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-1">
@@ -196,7 +189,6 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* Sort order */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-1">
@@ -216,7 +208,6 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {/* View mode toggle */}
           <div className="flex rounded-md border overflow-hidden">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -238,12 +229,10 @@ export function PropertyGrid({ properties, onPropertyClick, onPropertyEdit }: Pr
         </div>
       </div>
       
-      {/* Results count */}
       <div className="text-sm text-muted-foreground">
         Showing {sortedProperties.length} of {properties.length} properties
       </div>
       
-      {/* Property grid */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all animate-scale-in">
           {sortedProperties.map((property, index) => (
