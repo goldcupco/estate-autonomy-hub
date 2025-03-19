@@ -34,10 +34,7 @@ interface AddPropertyModalProps {
 
 export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPropertyModalProps) {
   const [activeTab, setActiveTab] = useState('manual');
-  const [property, setProperty] = useState<Partial<Property>>({
-    status: 'For Sale',
-    propertyType: 'House',
-  });
+  const [property, setProperty] = useState<Partial<Property>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: keyof Property, value: any) => {
@@ -102,6 +99,9 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
 
       toast.success('Property added successfully');
       onOpenChange(false);
+      
+      // Reset the form after successful submission
+      setProperty({});
     } catch (error) {
       console.error('Error adding property:', error);
       toast.error('Failed to add property');
@@ -168,7 +168,14 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen) {
+        // Reset form when closing the dialog
+        setProperty({});
+        setActiveTab('manual');
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Property</DialogTitle>
@@ -275,7 +282,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
-                  value={property.status || 'For Sale'}
+                  value={property.status}
                   onValueChange={value => handleInputChange('status', value)}
                 >
                   <SelectTrigger id="status">
@@ -294,7 +301,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
               <div className="space-y-2">
                 <Label htmlFor="propertyType">Property Type</Label>
                 <Select
-                  value={property.propertyType || 'House'}
+                  value={property.propertyType}
                   onValueChange={value => handleInputChange('propertyType', value)}
                 >
                   <SelectTrigger id="propertyType">
