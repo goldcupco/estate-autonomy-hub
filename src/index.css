@@ -96,11 +96,16 @@
   }
   
   .button-with-icon {
-    @apply flex items-center gap-2 overflow-hidden;
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap overflow-hidden;
   }
   
   .text-with-icon {
     @apply truncate;
+  }
+  
+  /* Table cell alignment */
+  .table-cell-align {
+    @apply align-middle whitespace-nowrap;
   }
   
   /* Animation utilities */

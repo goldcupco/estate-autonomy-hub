@@ -20,9 +20,9 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
           e.stopPropagation();
           onOpenCall();
         }}
-        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-100 border-green-200"
+        className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700 hover:bg-green-100 border-green-200 whitespace-nowrap"
       >
-        <Phone className="h-4 w-4 shrink-0" />
+        <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="truncate">Quick Call</span>
       </Button>
       <Button 
@@ -33,9 +33,9 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
           e.stopPropagation();
           onOpenSms();
         }}
-        className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 border-blue-200"
+        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100 border-blue-200 whitespace-nowrap"
       >
-        <MessageSquare className="h-4 w-4 shrink-0" />
+        <MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="truncate">Quick SMS</span>
       </Button>
       <Button 
@@ -46,9 +46,9 @@ export function LeadQuickActions({ onOpenCall, onOpenSms, onOpenLetter }: LeadQu
           e.stopPropagation();
           onOpenLetter();
         }}
-        className="flex items-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-100 border-amber-200"
+        className="inline-flex items-center gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-100 border-amber-200 whitespace-nowrap"
       >
-        <FileText className="h-4 w-4 shrink-0" />
+        <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="truncate">Quick Letter</span>
       </Button>
     </>
