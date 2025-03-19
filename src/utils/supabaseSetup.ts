@@ -8,8 +8,22 @@ export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
   
   try {
-    // Check for tables one by one
-    const tables = ['communication_providers', 'call_records', 'sms_records', 'letter_records'];
+    // Check for all core tables
+    const tables = [
+      'communication_providers', 
+      'call_records', 
+      'sms_records', 
+      'letter_records',
+      'leads',
+      'properties',
+      'lists',
+      'list_items',
+      'campaigns',
+      'campaign_leads',
+      'documents',
+      'phone_numbers',
+      'contracts'
+    ];
     const existingTables = [];
     const missingTables = [];
     
@@ -83,6 +97,18 @@ export async function setupSupabaseTables() {
       
       // Create tables by upserting test records
       try {
+        if (stillMissing.includes('leads')) {
+          console.log('Creating leads table...');
+          await supabase.from('leads').upsert({
+            id: testId,
+            user_id: 'system',
+            first_name: 'Test',
+            last_name: 'User',
+            lead_type: 'buyer',
+            status: 'new'
+          }, { onConflict: 'id' });
+        }
+        
         if (stillMissing.includes('communication_providers')) {
           console.log('Creating communication_providers table...');
           await supabase.from('communication_providers').upsert({

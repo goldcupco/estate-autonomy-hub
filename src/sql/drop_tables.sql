@@ -6,13 +6,15 @@
 DROP TABLE IF EXISTS public.campaign_leads;
 DROP TABLE IF EXISTS public.list_items;
 
--- Drop main entity tables
+-- Drop tables with foreign key dependencies
 DROP TABLE IF EXISTS public.contracts;
 DROP TABLE IF EXISTS public.phone_numbers;
 DROP TABLE IF EXISTS public.documents;
 DROP TABLE IF EXISTS public.letter_records;
 DROP TABLE IF EXISTS public.sms_records;
 DROP TABLE IF EXISTS public.call_records;
+
+-- Drop main entity tables
 DROP TABLE IF EXISTS public.campaigns;
 DROP TABLE IF EXISTS public.lists;
 DROP TABLE IF EXISTS public.leads;

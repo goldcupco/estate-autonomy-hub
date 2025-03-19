@@ -24,6 +24,30 @@ export async function createTablesDirectly() {
   try {
     // Create all tables with one REST API call for better reliability
     const tableCreationSql = `
+      CREATE TABLE IF NOT EXISTS public.leads (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        zip TEXT,
+        lead_type TEXT NOT NULL,
+        lead_source TEXT,
+        status TEXT NOT NULL,
+        stage TEXT,
+        assigned_to TEXT,
+        notes TEXT,
+        last_contact_date TIMESTAMPTZ,
+        next_follow_up TIMESTAMPTZ,
+        tags JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS public.communication_providers (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
@@ -47,6 +71,7 @@ export async function createTablesDirectly() {
         duration INTEGER DEFAULT 0,
         recording_url TEXT,
         notes TEXT,
+        lead_id UUID,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
 
@@ -60,6 +85,7 @@ export async function createTablesDirectly() {
         timestamp TIMESTAMPTZ DEFAULT NOW(),
         message TEXT NOT NULL,
         direction TEXT NOT NULL,
+        lead_id UUID,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
 
@@ -72,6 +98,7 @@ export async function createTablesDirectly() {
         content TEXT NOT NULL,
         status TEXT NOT NULL,
         tracking_number TEXT,
+        lead_id UUID,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `;
@@ -250,6 +277,7 @@ export interface DbCallRecord {
   duration: number;
   recording_url?: string;
   notes?: string;
+  lead_id?: string;
   created_at: string;
 }
 
@@ -263,6 +291,7 @@ export interface DbSmsRecord {
   timestamp: string;
   message: string;
   direction: 'outgoing' | 'incoming';
+  lead_id?: string;
   created_at: string;
 }
 
@@ -275,5 +304,19 @@ export interface DbLetterRecord {
   content: string;
   status: 'draft' | 'sent' | 'delivered';
   tracking_number?: string;
+  lead_id?: string;
   created_at: string;
+}
+
+export interface DbLead {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  lead_type: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }

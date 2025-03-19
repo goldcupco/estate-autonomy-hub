@@ -1,3 +1,4 @@
+
 import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
@@ -29,6 +30,7 @@ export const CREATE_TABLES_SQL = {
       duration INTEGER DEFAULT 0,
       recording_url TEXT,
       notes TEXT,
+      lead_id UUID,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `,
@@ -43,6 +45,7 @@ export const CREATE_TABLES_SQL = {
       timestamp TIMESTAMPTZ DEFAULT NOW(),
       message TEXT NOT NULL,
       direction TEXT NOT NULL,
+      lead_id UUID,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `,
@@ -56,7 +59,154 @@ export const CREATE_TABLES_SQL = {
       content TEXT NOT NULL,
       status TEXT NOT NULL,
       tracking_number TEXT,
+      lead_id UUID,
       created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  leads: `
+    CREATE TABLE IF NOT EXISTS leads (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      address TEXT,
+      city TEXT,
+      state TEXT,
+      zip TEXT,
+      lead_type TEXT NOT NULL,
+      lead_source TEXT,
+      status TEXT NOT NULL,
+      stage TEXT,
+      assigned_to TEXT,
+      notes TEXT,
+      last_contact_date TIMESTAMPTZ,
+      next_follow_up TIMESTAMPTZ,
+      tags JSONB DEFAULT '[]'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  properties: `
+    CREATE TABLE IF NOT EXISTS properties (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      address TEXT NOT NULL,
+      city TEXT NOT NULL,
+      state TEXT NOT NULL,
+      zip TEXT NOT NULL,
+      price DECIMAL(12, 2),
+      bedrooms INTEGER,
+      bathrooms DECIMAL(3, 1),
+      square_feet INTEGER,
+      lot_size DECIMAL(10, 2),
+      year_built INTEGER,
+      property_type TEXT,
+      status TEXT NOT NULL,
+      description TEXT,
+      features JSONB DEFAULT '{}'::jsonb,
+      images JSONB DEFAULT '[]'::jsonb,
+      listing_date TIMESTAMPTZ,
+      mls_number TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  lists: `
+    CREATE TABLE IF NOT EXISTS lists (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  list_items: `
+    CREATE TABLE IF NOT EXISTS list_items (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      list_id UUID NOT NULL,
+      item_id UUID NOT NULL,
+      item_type TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  campaigns: `
+    CREATE TABLE IF NOT EXISTS campaigns (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      status TEXT NOT NULL,
+      type TEXT NOT NULL,
+      start_date TIMESTAMPTZ,
+      end_date TIMESTAMPTZ,
+      created_by TEXT NOT NULL,
+      assigned_users JSONB DEFAULT '[]'::jsonb,
+      budget DECIMAL(12, 2),
+      metrics JSONB DEFAULT '{}'::jsonb,
+      access_restricted BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  campaign_leads: `
+    CREATE TABLE IF NOT EXISTS campaign_leads (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      campaign_id UUID NOT NULL,
+      lead_id UUID NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  documents: `
+    CREATE TABLE IF NOT EXISTS documents (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      file_path TEXT NOT NULL,
+      file_type TEXT NOT NULL,
+      file_size INTEGER,
+      related_to_id UUID,
+      related_to_type TEXT,
+      tags JSONB DEFAULT '[]'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  phone_numbers: `
+    CREATE TABLE IF NOT EXISTS phone_numbers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      phone_number TEXT NOT NULL,
+      provider_id UUID,
+      label TEXT,
+      is_primary BOOLEAN DEFAULT false,
+      capabilities JSONB DEFAULT '{}'::jsonb,
+      status TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  contracts: `
+    CREATE TABLE IF NOT EXISTS contracts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      contract_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      property_id UUID,
+      buyer_id UUID,
+      seller_id UUID,
+      amount DECIMAL(12, 2),
+      start_date TIMESTAMPTZ,
+      end_date TIMESTAMPTZ,
+      document_id UUID,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `
 };

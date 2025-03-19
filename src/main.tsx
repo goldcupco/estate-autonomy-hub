@@ -1,4 +1,3 @@
-
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -50,7 +49,7 @@ const checkEnvironmentVariables = () => {
   try {
     // First check if tables already exist by trying to query one of them
     const { data, error } = await supabase
-      .from('communication_providers')
+      .from('leads')
       .select('count(*)', { count: 'exact', head: true });
     
     // If we can query successfully, tables exist
@@ -102,6 +101,32 @@ const checkEnvironmentVariables = () => {
               altText="Copy SQL"
               onClick={() => {
                 const sql = `
+-- Create leads table first (since other tables reference it)
+CREATE TABLE public.leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  lead_type TEXT NOT NULL,
+  lead_source TEXT,
+  status TEXT NOT NULL,
+  stage TEXT,
+  assigned_to TEXT,
+  notes TEXT,
+  last_contact_date TIMESTAMPTZ,
+  next_follow_up TIMESTAMPTZ,
+  tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create other main tables
 CREATE TABLE public.communication_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
@@ -113,6 +138,47 @@ CREATE TABLE public.communication_providers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE public.properties (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip TEXT NOT NULL,
+  price DECIMAL(12, 2),
+  bedrooms INTEGER,
+  bathrooms DECIMAL(3, 1),
+  square_feet INTEGER,
+  property_type TEXT,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.lists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL,
+  type TEXT NOT NULL,
+  start_date TIMESTAMPTZ,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create tables that reference the main tables
 CREATE TABLE public.call_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
@@ -125,6 +191,7 @@ CREATE TABLE public.call_records (
   duration INTEGER DEFAULT 0,
   recording_url TEXT,
   notes TEXT,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -138,6 +205,7 @@ CREATE TABLE public.sms_records (
   timestamp TIMESTAMPTZ DEFAULT NOW(),
   message TEXT NOT NULL,
   direction TEXT NOT NULL,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -150,7 +218,61 @@ CREATE TABLE public.letter_records (
   content TEXT NOT NULL,
   status TEXT NOT NULL,
   tracking_number TEXT,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.list_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  list_id UUID NOT NULL,
+  item_id UUID NOT NULL,
+  item_type TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.campaign_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL,
+  lead_id UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  related_to_id UUID,
+  related_to_type TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.phone_numbers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  provider_id UUID,
+  label TEXT,
+  is_primary BOOLEAN DEFAULT false,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.contracts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  contract_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  property_id UUID,
+  buyer_id UUID,
+  seller_id UUID,
+  amount DECIMAL(12, 2),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );`;
                 navigator.clipboard.writeText(sql);
                 toast({
@@ -168,6 +290,32 @@ CREATE TABLE public.letter_records (
       // Log the SQL more cleanly in the console for reference
       console.error('=== SQL TO CREATE TABLES ===');
       console.error(`
+-- Create leads table first (since other tables reference it)
+CREATE TABLE public.leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  lead_type TEXT NOT NULL,
+  lead_source TEXT,
+  status TEXT NOT NULL,
+  stage TEXT,
+  assigned_to TEXT,
+  notes TEXT,
+  last_contact_date TIMESTAMPTZ,
+  next_follow_up TIMESTAMPTZ,
+  tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create other main tables
 CREATE TABLE public.communication_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
@@ -179,6 +327,47 @@ CREATE TABLE public.communication_providers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE public.properties (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip TEXT NOT NULL,
+  price DECIMAL(12, 2),
+  bedrooms INTEGER,
+  bathrooms DECIMAL(3, 1),
+  square_feet INTEGER,
+  property_type TEXT,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.lists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL,
+  type TEXT NOT NULL,
+  start_date TIMESTAMPTZ,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create tables that reference the main tables
 CREATE TABLE public.call_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
@@ -191,6 +380,7 @@ CREATE TABLE public.call_records (
   duration INTEGER DEFAULT 0,
   recording_url TEXT,
   notes TEXT,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -204,6 +394,7 @@ CREATE TABLE public.sms_records (
   timestamp TIMESTAMPTZ DEFAULT NOW(),
   message TEXT NOT NULL,
   direction TEXT NOT NULL,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -216,7 +407,61 @@ CREATE TABLE public.letter_records (
   content TEXT NOT NULL,
   status TEXT NOT NULL,
   tracking_number TEXT,
+  lead_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.list_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  list_id UUID NOT NULL,
+  item_id UUID NOT NULL,
+  item_type TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.campaign_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL,
+  lead_id UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  related_to_id UUID,
+  related_to_type TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.phone_numbers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  provider_id UUID,
+  label TEXT,
+  is_primary BOOLEAN DEFAULT false,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.contracts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  contract_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  property_id UUID,
+  buyer_id UUID,
+  seller_id UUID,
+  amount DECIMAL(12, 2),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );`);
     }
   } catch (error) {
