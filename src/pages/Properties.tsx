@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -27,7 +26,7 @@ export interface Property {
   sqft: number;
   status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
   imageUrl: string;
-  propertyType: 'House' | 'Condo' | 'Land' | 'Multi-Family' | 'Commercial';
+  propertyType: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
 }
 
 export function Properties() {

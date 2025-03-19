@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { MLSImporter } from './MLSImporter';
+import { supabase } from '@/utils/supabaseClient';
 
 interface Property {
   id: string;
@@ -20,8 +21,9 @@ interface Property {
   bedrooms: number;
   bathrooms: number;
   sqft: number;
-  status: 'For Sale' | 'Pending' | 'Sold' | 'Lead';
-  imageUrl?: string;
+  status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
+  imageUrl: string;
+  propertyType: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
 }
 
 interface AddPropertyModalProps {
@@ -34,7 +36,9 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
   const [activeTab, setActiveTab] = useState('manual');
   const [property, setProperty] = useState<Partial<Property>>({
     status: 'For Sale',
+    propertyType: 'House',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: keyof Property, value: any) => {
     setProperty(prev => ({
@@ -43,40 +47,123 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!property.address || !property.city || !property.state || !property.zipCode) {
       toast.error('Please fill out all required fields');
       return;
     }
 
-    // In a real app, this would call an API to save the property
-    const newProperty = {
-      ...property,
-      id: `prop-${Date.now()}`,
-      price: property.price || 0,
-      bedrooms: property.bedrooms || 0,
-      bathrooms: property.bathrooms || 0,
-      sqft: property.sqft || 0,
-      status: property.status || 'For Sale',
-      imageUrl: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'
-    } as Property;
+    setIsSubmitting(true);
 
-    if (onPropertyAdded) {
-      onPropertyAdded(newProperty);
+    try {
+      // Save to Supabase
+      const { data, error } = await supabase.from('properties').insert({
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        zip_code: property.zipCode,
+        price: property.price || 0,
+        bedrooms: property.bedrooms || 0,
+        bathrooms: property.bathrooms || 0,
+        square_feet: property.sqft || 0,
+        status: property.status || 'For Sale',
+        image_url: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+        property_type: property.propertyType || 'House',
+        user_id: 'system', // This would be the actual user ID in a real app
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).select().single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Format the response to match the Property interface
+      if (data) {
+        const newProperty: Property = {
+          id: data.id,
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          zipCode: data.zip_code || '',
+          price: data.price || 0,
+          bedrooms: data.bedrooms || 0,
+          bathrooms: data.bathrooms || 0,
+          sqft: data.square_feet || 0,
+          status: (data.status as Property['status']) || 'For Sale',
+          imageUrl: data.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          propertyType: (data.property_type as Property['propertyType']) || 'House'
+        };
+
+        if (onPropertyAdded) {
+          onPropertyAdded(newProperty);
+        }
+      }
+
+      toast.success('Property added successfully');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error adding property:', error);
+      toast.error('Failed to add property');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success('Property added successfully');
-    onOpenChange(false);
   };
 
-  const handleImportSuccess = (properties: Property[]) => {
-    if (properties.length > 0) {
-      if (onPropertyAdded) {
-        // Only add the first property for simplicity
-        onPropertyAdded(properties[0]);
+  const handleImportSuccess = async (properties: any[]) => {
+    setIsSubmitting(true);
+    
+    try {
+      if (properties.length > 0) {
+        // Save to Supabase
+        const { data, error } = await supabase.from('properties').insert({
+          address: properties[0].address,
+          city: properties[0].city,
+          state: properties[0].state,
+          zip_code: properties[0].zipCode,
+          price: properties[0].price || 0,
+          bedrooms: properties[0].bedrooms || 0,
+          bathrooms: properties[0].bathrooms || 0,
+          square_feet: properties[0].sqft || 0,
+          status: properties[0].status || 'For Sale',
+          image_url: properties[0].imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          property_type: properties[0].propertyType || 'House',
+          user_id: 'system', // This would be the actual user ID in a real app
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).select().single();
+
+        if (error) {
+          throw error;
+        }
+
+        // Format the response to match the Property interface
+        if (data && onPropertyAdded) {
+          const newProperty: Property = {
+            id: data.id,
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zip_code || '',
+            price: data.price || 0,
+            bedrooms: data.bedrooms || 0,
+            bathrooms: data.bathrooms || 0,
+            sqft: data.square_feet || 0,
+            status: (data.status as Property['status']) || 'For Sale',
+            imageUrl: data.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            propertyType: (data.property_type as Property['propertyType']) || 'House'
+          };
+          onPropertyAdded(newProperty);
+        }
+
+        toast.success(`Imported ${properties.length} properties successfully`);
+        onOpenChange(false);
       }
-      toast.success(`Imported ${properties.length} properties successfully`);
-      onOpenChange(false);
+    } catch (error) {
+      console.error('Error importing property:', error);
+      toast.error('Failed to import property');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -199,6 +286,26 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Sold">Sold</SelectItem>
                     <SelectItem value="Lead">Lead</SelectItem>
+                    <SelectItem value="Negotiating">Negotiating</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="propertyType">Property Type</Label>
+                <Select
+                  value={property.propertyType || 'House'}
+                  onValueChange={value => handleInputChange('propertyType', value)}
+                >
+                  <SelectTrigger id="propertyType">
+                    <SelectValue placeholder="Select property type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="House">House</SelectItem>
+                    <SelectItem value="Condo">Condo</SelectItem>
+                    <SelectItem value="Land">Land</SelectItem>
+                    <SelectItem value="Commercial">Commercial</SelectItem>
+                    <SelectItem value="Apartment">Apartment</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -223,7 +330,9 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
         {activeTab === 'manual' && (
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSubmit}>Add Property</Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Adding...' : 'Add Property'}
+            </Button>
           </DialogFooter>
         )}
       </DialogContent>
