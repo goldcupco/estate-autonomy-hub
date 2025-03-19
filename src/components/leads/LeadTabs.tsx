@@ -3,6 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lead, Note } from './types';
 import { LeadTable } from './LeadTable';
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LeadTabsProps {
   leadsData: Lead[];
@@ -14,6 +16,7 @@ interface LeadTabsProps {
   onMoveToNextStage: (lead: Lead) => void;
   onToggleDoNotContact: (leadId: string, doNotContact: boolean) => void;
   isLoading?: boolean;
+  onAddLead?: () => void;
 }
 
 export function LeadTabs({
@@ -25,7 +28,8 @@ export function LeadTabs({
   onFlagLead,
   onMoveToNextStage,
   onToggleDoNotContact,
-  isLoading = false
+  isLoading = false,
+  onAddLead
 }: LeadTabsProps) {
   // Filter leads based on the current tab
   const getFilteredLeads = () => {
@@ -34,6 +38,8 @@ export function LeadTabs({
     }
     return leadsData.filter(lead => lead.status === currentTab);
   };
+
+  const filteredLeads = getFilteredLeads();
 
   if (isLoading) {
     return (
@@ -57,14 +63,31 @@ export function LeadTabs({
       </TabsList>
       
       <TabsContent value={currentTab} className="mt-0">
-        <LeadTable
-          data={getFilteredLeads()}
-          onEditLead={onEditLead}
-          onAddNote={onAddNote}
-          onMoveToNextStage={onMoveToNextStage}
-          onFlagLead={onFlagLead}
-          onToggleDoNotContact={onToggleDoNotContact}
-        />
+        {filteredLeads.length === 0 ? (
+          <div className="text-center py-16 border border-dashed rounded-lg">
+            <h3 className="text-lg font-medium mb-2">No leads found</h3>
+            <p className="text-muted-foreground mb-4">
+              {currentTab === 'All' 
+                ? "You don't have any leads yet" 
+                : `You don't have any ${currentTab} leads yet`}
+            </p>
+            {onAddLead && (
+              <Button onClick={onAddLead}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Lead
+              </Button>
+            )}
+          </div>
+        ) : (
+          <LeadTable
+            data={filteredLeads}
+            onEditLead={onEditLead}
+            onAddNote={onAddNote}
+            onMoveToNextStage={onMoveToNextStage}
+            onFlagLead={onFlagLead}
+            onToggleDoNotContact={onToggleDoNotContact}
+          />
+        )}
       </TabsContent>
     </Tabs>
   );

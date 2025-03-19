@@ -1,5 +1,4 @@
-
-import { Lead } from './LeadTable';
+import { Lead } from './types';
 
 export const initialLeadsData: Lead[] = [
   {

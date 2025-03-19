@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -10,225 +11,82 @@ import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
+import { supabase } from '@/utils/supabaseClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const propertiesData = [
-  {
-    id: '1',
-    address: '123 Main Street',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78701',
-    price: 450000,
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1800,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '2',
-    address: '456 Oak Avenue',
-    city: 'Denver',
-    state: 'CO',
-    zipCode: '80202',
-    price: 625000,
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2400,
-    status: 'Pending' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1598228723793-52759bba239c',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '3',
-    address: '789 Pine Lane',
-    city: 'Miami',
-    state: 'FL',
-    zipCode: '33101',
-    price: 380000,
-    bedrooms: 2,
-    bathrooms: 2,
-    sqft: 1500,
-    status: 'Sold' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '4',
-    address: '101 Lake Drive',
-    city: 'Seattle',
-    state: 'WA',
-    zipCode: '98101',
-    price: 750000,
-    bedrooms: 4,
-    bathrooms: 3.5,
-    sqft: 2800,
-    status: 'Lead' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '5',
-    address: '222 Cedar Court',
-    city: 'Chicago',
-    state: 'IL',
-    zipCode: '60601',
-    price: 520000,
-    bedrooms: 3,
-    bathrooms: 2.5,
-    sqft: 2100,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '6',
-    address: '333 Maple Road',
-    city: 'Portland',
-    state: 'OR',
-    zipCode: '97201',
-    price: 495000,
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1950,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '7',
-    address: '444 Birch Street',
-    city: 'Nashville',
-    state: 'TN',
-    zipCode: '37203',
-    price: 410000,
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1750,
-    status: 'Negotiating' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '8',
-    address: '555 Elm Boulevard',
-    city: 'San Diego',
-    state: 'CA',
-    zipCode: '92101',
-    price: 825000,
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2600,
-    status: 'Pending' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1592595896551-12b371d546d5',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '9',
-    address: '666 Willow Way',
-    city: 'Boston',
-    state: 'MA',
-    zipCode: '02108',
-    price: 710000,
-    bedrooms: 3,
-    bathrooms: 2.5,
-    sqft: 2200,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '10',
-    address: '777 Cherry Lane',
-    city: 'Atlanta',
-    state: 'GA',
-    zipCode: '30305',
-    price: 390000,
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1850,
-    status: 'Sold' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '11',
-    address: '888 Aspen Court',
-    city: 'Phoenix',
-    state: 'AZ',
-    zipCode: '85001',
-    price: 460000,
-    bedrooms: 4,
-    bathrooms: 2.5,
-    sqft: 2300,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1576941089067-2de3c901e126',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '12',
-    address: '999 Sycamore Drive',
-    city: 'Philadelphia',
-    state: 'PA',
-    zipCode: '19103',
-    price: 575000,
-    bedrooms: 3,
-    bathrooms: 3,
-    sqft: 2100,
-    status: 'Lead' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1575517111839-3a3843ee7f5d',
-    propertyType: 'House' as const,
-  },
-  {
-    id: '13',
-    address: 'Hillside Acres Lot 7',
-    city: 'Bozeman',
-    state: 'MT',
-    zipCode: '59715',
-    price: 320000,
-    bedrooms: 0,
-    bathrooms: 0,
-    sqft: 5,  // 5 acres
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef',
-    propertyType: 'Land' as const,
-  },
-  {
-    id: '14',
-    address: 'Riverside Plot B2',
-    city: 'Sedona',
-    state: 'AZ',
-    zipCode: '86336',
-    price: 275000,
-    bedrooms: 0,
-    bathrooms: 0,
-    sqft: 2.5,  // 2.5 acres
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e',
-    propertyType: 'Land' as const,
-  },
-  {
-    id: '15',
-    address: 'Mountain View Lot 12',
-    city: 'Aspen',
-    state: 'CO',
-    zipCode: '81611',
-    price: 1200000,
-    bedrooms: 0,
-    bathrooms: 0,
-    sqft: 10,  // 10 acres
-    status: 'Pending' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1449452198679-05c7fd30f416',
-    propertyType: 'Land' as const,
-  }
-];
+// Define the property type
+export interface Property {
+  id: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
+  imageUrl: string;
+  propertyType: 'House' | 'Condo' | 'Land' | 'Multi-Family' | 'Commercial';
+}
 
 export function Properties() {
   const navigate = useNavigate();
   const [showImporter, setShowImporter] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
+  // Fetch properties from the database
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          // Map database properties to the Property interface
+          const formattedProperties: Property[] = data.map(property => ({
+            id: property.id,
+            address: property.address || '',
+            city: property.city || '',
+            state: property.state || '',
+            zipCode: property.zip_code || '',
+            price: property.price || 0,
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            sqft: property.square_feet || 0,
+            status: (property.status as Property['status']) || 'For Sale',
+            imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', // fallback image
+            propertyType: (property.property_type as Property['propertyType']) || 'House'
+          }));
+          
+          setProperties(formattedProperties);
+        } else {
+          // If no properties found, show empty state
+          setProperties([]);
+          toast("No properties found. Add a new property to get started.");
+        }
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        toast("Error fetching properties.");
+        // Set empty array so UI doesn't stay in loading state
+        setProperties([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProperties();
+  }, []);
+
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -247,9 +105,59 @@ export function Properties() {
     }
   }, []);
   
-  const handleImportSuccess = (properties: any[]) => {
-    toast.success(`Successfully imported ${properties.length} properties from MLS`);
-    setShowImporter(false);
+  const handleImportSuccess = async (newProperties: any[]) => {
+    try {
+      // Save the imported properties to Supabase
+      for (const property of newProperties) {
+        await supabase.from('properties').insert({
+          address: property.address,
+          city: property.city,
+          state: property.state,
+          zip_code: property.zipCode,
+          price: property.price,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          square_feet: property.sqft,
+          status: property.status,
+          image_url: property.imageUrl,
+          property_type: property.propertyType,
+          user_id: 'system', // This would be the actual user ID in a real app
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }
+      
+      // Refresh the properties list
+      const { data } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (data) {
+        const formattedProperties: Property[] = data.map(property => ({
+          id: property.id,
+          address: property.address || '',
+          city: property.city || '',
+          state: property.state || '',
+          zipCode: property.zip_code || '',
+          price: property.price || 0,
+          bedrooms: property.bedrooms || 0,
+          bathrooms: property.bathrooms || 0,
+          sqft: property.square_feet || 0,
+          status: (property.status as Property['status']) || 'For Sale',
+          imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          propertyType: (property.property_type as Property['propertyType']) || 'House'
+        }));
+        
+        setProperties(formattedProperties);
+      }
+      
+      toast.success(`Successfully imported ${newProperties.length} properties from MLS`);
+      setShowImporter(false);
+    } catch (error) {
+      console.error('Error saving imported properties:', error);
+      toast.error('Failed to import properties');
+    }
   };
   
   return (
@@ -291,10 +199,27 @@ export function Properties() {
               </div>
             </div>
             
-            <PropertyGrid 
-              properties={propertiesData} 
-              onPropertyClick={(id) => navigate(`/property/${id}`)}
-            />
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array(6).fill(0).map((_, index) => (
+                  <Skeleton key={index} className="h-[300px] rounded-lg" />
+                ))}
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="text-center py-20 border border-dashed rounded-lg">
+                <h3 className="text-lg font-medium mb-2">No properties found</h3>
+                <p className="text-muted-foreground mb-4">Add your first property to get started</p>
+                <Button onClick={() => navigate('/property/new')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Property
+                </Button>
+              </div>
+            ) : (
+              <PropertyGrid 
+                properties={properties} 
+                onPropertyClick={(id) => navigate(`/property/${id}`)}
+              />
+            )}
           </div>
         </main>
       </div>

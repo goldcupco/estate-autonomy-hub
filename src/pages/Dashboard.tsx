@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
@@ -11,116 +12,24 @@ import { toggleSidebar } from '@/utils/sidebarUtils';
 import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 import { AddLeadModal } from '@/components/leads/AddLeadModal';
 import { ScheduleCallModal } from '@/components/calls/ScheduleCallModal';
+import { supabase } from '@/utils/supabaseClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Dummy property data
-const recentProperties = [
-  {
-    id: '1',
-    address: '123 Main Street',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78701',
-    price: 450000,
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1800,
-    status: 'For Sale' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-  },
-  {
-    id: '2',
-    address: '456 Oak Avenue',
-    city: 'Denver',
-    state: 'CO',
-    zipCode: '80202',
-    price: 625000,
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2400,
-    status: 'Pending' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1598228723793-52759bba239c',
-  },
-  {
-    id: '3',
-    address: '789 Pine Lane',
-    city: 'Miami',
-    state: 'FL',
-    zipCode: '33101',
-    price: 380000,
-    bedrooms: 2,
-    bathrooms: 2,
-    sqft: 1500,
-    status: 'Sold' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-  },
-  {
-    id: '4',
-    address: '101 Lake Drive',
-    city: 'Seattle',
-    state: 'WA',
-    zipCode: '98101',
-    price: 750000,
-    bedrooms: 4,
-    bathrooms: 3.5,
-    sqft: 2800,
-    status: 'Lead' as const,
-    imageUrl: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde',
-  },
-];
-
-// Dummy lead data
-const recentLeads: Lead[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '(555) 123-4567',
-    status: 'New',
-    source: 'Website Inquiry',
-    dateAdded: '2023-06-15',
-    lastContact: '2023-06-15',
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@example.com',
-    phone: '(555) 987-6543',
-    status: 'Contacted',
-    source: 'Zillow',
-    dateAdded: '2023-06-12',
-    lastContact: '2023-06-14',
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    email: 'michael.b@example.com',
-    phone: '(555) 456-7890',
-    status: 'Qualified',
-    source: 'Referral',
-    dateAdded: '2023-06-10',
-    lastContact: '2023-06-13',
-  },
-  {
-    id: '4',
-    name: 'Emily Davis',
-    email: 'emily.davis@example.com',
-    phone: '(555) 321-6547',
-    status: 'Negotiating',
-    source: 'Direct Mail',
-    dateAdded: '2023-06-08',
-    lastContact: '2023-06-12',
-  },
-  {
-    id: '5',
-    name: 'Robert Wilson',
-    email: 'robert.w@example.com',
-    phone: '(555) 789-4561',
-    status: 'Lost',
-    source: 'Cold Call',
-    dateAdded: '2023-06-05',
-    lastContact: '2023-06-10',
-  },
-];
+// Property interface (should match with Properties.tsx)
+interface Property {
+  id: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
+  imageUrl: string;
+  propertyType?: string;
+}
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -131,9 +40,11 @@ export function Dashboard() {
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [scheduleCallOpen, setScheduleCallOpen] = useState(false);
   
-  // Local state for properties and leads
-  const [properties, setProperties] = useState(recentProperties);
-  const [leads, setLeads] = useState(recentLeads);
+  // Data states
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [isLoadingLeads, setIsLoadingLeads] = useState(true);
 
   // Subscribe to global sidebar state changes
   useEffect(() => {
@@ -147,6 +58,100 @@ export function Dashboard() {
     };
   }, []);
 
+  // Fetch properties from Supabase
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoadingProperties(true);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(4);
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          const formattedProperties: Property[] = data.map(property => ({
+            id: property.id,
+            address: property.address || '',
+            city: property.city || '',
+            state: property.state || '',
+            zipCode: property.zip_code || '',
+            price: property.price || 0,
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            sqft: property.square_feet || 0,
+            status: (property.status as Property['status']) || 'For Sale',
+            imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'
+          }));
+          
+          setProperties(formattedProperties);
+        } else {
+          // Show empty state
+          setProperties([]);
+        }
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        // Set empty array to avoid UI staying in loading state
+        setProperties([]);
+      } finally {
+        setIsLoadingProperties(false);
+      }
+    };
+    
+    fetchProperties();
+  }, []);
+
+  // Fetch leads from Supabase
+  useEffect(() => {
+    const fetchLeads = async () => {
+      setIsLoadingLeads(true);
+      try {
+        const { data, error } = await supabase
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          const formattedLeads: Lead[] = data.map(lead => ({
+            id: lead.id,
+            name: `${lead.first_name} ${lead.last_name}`,
+            email: lead.email || '',
+            phone: lead.phone || '',
+            status: lead.status as Lead['status'],
+            source: lead.lead_source || 'Unknown',
+            dateAdded: new Date(lead.created_at).toISOString().split('T')[0],
+            lastContact: lead.last_contact_date 
+              ? new Date(lead.last_contact_date).toISOString().split('T')[0] 
+              : new Date(lead.created_at).toISOString().split('T')[0],
+            notes: []
+          }));
+          
+          setLeads(formattedLeads);
+        } else {
+          // Show empty state
+          setLeads([]);
+        }
+      } catch (err) {
+        console.error('Error fetching leads:', err);
+        // Set empty array to avoid UI staying in loading state
+        setLeads([]);
+      } finally {
+        setIsLoadingLeads(false);
+      }
+    };
+    
+    fetchLeads();
+  }, []);
+
   // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
@@ -156,13 +161,98 @@ export function Dashboard() {
   }, []);
 
   // Handler for adding a new property
-  const handlePropertyAdded = (property: any) => {
-    setProperties(prev => [property, ...prev]);
+  const handlePropertyAdded = async (property: any) => {
+    try {
+      // Save property to the database
+      const { data, error } = await supabase
+        .from('properties')
+        .insert({
+          address: property.address,
+          city: property.city,
+          state: property.state,
+          zip_code: property.zipCode,
+          price: property.price,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          square_feet: property.sqft,
+          status: property.status,
+          image_url: property.imageUrl,
+          property_type: property.propertyType || 'House',
+          user_id: 'system', // Replace with actual user ID in a real app
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const formattedProperty: Property = {
+          id: data[0].id,
+          address: data[0].address || '',
+          city: data[0].city || '',
+          state: data[0].state || '',
+          zipCode: data[0].zip_code || '',
+          price: data[0].price || 0,
+          bedrooms: data[0].bedrooms || 0,
+          bathrooms: data[0].bathrooms || 0,
+          sqft: data[0].square_feet || 0,
+          status: (data[0].status as Property['status']) || 'For Sale',
+          imageUrl: data[0].image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'
+        };
+        
+        setProperties(prev => [formattedProperty, ...prev].slice(0, 4));
+      }
+    } catch (error) {
+      console.error('Error adding property:', error);
+    }
   };
 
   // Handler for adding a new lead
-  const handleLeadAdded = (lead: Lead) => {
-    setLeads(prev => [lead, ...prev]);
+  const handleLeadAdded = async (lead: Lead) => {
+    try {
+      const [firstName, ...lastNameParts] = lead.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      // Save lead to the database
+      const { data, error } = await supabase
+        .from('leads')
+        .insert({
+          first_name: firstName,
+          last_name: lastName || '',
+          email: lead.email,
+          phone: lead.phone,
+          status: lead.status,
+          lead_source: lead.source,
+          lead_type: 'buyer', // Default type
+          user_id: 'system', // Replace with actual user ID in a real app
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const formattedLead: Lead = {
+          id: data[0].id,
+          name: `${data[0].first_name} ${data[0].last_name}`,
+          email: data[0].email || '',
+          phone: data[0].phone || '',
+          status: data[0].status as Lead['status'],
+          source: data[0].lead_source || 'Unknown',
+          dateAdded: new Date(data[0].created_at).toISOString().split('T')[0],
+          lastContact: data[0].last_contact_date 
+            ? new Date(data[0].last_contact_date).toISOString().split('T')[0] 
+            : new Date(data[0].created_at).toISOString().split('T')[0],
+          notes: []
+        };
+        
+        setLeads(prev => [formattedLead, ...prev].slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Error adding lead:', error);
+    }
   };
 
   return (
@@ -214,17 +304,35 @@ export function Dashboard() {
                   View All
                 </Button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {properties.slice(0, 4).map((property, index) => (
-                  <PropertyCard 
-                    key={property.id} 
-                    property={property} 
-                    className="opacity-0 animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
-                    onClick={() => navigate(`/property/${property.id}`)}
-                  />
-                ))}
-              </div>
+              
+              {isLoadingProperties ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {Array(4).fill(0).map((_, index) => (
+                    <Skeleton key={index} className="h-[200px] rounded-lg" />
+                  ))}
+                </div>
+              ) : properties.length === 0 ? (
+                <div className="text-center py-10 border border-dashed rounded-lg">
+                  <h3 className="text-lg font-medium mb-2">No properties found</h3>
+                  <p className="text-muted-foreground mb-4">Add your first property to get started</p>
+                  <Button onClick={() => setAddPropertyOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Property
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {properties.map((property, index) => (
+                    <PropertyCard 
+                      key={property.id} 
+                      property={property} 
+                      className="opacity-0 animate-fade-in"
+                      style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                      onClick={() => navigate(`/property/${property.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
             
             {/* Recent Leads */}
@@ -235,7 +343,21 @@ export function Dashboard() {
                   View All
                 </Button>
               </div>
-              <LeadTable data={leads.slice(0, 5)} />
+              
+              {isLoadingLeads ? (
+                <Skeleton className="h-[300px] w-full rounded-lg" />
+              ) : leads.length === 0 ? (
+                <div className="text-center py-10 border border-dashed rounded-lg">
+                  <h3 className="text-lg font-medium mb-2">No leads found</h3>
+                  <p className="text-muted-foreground mb-4">Add your first lead to get started</p>
+                  <Button onClick={() => setAddLeadOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Lead
+                  </Button>
+                </div>
+              ) : (
+                <LeadTable data={leads} />
+              )}
             </section>
           </div>
         </main>
