@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useSupabaseCommunication } from '@/utils/supabaseCommunicationService';
-import { DbCommunicationProvider, ProviderType } from '@/utils/supabaseClient';
+import { DbCommunicationProvider, ProviderType, supabase } from '@/utils/supabaseClient';
 import { 
   APIKeyForm, 
   APIKeyFormValues,
@@ -34,8 +34,26 @@ export const SupabaseAPIKeyManager = () => {
     const loadProviders = async () => {
       try {
         setIsLoading(true);
-        const providers = await getProviders();
-        setApiKeys(providers);
+        // First try direct method from service
+        try {
+          const providers = await getProviders();
+          setApiKeys(providers);
+          return;
+        } catch (serviceError) {
+          console.warn('Could not load providers through service, falling back to direct query', serviceError);
+        }
+        
+        // Fallback to direct query if the service fails
+        const { data, error } = await supabase
+          .from('communication_providers')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setApiKeys(data || []);
       } catch (error) {
         console.error('Error loading providers:', error);
         toast({
@@ -43,6 +61,8 @@ export const SupabaseAPIKeyManager = () => {
           description: 'Failed to load API keys from database',
           variant: 'destructive'
         });
+        // Set empty array so UI doesn't stay in loading state forever
+        setApiKeys([]);
       } finally {
         setIsLoading(false);
       }
@@ -77,12 +97,33 @@ export const SupabaseAPIKeyManager = () => {
         };
       }
       
-      // Save to Supabase
-      await saveProvider(newProvider);
-      
-      // Refresh the list
-      const providers = await getProviders();
-      setApiKeys(providers);
+      // Try the service first
+      try {
+        // Save to Supabase
+        await saveProvider(newProvider);
+        
+        // Refresh the list
+        const providers = await getProviders();
+        setApiKeys(providers);
+      } catch (serviceError) {
+        console.warn('Service method failed, trying direct DB insert', serviceError);
+        
+        // Fallback to direct insert
+        const { data, error } = await supabase
+          .from('communication_providers')
+          .insert({
+            ...newProvider,
+            user_id: 'system' // In a real app, this would be the current user's ID
+          })
+          .select();
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Add the new key to state
+          setApiKeys([data[0], ...apiKeys]);
+        }
+      }
       
       setIsAddDialogOpen(false);
       
@@ -103,8 +144,24 @@ export const SupabaseAPIKeyManager = () => {
   // Delete an API key
   const handleDeleteApiKey = async (id: string) => {
     try {
-      await deleteProvider(id);
+      // Try the service first
+      try {
+        await deleteProvider(id);
+      } catch (serviceError) {
+        console.warn('Service delete failed, trying direct DB delete', serviceError);
+        
+        // Fallback to direct delete
+        const { error } = await supabase
+          .from('communication_providers')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+      }
+      
+      // Update UI immediately
       setApiKeys(apiKeys.filter(key => key.id !== id));
+      
       toast({
         title: "API Key Removed",
         description: "The API key has been deleted.",

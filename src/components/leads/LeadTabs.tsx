@@ -1,17 +1,19 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lead, Note } from '@/components/leads/types';
-import { LeadTabContent } from './LeadTabContent';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Lead, Note } from './types';
+import { LeadTable } from './LeadTable';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LeadTabsProps {
   leadsData: Lead[];
   currentTab: string;
-  onTabChange: (value: string) => void;
+  onTabChange: (tab: string) => void;
   onEditLead: (updatedLead: Lead) => void;
   onAddNote: (leadId: string, note: Omit<Note, 'id'>) => void;
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
-  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void; // Renamed from onToggleDoNotCall
+  onToggleDoNotContact: (leadId: string, doNotContact: boolean) => void;
+  isLoading?: boolean;
 }
 
 export function LeadTabs({
@@ -22,38 +24,48 @@ export function LeadTabs({
   onAddNote,
   onFlagLead,
   onMoveToNextStage,
-  onToggleDoNotContact // Renamed from onToggleDoNotCall
+  onToggleDoNotContact,
+  isLoading = false
 }: LeadTabsProps) {
-  const statuses = ['All', 'New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
-  
+  // Filter leads based on the current tab
+  const getFilteredLeads = () => {
+    if (currentTab === 'All') {
+      return leadsData;
+    }
+    return leadsData.filter(lead => lead.status === currentTab);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-[500px] w-full rounded-md" />
+      </div>
+    );
+  }
+
   return (
-    <Tabs 
-      defaultValue="All" 
-      className="w-full animate-scale-in"
-      value={currentTab}
-      onValueChange={onTabChange}
-    >
-      <TabsList className="mb-6">
-        {statuses.map(status => (
-          <TabsTrigger key={status} value={status}>
-            {status === 'All' ? 'All Leads' : status}
-          </TabsTrigger>
-        ))}
+    <Tabs value={currentTab} onValueChange={onTabChange} className="w-full">
+      <TabsList className="grid grid-cols-7 mb-4">
+        <TabsTrigger value="All">All Leads</TabsTrigger>
+        <TabsTrigger value="New">New</TabsTrigger>
+        <TabsTrigger value="Contacted">Contacted</TabsTrigger>
+        <TabsTrigger value="Qualified">Qualified</TabsTrigger>
+        <TabsTrigger value="Negotiating">Negotiating</TabsTrigger>
+        <TabsTrigger value="Closed">Closed</TabsTrigger>
+        <TabsTrigger value="Lost">Lost</TabsTrigger>
       </TabsList>
       
-      {statuses.map(status => (
-        <TabsContent key={status} value={status} className="space-y-6 mt-6">
-          <LeadTabContent 
-            data={leadsData}
-            status={status}
-            onEditLead={onEditLead}
-            onAddNote={onAddNote}
-            onFlagLead={onFlagLead}
-            onMoveToNextStage={onMoveToNextStage}
-            onToggleDoNotContact={onToggleDoNotContact} // Renamed from onToggleDoNotCall
-          />
-        </TabsContent>
-      ))}
+      <TabsContent value={currentTab} className="mt-0">
+        <LeadTable
+          data={getFilteredLeads()}
+          onEditLead={onEditLead}
+          onAddNote={onAddNote}
+          onMoveToNextStage={onMoveToNextStage}
+          onFlagLead={onFlagLead}
+          onToggleDoNotContact={onToggleDoNotContact}
+        />
+      </TabsContent>
     </Tabs>
   );
 }

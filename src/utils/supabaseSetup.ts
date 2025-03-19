@@ -1,5 +1,5 @@
 
-import { supabase, executeSql } from './supabaseClient';
+import { supabase, executeSql, createTablesDirectly } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { CREATE_TABLES_SQL } from './initializeApp';
 
@@ -74,7 +74,18 @@ export async function setupSupabaseTables() {
     
     console.log('Missing tables, trying to create them with direct SQL...');
     
-    // Try to create the missing tables with direct SQL
+    // Try to create all tables using direct SQL
+    try {
+      const result = await createTablesDirectly();
+      if (result.success) {
+        console.log('Tables created successfully with direct SQL');
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Error creating tables with direct SQL:', error);
+    }
+    
+    // If direct approach failed, try individual SQL statements
     for (const table of missingTables) {
       if (CREATE_TABLES_SQL[table]) {
         console.log(`Creating ${table} with direct SQL...`);
@@ -86,96 +97,177 @@ export async function setupSupabaseTables() {
     const { success: verifySuccess, missingTables: stillMissing } = await verifyDatabaseSetup();
     
     if (verifySuccess) {
-      console.log('All tables created successfully with direct SQL');
+      console.log('All tables created successfully');
       return { success: true };
     }
     
     if (stillMissing.length > 0) {
       console.log('Some tables still missing after SQL creation, trying data insertion...');
-      // Create a UUID for our test records
-      const testId = '00000000-0000-0000-0000-000000000000';
-      
-      // Create tables by upserting test records
+      // Create records for missing tables using upsert approach
       try {
-        if (stillMissing.includes('leads')) {
-          console.log('Creating leads table...');
-          await supabase.from('leads').upsert({
-            id: testId,
-            user_id: 'system',
-            first_name: 'Test',
-            last_name: 'User',
-            lead_type: 'buyer',
-            status: 'new'
-          }, { onConflict: 'id' });
-        }
+        // Generate a test ID for system records
+        const testId = '00000000-0000-0000-0000-000000000000';
         
-        if (stillMissing.includes('communication_providers')) {
-          console.log('Creating communication_providers table...');
-          await supabase.from('communication_providers').upsert({
-            id: testId,
-            user_id: 'system',
-            name: 'System Default',
-            type: 'twilio',
-            is_default: true,
-            config: {}
-          }, { onConflict: 'id' });
-        }
-        
-        if (stillMissing.includes('call_records')) {
-          console.log('Creating call_records table...');
-          await supabase.from('call_records').upsert({
-            id: testId,
-            user_id: 'system',
-            provider_id: 'system',
-            provider_type: 'twilio',
-            call_id: 'system-test',
-            phone_number: '+10000000000',
-            contact_name: 'System Test',
-            timestamp: new Date().toISOString(),
-            duration: 0
-          }, { onConflict: 'id' });
-        }
-        
-        if (stillMissing.includes('sms_records')) {
-          console.log('Creating sms_records table...');
-          await supabase.from('sms_records').upsert({
-            id: testId,
-            user_id: 'system',
-            provider_id: 'system',
-            sms_id: 'system-test',
-            phone_number: '+10000000000',
-            contact_name: 'System Test',
-            timestamp: new Date().toISOString(),
-            message: 'System test',
-            direction: 'outgoing'
-          }, { onConflict: 'id' });
-        }
-        
-        if (stillMissing.includes('letter_records')) {
-          console.log('Creating letter_records table...');
-          await supabase.from('letter_records').upsert({
-            id: testId,
-            user_id: 'system',
-            recipient: 'System Test',
-            timestamp: new Date().toISOString(),
-            content: 'System test',
-            status: 'draft'
-          }, { onConflict: 'id' });
-        }
-        
-        // Final verification
-        const { success: finalSuccess } = await verifyDatabaseSetup();
-        if (finalSuccess) {
-          console.log('All tables created successfully after multiple attempts');
-          return { success: true };
+        // Try to create missing tables by inserting records
+        for (const table of stillMissing) {
+          switch (table) {
+            case 'leads':
+              await supabase.from('leads').upsert({
+                id: testId,
+                user_id: 'system',
+                first_name: 'Test',
+                last_name: 'User',
+                lead_type: 'buyer',
+                status: 'new'
+              });
+              break;
+              
+            case 'properties':
+              await supabase.from('properties').upsert({
+                id: testId,
+                user_id: 'system',
+                address: '123 Test St',
+                city: 'Test City',
+                state: 'TS',
+                zip: '12345',
+                status: 'active'
+              });
+              break;
+              
+            case 'lists':
+              await supabase.from('lists').upsert({
+                id: testId,
+                user_id: 'system',
+                name: 'Test List',
+                type: 'general'
+              });
+              break;
+              
+            case 'campaigns':
+              await supabase.from('campaigns').upsert({
+                id: testId,
+                user_id: 'system',
+                name: 'Test Campaign',
+                status: 'draft',
+                type: 'direct_mail',
+                created_by: 'system'
+              });
+              break;
+              
+            case 'documents':
+              await supabase.from('documents').upsert({
+                id: testId,
+                user_id: 'system',
+                name: 'Test Document',
+                file_path: '/test/document.pdf',
+                file_type: 'pdf'
+              });
+              break;
+              
+            case 'phone_numbers':
+              await supabase.from('phone_numbers').upsert({
+                id: testId,
+                user_id: 'system',
+                phone_number: '+10000000000',
+                status: 'active'
+              });
+              break;
+              
+            case 'contracts':
+              await supabase.from('contracts').upsert({
+                id: testId,
+                user_id: 'system',
+                title: 'Test Contract',
+                contract_type: 'purchase',
+                status: 'draft'
+              });
+              break;
+              
+            // For junction tables
+            case 'list_items':
+              await supabase.from('list_items').upsert({
+                id: testId,
+                list_id: testId,
+                item_id: testId,
+                item_type: 'lead'
+              });
+              break;
+              
+            case 'campaign_leads':
+              await supabase.from('campaign_leads').upsert({
+                id: testId,
+                campaign_id: testId,
+                lead_id: testId
+              });
+              break;
+              
+            // For communication-related tables
+            case 'communication_providers':
+              await supabase.from('communication_providers').upsert({
+                id: testId,
+                user_id: 'system',
+                name: 'Default Provider',
+                type: 'twilio',
+                is_default: true,
+                config: {}
+              });
+              break;
+              
+            case 'call_records':
+              await supabase.from('call_records').upsert({
+                id: testId,
+                user_id: 'system',
+                provider_id: 'system',
+                provider_type: 'twilio',
+                call_id: 'system-test',
+                phone_number: '+10000000000',
+                contact_name: 'System Test',
+                timestamp: new Date().toISOString(),
+                duration: 0
+              });
+              break;
+              
+            case 'sms_records':
+              await supabase.from('sms_records').upsert({
+                id: testId,
+                user_id: 'system',
+                provider_id: 'system',
+                sms_id: 'system-test',
+                phone_number: '+10000000000',
+                contact_name: 'System Test',
+                timestamp: new Date().toISOString(),
+                message: 'System test',
+                direction: 'outgoing'
+              });
+              break;
+              
+            case 'letter_records':
+              await supabase.from('letter_records').upsert({
+                id: testId,
+                user_id: 'system',
+                recipient: 'System Test',
+                timestamp: new Date().toISOString(),
+                content: 'System test',
+                status: 'draft'
+              });
+              break;
+              
+            default:
+              console.log(`No handler for table ${table}`);
+          }
         }
       } catch (error) {
-        console.error('Error creating tables with data insertion:', error);
+        console.error('Error creating tables with record insertion:', error);
       }
     }
     
-    console.error('Failed to create tables after multiple attempts');
-    return { success: false, error: 'Failed to create required tables' };
+    // Final verification
+    const finalCheck = await verifyDatabaseSetup();
+    return { 
+      success: finalCheck.success,
+      missingTables: finalCheck.missingTables,
+      error: finalCheck.success ? null : 'Failed to create all required tables' 
+    };
   } catch (error) {
     console.error('Error setting up tables:', error);
     toast({

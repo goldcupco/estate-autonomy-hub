@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Lead, Note } from '@/components/leads/LeadTable';
+import { supabase } from '@/utils/supabaseClient';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AddLeadModalProps {
   open: boolean;
@@ -26,6 +28,7 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
     dateAdded: new Date().toISOString().split('T')[0],
     lastContact: new Date().toISOString().split('T')[0]
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: keyof LeadFormState, value: any) => {
     setLead(prev => ({
@@ -34,56 +37,92 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!lead.name || !lead.email) {
       toast.error('Please fill out all required fields');
       return;
     }
+    
+    setIsSubmitting(true);
 
-    // Create initial note if notes text exists
-    const notes: Note[] = [];
-    if (lead.notes && typeof lead.notes === 'string' && lead.notes.trim() !== '') {
-      notes.push({
-        id: `note-${Date.now()}`,
-        text: lead.notes,
-        type: 'other',
-        timestamp: new Date().toISOString()
+    try {
+      // Parse name into first and last name
+      const [firstName, ...lastNameParts] = (lead.name || '').split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('leads')
+        .insert({
+          first_name: firstName,
+          last_name: lastName || '',
+          email: lead.email,
+          phone: lead.phone || '',
+          status: lead.status,
+          lead_type: 'buyer', // Default
+          lead_source: lead.source,
+          user_id: 'system', // In a real app, this would be the current user ID
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (error) throw error;
+
+      // Create initial note if notes text exists
+      const notes: Note[] = [];
+      if (lead.notes && typeof lead.notes === 'string' && lead.notes.trim() !== '') {
+        notes.push({
+          id: uuidv4(),
+          text: lead.notes,
+          type: 'other',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Create Lead object with returned DB ID
+      const newLead: Lead = {
+        id: data?.[0]?.id || `lead-${Date.now()}`,
+        name: lead.name || '',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        status: lead.status || 'New',
+        source: lead.source || 'Website Inquiry',
+        dateAdded: lead.dateAdded || new Date().toISOString().split('T')[0],
+        lastContact: lead.lastContact || new Date().toISOString().split('T')[0],
+        notes: notes,
+        flaggedForNextStage: false,
+        readyToMove: false,
+        doNotContact: false
+      };
+
+      if (onLeadAdded) {
+        onLeadAdded(newLead);
+      }
+
+      toast.success('Lead added successfully');
+      
+      // Reset form
+      setLead({
+        status: 'New',
+        source: 'Website Inquiry',
+        dateAdded: new Date().toISOString().split('T')[0],
+        lastContact: new Date().toISOString().split('T')[0]
       });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error adding lead:', error);
+      toast.error('Failed to add lead to database');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // In a real app, this would call an API to save the lead
-    const newLead = {
-      ...lead,
-      id: `lead-${Date.now()}`,
-      name: lead.name || '',
-      email: lead.email || '',
-      phone: lead.phone || '',
-      status: lead.status || 'New',
-      source: lead.source || 'Website Inquiry',
-      dateAdded: lead.dateAdded || new Date().toISOString().split('T')[0],
-      lastContact: lead.lastContact || new Date().toISOString().split('T')[0],
-      notes: notes // Use our transformed notes array
-    } as Lead;
-
-    if (onLeadAdded) {
-      onLeadAdded(newLead);
-    }
-
-    toast.success('Lead added successfully');
-    
-    // Reset form
-    setLead({
-      status: 'New',
-      source: 'Website Inquiry',
-      dateAdded: new Date().toISOString().split('T')[0],
-      lastContact: new Date().toISOString().split('T')[0]
-    });
-    
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={open => {
+      if (!isSubmitting) onOpenChange(open);
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Lead</DialogTitle>
@@ -178,8 +217,19 @@ export function AddLeadModal({ open, onOpenChange, onLeadAdded }: AddLeadModalPr
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>Add Lead</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Adding...' : 'Add Lead'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
