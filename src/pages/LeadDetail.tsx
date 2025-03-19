@@ -153,7 +153,7 @@ const LeadDetail = () => {
       toast({
         title: "Note added locally",
         description: "Note was saved locally but not to the database",
-        variant: "warning"
+        variant: "destructive"
       });
     }
   };
@@ -192,7 +192,7 @@ const LeadDetail = () => {
       toast({
         title: "Update partially successful",
         description: "Lead updated locally but database update failed",
-        variant: "warning"
+        variant: "destructive"
       });
     }
   };

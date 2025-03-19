@@ -221,7 +221,7 @@ export function Leads() {
       toast({
         title: "Failed to save note",
         description: "The note was added locally but not saved to the database",
-        variant: "warning"
+        variant: "destructive"
       });
     }
   };
@@ -284,7 +284,7 @@ export function Leads() {
       toast({
         title: "Database error",
         description: "Lead was added locally but not saved to database",
-        variant: "warning"
+        variant: "destructive"
       });
     }
   };
