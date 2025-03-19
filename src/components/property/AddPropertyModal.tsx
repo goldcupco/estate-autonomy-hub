@@ -8,21 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { MLSImporter } from './MLSImporter';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Property {
-  id: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  sqft: number;
-  status: 'For Sale' | 'Pending' | 'Sold' | 'Lead' | 'Negotiating';
-  imageUrl: string;
-  propertyType: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
-}
+import { Property } from '@/pages/Properties';
 
 interface AddPropertyModalProps {
   open: boolean;
@@ -127,6 +113,16 @@ export function AddPropertyModal({
         if (error) throw error;
 
         if (data && onPropertyAdded) {
+          const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+          let imageUrl = defaultImageUrl;
+          
+          if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+            const firstImage = data.images[0];
+            if (typeof firstImage === 'string') {
+              imageUrl = firstImage;
+            }
+          }
+          
           const newProperty: Property = {
             id: data.id,
             address: data.address || '',
@@ -138,9 +134,7 @@ export function AddPropertyModal({
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.images && Array.isArray(data.images) && data.images.length > 0 
-              ? data.images[0] 
-              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl,
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
 
@@ -196,6 +190,16 @@ export function AddPropertyModal({
         if (error) throw error;
 
         if (data && onPropertyAdded) {
+          const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+          let imageUrl = defaultImageUrl;
+          
+          if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+            const firstImage = data.images[0];
+            if (typeof firstImage === 'string') {
+              imageUrl = firstImage;
+            }
+          }
+          
           const newProperty: Property = {
             id: data.id,
             address: data.address || '',
@@ -207,9 +211,7 @@ export function AddPropertyModal({
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.images && Array.isArray(data.images) && data.images.length > 0 
-              ? data.images[0] 
-              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl,
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
           onPropertyAdded(newProperty);

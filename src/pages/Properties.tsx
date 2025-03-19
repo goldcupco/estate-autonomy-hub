@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -51,22 +52,32 @@ export function Properties() {
         }
         
         if (data && data.length > 0) {
-          const formattedProperties: Property[] = data.map(property => ({
-            id: property.id,
-            address: property.address || '',
-            city: property.city || '',
-            state: property.state || '',
-            zipCode: property.zip || '', // Changed from zip_code to zip
-            price: property.price || 0,
-            bedrooms: property.bedrooms || 0,
-            bathrooms: property.bathrooms || 0,
-            sqft: property.square_feet || 0,
-            status: (property.status as Property['status']) || 'For Sale',
-            imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
-              ? property.images[0] 
-              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-            propertyType: (property.property_type as Property['propertyType']) || 'House'
-          }));
+          const formattedProperties: Property[] = data.map(property => {
+            // Safely extract the first image URL from the images array or use a default
+            let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+            if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+              // Ensure the first element is a string
+              const firstImage = property.images[0];
+              if (typeof firstImage === 'string') {
+                imageUrl = firstImage;
+              }
+            }
+            
+            return {
+              id: property.id,
+              address: property.address || '',
+              city: property.city || '',
+              state: property.state || '',
+              zipCode: property.zip || '',
+              price: property.price || 0,
+              bedrooms: property.bedrooms || 0,
+              bathrooms: property.bathrooms || 0,
+              sqft: property.square_feet || 0,
+              status: (property.status as Property['status']) || 'For Sale',
+              imageUrl,
+              propertyType: (property.property_type as Property['propertyType']) || 'House'
+            };
+          });
           
           setProperties(formattedProperties);
         } else {
@@ -204,22 +215,31 @@ export function Properties() {
                             .order('created_at', { ascending: false });
                             
                           if (data) {
-                            const formattedProperties: Property[] = data.map(property => ({
-                              id: property.id,
-                              address: property.address || '',
-                              city: property.city || '',
-                              state: property.state || '',
-                              zipCode: property.zip || '', // Changed from zip_code to zip
-                              price: property.price || 0,
-                              bedrooms: property.bedrooms || 0,
-                              bathrooms: property.bathrooms || 0,
-                              sqft: property.square_feet || 0,
-                              status: (property.status as Property['status']) || 'For Sale',
-                              imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
-                                ? property.images[0] 
-                                : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-                              propertyType: (property.property_type as Property['propertyType']) || 'House'
-                            }));
+                            const formattedProperties: Property[] = data.map(property => {
+                              // Safely extract the first image URL from the images array or use a default
+                              let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+                              if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+                                const firstImage = property.images[0];
+                                if (typeof firstImage === 'string') {
+                                  imageUrl = firstImage;
+                                }
+                              }
+                              
+                              return {
+                                id: property.id,
+                                address: property.address || '',
+                                city: property.city || '',
+                                state: property.state || '',
+                                zipCode: property.zip || '',
+                                price: property.price || 0,
+                                bedrooms: property.bedrooms || 0,
+                                bathrooms: property.bathrooms || 0,
+                                sqft: property.square_feet || 0,
+                                status: (property.status as Property['status']) || 'For Sale',
+                                imageUrl,
+                                propertyType: (property.property_type as Property['propertyType']) || 'House'
+                              };
+                            });
                             
                             setProperties(formattedProperties);
                           }
