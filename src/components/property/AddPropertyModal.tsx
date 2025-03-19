@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { MLSImporter } from './MLSImporter';
-import { supabase } from '@/utils/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Property {
   id: string;
@@ -32,7 +33,10 @@ interface AddPropertyModalProps {
 
 export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPropertyModalProps) {
   const [activeTab, setActiveTab] = useState('manual');
-  const [property, setProperty] = useState<Partial<Property>>({});
+  const [property, setProperty] = useState<Partial<Property>>({
+    status: 'For Sale',
+    propertyType: 'House',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: keyof Property, value: any) => {
@@ -51,26 +55,33 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     setIsSubmitting(true);
 
     try {
-      // Save to Supabase - using the correct database column names
-      const { data, error } = await supabase.from('properties').insert({
+      // Map property data to database schema
+      const propertyData = {
         address: property.address,
         city: property.city,
         state: property.state,
-        zip_code: property.zipCode,
+        zip_code: property.zipCode,  // Note the underscore in the database field
         price: property.price || 0,
         bedrooms: property.bedrooms || 0,
         bathrooms: property.bathrooms || 0,
-        square_feet: property.sqft || 0,
+        square_feet: property.sqft || 0,  // Note the underscore in the database field
         status: property.status || 'For Sale',
-        // Changed from image_url to image_uri to match the database schema
         image_uri: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        property_type: property.propertyType || 'House',
-        user_id: 'system', // This would be the actual user ID in a real app
+        property_type: property.propertyType || 'House',  // Note the underscore in the database field
+        user_id: 'system',  // This would be the actual user ID in a real app
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }).select().single();
+      };
+
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('properties')
+        .insert(propertyData)
+        .select()
+        .single();
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
@@ -87,7 +98,6 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
           bathrooms: data.bathrooms || 0,
           sqft: data.square_feet || 0,
           status: (data.status as Property['status']) || 'For Sale',
-          // Changed from image_url to image_uri
           imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           propertyType: (data.property_type as Property['propertyType']) || 'House'
         };
@@ -101,7 +111,10 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
       onOpenChange(false);
       
       // Reset the form after successful submission
-      setProperty({});
+      setProperty({
+        status: 'For Sale',
+        propertyType: 'House',
+      });
     } catch (error) {
       console.error('Error adding property:', error);
       toast.error('Failed to add property');
@@ -115,8 +128,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     
     try {
       if (properties.length > 0) {
-        // Save to Supabase - using the correct database column names
-        const { data, error } = await supabase.from('properties').insert({
+        // Map property data to database schema
+        const propertyData = {
           address: properties[0].address,
           city: properties[0].city,
           state: properties[0].state,
@@ -126,15 +139,22 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
           bathrooms: properties[0].bathrooms || 0,
           square_feet: properties[0].sqft || 0,
           status: properties[0].status || 'For Sale',
-          // Changed from image_url to image_uri
           image_uri: properties[0].imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           property_type: properties[0].propertyType || 'House',
-          user_id: 'system', // This would be the actual user ID in a real app
+          user_id: 'system',  // This would be the actual user ID in a real app
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }).select().single();
+        };
+
+        // Save to Supabase
+        const { data, error } = await supabase
+          .from('properties')
+          .insert(propertyData)
+          .select()
+          .single();
 
         if (error) {
+          console.error('Supabase error:', error);
           throw error;
         }
 
@@ -151,7 +171,6 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            // Changed from image_url to image_uri
             imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
@@ -173,7 +192,10 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen) {
         // Reset form when closing the dialog
-        setProperty({});
+        setProperty({
+          status: 'For Sale',
+          propertyType: 'House',
+        });
         setActiveTab('manual');
       }
       onOpenChange(newOpen);
@@ -241,7 +263,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                     id="price"
                     type="number"
                     value={property.price || ''}
-                    onChange={e => handleInputChange('price', parseFloat(e.target.value))}
+                    onChange={e => handleInputChange('price', parseFloat(e.target.value) || 0)}
                     placeholder="450000"
                   />
                 </div>
@@ -254,7 +276,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                     id="bedrooms"
                     type="number"
                     value={property.bedrooms || ''}
-                    onChange={e => handleInputChange('bedrooms', parseInt(e.target.value))}
+                    onChange={e => handleInputChange('bedrooms', parseInt(e.target.value) || 0)}
                     placeholder="3"
                   />
                 </div>
@@ -264,7 +286,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                     id="bathrooms"
                     type="number"
                     value={property.bathrooms || ''}
-                    onChange={e => handleInputChange('bathrooms', parseFloat(e.target.value))}
+                    onChange={e => handleInputChange('bathrooms', parseFloat(e.target.value) || 0)}
                     placeholder="2"
                     step="0.5"
                   />
@@ -275,7 +297,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
                     id="sqft"
                     type="number"
                     value={property.sqft || ''}
-                    onChange={e => handleInputChange('sqft', parseInt(e.target.value))}
+                    onChange={e => handleInputChange('sqft', parseInt(e.target.value) || 0)}
                     placeholder="1800"
                   />
                 </div>
@@ -284,8 +306,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
-                  value={property.status}
-                  onValueChange={value => handleInputChange('status', value)}
+                  value={property.status || 'For Sale'}
+                  onValueChange={value => handleInputChange('status', value as Property['status'])}
                 >
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
@@ -303,7 +325,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
               <div className="space-y-2">
                 <Label htmlFor="propertyType">Property Type</Label>
                 <Select
-                  value={property.propertyType}
+                  value={property.propertyType || 'House'}
                   onValueChange={value => handleInputChange('propertyType', value as Property['propertyType'])}
                 >
                   <SelectTrigger id="propertyType">

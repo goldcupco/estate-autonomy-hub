@@ -1,17 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
-import { Building, Plus, Database, X } from 'lucide-react';
-import { DataUploader } from '@/components/ui/DataUploader';
-import { MLSImporter } from '@/components/property/MLSImporter';
+import { Building, Plus, Database } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
-import { supabase } from '@/utils/supabaseClient';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { MLSImporter } from '@/components/property/MLSImporter';
+import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 
 // Define the property type
 export interface Property {
@@ -35,6 +36,7 @@ export function Properties() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [addPropertyOpen, setAddPropertyOpen] = useState(false);
   
   // Fetch properties from the database
   useEffect(() => {
@@ -63,7 +65,6 @@ export function Properties() {
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            // Changed from image_url to image_uri
             imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', 
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
@@ -76,7 +77,7 @@ export function Properties() {
         }
       } catch (err) {
         console.error('Error fetching properties:', err);
-        toast("Error fetching properties.");
+        toast.error("Error fetching properties.");
         // Set empty array so UI doesn't stay in loading state
         setProperties([]);
       } finally {
@@ -105,61 +106,10 @@ export function Properties() {
     }
   }, []);
   
-  const handleImportSuccess = async (newProperties: any[]) => {
-    try {
-      // Save the imported properties to Supabase
-      for (const property of newProperties) {
-        await supabase.from('properties').insert({
-          address: property.address,
-          city: property.city,
-          state: property.state,
-          zip_code: property.zipCode,
-          price: property.price,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          square_feet: property.sqft,
-          status: property.status,
-          // Changed from image_url to image_uri
-          image_uri: property.imageUrl,
-          property_type: property.propertyType,
-          user_id: 'system', // This would be the actual user ID in a real app
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-      }
-      
-      // Refresh the properties list
-      const { data } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (data) {
-        const formattedProperties: Property[] = data.map(property => ({
-          id: property.id,
-          address: property.address || '',
-          city: property.city || '',
-          state: property.state || '',
-          zipCode: property.zip_code || '',
-          price: property.price || 0,
-          bedrooms: property.bedrooms || 0,
-          bathrooms: property.bathrooms || 0,
-          sqft: property.square_feet || 0,
-          status: (property.status as Property['status']) || 'For Sale',
-          // Changed from image_url to image_uri
-          imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-          propertyType: (property.property_type as Property['propertyType']) || 'House'
-        }));
-        
-        setProperties(formattedProperties);
-      }
-      
-      toast.success(`Successfully imported ${newProperties.length} properties from MLS`);
-      setShowImporter(false);
-    } catch (error) {
-      console.error('Error saving imported properties:', error);
-      toast.error('Failed to import properties');
-    }
+  const handlePropertyAdded = (newProperty: Property) => {
+    // Add the new property to the list and refresh the UI
+    setProperties(prev => [newProperty, ...prev]);
+    toast.success("Property added successfully");
   };
   
   return (
@@ -189,12 +139,45 @@ export function Properties() {
                       </SheetDescription>
                     </SheetHeader>
                     <div className="mt-6 space-y-6">
-                      <MLSImporter onImportSuccess={handleImportSuccess} />
+                      <MLSImporter onImportSuccess={(props) => {
+                        // After importing, refresh the properties list
+                        const fetchProperties = async () => {
+                          const { data } = await supabase
+                            .from('properties')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+                            
+                          if (data) {
+                            const formattedProperties: Property[] = data.map(property => ({
+                              id: property.id,
+                              address: property.address || '',
+                              city: property.city || '',
+                              state: property.state || '',
+                              zipCode: property.zip_code || '',
+                              price: property.price || 0,
+                              bedrooms: property.bedrooms || 0,
+                              bathrooms: property.bathrooms || 0,
+                              sqft: property.square_feet || 0,
+                              status: (property.status as Property['status']) || 'For Sale',
+                              imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+                              propertyType: (property.property_type as Property['propertyType']) || 'House'
+                            }));
+                            
+                            setProperties(formattedProperties);
+                          }
+                        };
+                        
+                        fetchProperties();
+                        toast.success(`Successfully imported ${props.length} properties from MLS`);
+                      }} />
                     </div>
                   </SheetContent>
                 </Sheet>
                 
-                <Button className="flex items-center gap-2 animate-scale-in" onClick={() => navigate('/property/new')}>
+                <Button 
+                  className="flex items-center gap-2 animate-scale-in" 
+                  onClick={() => setAddPropertyOpen(true)}
+                >
                   <Building className="h-4 w-4" />
                   <span>Add Property</span>
                 </Button>
@@ -211,7 +194,7 @@ export function Properties() {
               <div className="text-center py-20 border border-dashed rounded-lg">
                 <h3 className="text-lg font-medium mb-2">No properties found</h3>
                 <p className="text-muted-foreground mb-4">Add your first property to get started</p>
-                <Button onClick={() => navigate('/property/new')}>
+                <Button onClick={() => setAddPropertyOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Property
                 </Button>
@@ -225,6 +208,13 @@ export function Properties() {
           </div>
         </main>
       </div>
+
+      {/* Add Property Modal */}
+      <AddPropertyModal
+        open={addPropertyOpen}
+        onOpenChange={setAddPropertyOpen}
+        onPropertyAdded={handlePropertyAdded}
+      />
     </div>
   );
 }
