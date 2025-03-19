@@ -6,6 +6,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CampaignProvider } from '@/contexts/CampaignContext';
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { vi } from 'vitest';
 
 // Create a custom render method that includes providers
 const queryClient = new QueryClient({
@@ -45,17 +46,17 @@ const customRender = (
   return render(ui, { wrapper: AllTheProviders, ...options });
 };
 
-// Mock supabase client
-jest.mock('@/utils/supabaseClient', () => ({
+// Mock supabase client using vitest instead of jest
+vi.mock('@/utils/supabaseClient', () => ({
   supabase: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    single: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
     data: null,
     error: null,
   },

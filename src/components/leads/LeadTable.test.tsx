@@ -3,15 +3,16 @@ import { describe, test, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '../../test/helpers/test-utils';
 import userEvent from '@testing-library/user-event';
 import { LeadTable } from './LeadTable';
+import { Lead } from './types';
 
 // Sample lead data for testing
-const mockLeads = [
+const mockLeads: Lead[] = [
   {
     id: '1',
     name: 'John Doe',
     email: 'john@example.com',
     phone: '555-123-4567',
-    status: 'New',
+    status: 'New', // Using a valid status from the union type
     source: 'Website',
     dateAdded: '2023-01-01',
     lastContact: '2023-01-01',
@@ -25,7 +26,7 @@ const mockLeads = [
     name: 'Jane Smith',
     email: 'jane@example.com',
     phone: '555-765-4321',
-    status: 'Contacted',
+    status: 'Contacted', // Using a valid status from the union type
     source: 'Referral',
     dateAdded: '2023-01-05',
     lastContact: '2023-01-10',
