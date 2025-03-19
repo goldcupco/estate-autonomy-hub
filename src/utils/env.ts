@@ -25,3 +25,11 @@ export const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY', 'eyJhbGciOiJIU
 
 // Add other environment variables as needed
 export const GOOGLE_MAPS_API_KEY = getEnv('VITE_GOOGLE_MAPS_API_KEY', '');
+
+// SQL script paths for database setup
+export const SQL_SCRIPTS = {
+  CREATE_TABLES: '/src/sql/create_tables.sql',
+  INSERT_SAMPLE_DATA: '/src/sql/insert_sample_data.sql',
+  ADD_RLS_POLICIES: '/src/sql/add_rls_policies.sql',
+  DROP_TABLES: '/src/sql/drop_tables.sql',
+};
