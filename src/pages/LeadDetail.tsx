@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/layout/Sidebar';
@@ -20,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { initialLeadsData } from '@/components/leads/LeadData';
-import { supabase } from '@/utils/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const LeadDetail = () => {
@@ -29,6 +30,7 @@ const LeadDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -197,6 +199,96 @@ const LeadDetail = () => {
     }
   };
 
+  const handleDeleteLead = async (leadId: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', leadId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Lead deleted",
+        description: "Lead has been deleted successfully"
+      });
+      
+      // Navigate back to leads page
+      navigate('/leads');
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete lead from database",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFlagForNextStage = (leadId: string, flagged: boolean) => {
+    setLead(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        flaggedForNextStage: flagged
+      };
+    });
+    
+    toast({
+      title: flagged ? "Lead flagged" : "Flag removed",
+      description: flagged ? "Lead has been flagged for the next stage" : "Flag has been removed"
+    });
+  };
+
+  const handleToggleDoNotContact = async (leadId: string, doNotContact: boolean) => {
+    try {
+      // Update local state
+      setLead(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          doNotContact
+        };
+      });
+      
+      // Optional: Add a note about this change
+      const note: Note = {
+        id: `note-${Date.now()}`,
+        text: doNotContact ? 'Marked as Do Not Contact' : 'Removed Do Not Contact flag',
+        type: 'other',
+        timestamp: new Date().toISOString()
+      };
+      
+      setLead(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          notes: [...(prev.notes || []), note]
+        };
+      });
+      
+      // You could have a database field for this flag
+      // const { error } = await supabase
+      //   .from('leads')
+      //   .update({ do_not_contact: doNotContact })
+      //   .eq('id', leadId);
+      
+      // if (error) throw error;
+      
+      toast({
+        title: doNotContact ? "Marked as Do Not Contact" : "Contact status restored",
+        description: doNotContact ? "Lead will not be contacted" : "Lead can now be contacted"
+      });
+    } catch (error) {
+      console.error('Error updating do not contact status:', error);
+      toast({
+        title: "Status updated locally",
+        description: "Status was updated locally but not saved to the database",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -322,6 +414,9 @@ const LeadDetail = () => {
                     lead={lead} 
                     onEdit={handleEditLead} 
                     onAddNote={handleAddNote}
+                    onDelete={handleDeleteLead}
+                    onFlagForNextStage={handleFlagForNextStage}
+                    onToggleDoNotContact={handleToggleDoNotContact}
                   />
                 </div>
               </CardContent>

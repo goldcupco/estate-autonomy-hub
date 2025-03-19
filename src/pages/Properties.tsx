@@ -37,6 +37,7 @@ export function Properties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addPropertyOpen, setAddPropertyOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   
   // Fetch properties from the database
   useEffect(() => {
@@ -59,13 +60,13 @@ export function Properties() {
             address: property.address || '',
             city: property.city || '',
             state: property.state || '',
-            zipCode: property.zip_code || '',
+            zipCode: property.zip || '', // Changed from zip_code to zip
             price: property.price || 0,
             bedrooms: property.bedrooms || 0,
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', 
+            imageUrl: property.images && property.images.length > 0 ? property.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', // Get first image from array
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
@@ -112,6 +113,70 @@ export function Properties() {
     toast.success("Property added successfully");
   };
   
+  const handleEditProperty = (property: Property) => {
+    setEditingProperty(property);
+    setAddPropertyOpen(true);
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProperties(prev => prev.filter(property => property.id !== propertyId));
+      
+      toast.success("Property deleted successfully");
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      toast.error("Failed to delete property");
+    }
+  };
+  
+  const handleUpdateProperty = async (updatedProperty: Property) => {
+    try {
+      // Map property data to database schema
+      const propertyData = {
+        address: updatedProperty.address,
+        city: updatedProperty.city,
+        state: updatedProperty.state,
+        zip: updatedProperty.zipCode,
+        price: updatedProperty.price,
+        bedrooms: updatedProperty.bedrooms,
+        bathrooms: updatedProperty.bathrooms,
+        square_feet: updatedProperty.sqft,
+        status: updatedProperty.status,
+        images: [updatedProperty.imageUrl],
+        property_type: updatedProperty.propertyType,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('properties')
+        .update(propertyData)
+        .eq('id', updatedProperty.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProperties(prev => 
+        prev.map(property => 
+          property.id === updatedProperty.id ? updatedProperty : property
+        )
+      );
+      
+      toast.success("Property updated successfully");
+      setEditingProperty(null);
+    } catch (error) {
+      console.error('Error updating property:', error);
+      toast.error("Failed to update property");
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -153,13 +218,13 @@ export function Properties() {
                               address: property.address || '',
                               city: property.city || '',
                               state: property.state || '',
-                              zipCode: property.zip_code || '',
+                              zipCode: property.zip || '', // Changed from zip_code to zip
                               price: property.price || 0,
                               bedrooms: property.bedrooms || 0,
                               bathrooms: property.bathrooms || 0,
                               sqft: property.square_feet || 0,
                               status: (property.status as Property['status']) || 'For Sale',
-                              imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+                              imageUrl: property.images && property.images.length > 0 ? property.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', // Changed from image_uri to images array
                               propertyType: (property.property_type as Property['propertyType']) || 'House'
                             }));
                             
@@ -176,7 +241,10 @@ export function Properties() {
                 
                 <Button 
                   className="flex items-center gap-2 animate-scale-in" 
-                  onClick={() => setAddPropertyOpen(true)}
+                  onClick={() => {
+                    setEditingProperty(null);
+                    setAddPropertyOpen(true);
+                  }}
                 >
                   <Building className="h-4 w-4" />
                   <span>Add Property</span>
@@ -203,17 +271,21 @@ export function Properties() {
               <PropertyGrid 
                 properties={properties} 
                 onPropertyClick={(id) => navigate(`/property/${id}`)}
+                onDeleteProperty={handleDeleteProperty}
+                onEditProperty={handleEditProperty}
               />
             )}
           </div>
         </main>
       </div>
 
-      {/* Add Property Modal */}
+      {/* Add/Edit Property Modal */}
       <AddPropertyModal
         open={addPropertyOpen}
         onOpenChange={setAddPropertyOpen}
         onPropertyAdded={handlePropertyAdded}
+        propertyToEdit={editingProperty}
+        onPropertyUpdated={handleUpdateProperty}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -29,15 +29,32 @@ interface AddPropertyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPropertyAdded?: (property: Property) => void;
+  propertyToEdit?: Property | null;
+  onPropertyUpdated?: (property: Property) => void;
 }
 
-export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPropertyModalProps) {
+export function AddPropertyModal({ 
+  open, 
+  onOpenChange, 
+  onPropertyAdded, 
+  propertyToEdit,
+  onPropertyUpdated 
+}: AddPropertyModalProps) {
   const [activeTab, setActiveTab] = useState('manual');
   const [property, setProperty] = useState<Partial<Property>>({
     status: 'For Sale',
     propertyType: 'House',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = !!propertyToEdit;
+
+  // When a property is provided for editing, set the form values
+  useEffect(() => {
+    if (propertyToEdit) {
+      setProperty(propertyToEdit);
+      setActiveTab('manual'); // Force manual tab when editing
+    }
+  }, [propertyToEdit]);
 
   const handleInputChange = (field: keyof Property, value: any) => {
     setProperty(prev => ({
@@ -55,69 +72,98 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     setIsSubmitting(true);
 
     try {
-      // Map property data to database schema
-      const propertyData = {
-        address: property.address,
-        city: property.city,
-        state: property.state,
-        zip_code: property.zipCode,  // Note the underscore in the database field
-        price: property.price || 0,
-        bedrooms: property.bedrooms || 0,
-        bathrooms: property.bathrooms || 0,
-        square_feet: property.sqft || 0,  // Note the underscore in the database field
-        status: property.status || 'For Sale',
-        image_uri: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        property_type: property.propertyType || 'House',  // Note the underscore in the database field
-        user_id: 'system',  // This would be the actual user ID in a real app
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('properties')
-        .insert(propertyData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
-      // Format the response to match the Property interface
-      if (data) {
-        const newProperty: Property = {
-          id: data.id,
-          address: data.address || '',
-          city: data.city || '',
-          state: data.state || '',
-          zipCode: data.zip_code || '',
-          price: data.price || 0,
-          bedrooms: data.bedrooms || 0,
-          bathrooms: data.bathrooms || 0,
-          sqft: data.square_feet || 0,
-          status: (data.status as Property['status']) || 'For Sale',
-          imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-          propertyType: (data.property_type as Property['propertyType']) || 'House'
+      if (isEditMode && propertyToEdit && onPropertyUpdated) {
+        // Update existing property
+        const updatedProperty = {
+          ...propertyToEdit,
+          ...property
+        } as Property;
+        
+        // Map property data to database schema
+        const propertyData = {
+          address: updatedProperty.address,
+          city: updatedProperty.city,
+          state: updatedProperty.state,
+          zip: updatedProperty.zipCode,
+          price: updatedProperty.price || 0,
+          bedrooms: updatedProperty.bedrooms || 0,
+          bathrooms: updatedProperty.bathrooms || 0,
+          square_feet: updatedProperty.sqft || 0,
+          status: updatedProperty.status,
+          images: [updatedProperty.imageUrl],
+          property_type: updatedProperty.propertyType,
+          updated_at: new Date().toISOString()
         };
 
-        if (onPropertyAdded) {
+        const { error } = await supabase
+          .from('properties')
+          .update(propertyData)
+          .eq('id', updatedProperty.id);
+          
+        if (error) throw error;
+        
+        onPropertyUpdated(updatedProperty);
+        toast.success('Property updated successfully');
+      } else {
+        // Add new property
+        const propertyData = {
+          address: property.address,
+          city: property.city,
+          state: property.state,
+          zip: property.zipCode,
+          price: property.price || 0,
+          bedrooms: property.bedrooms || 0,
+          bathrooms: property.bathrooms || 0,
+          square_feet: property.sqft || 0,
+          status: property.status || 'For Sale',
+          images: property.imageUrl ? [property.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
+          property_type: property.propertyType || 'House',
+          user_id: 'system',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('properties')
+          .insert(propertyData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data && onPropertyAdded) {
+          const newProperty: Property = {
+            id: data.id,
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zip || '',
+            price: data.price || 0,
+            bedrooms: data.bedrooms || 0,
+            bathrooms: data.bathrooms || 0,
+            sqft: data.square_feet || 0,
+            status: (data.status as Property['status']) || 'For Sale',
+            imageUrl: data.images && data.images.length > 0 ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            propertyType: (data.property_type as Property['propertyType']) || 'House'
+          };
+
           onPropertyAdded(newProperty);
+          toast.success('Property added successfully');
         }
       }
 
-      toast.success('Property added successfully');
       onOpenChange(false);
       
       // Reset the form after successful submission
-      setProperty({
-        status: 'For Sale',
-        propertyType: 'House',
-      });
+      if (!isEditMode) {
+        setProperty({
+          status: 'For Sale',
+          propertyType: 'House',
+        });
+      }
     } catch (error) {
-      console.error('Error adding property:', error);
-      toast.error('Failed to add property');
+      console.error('Error saving property:', error);
+      toast.error(isEditMode ? 'Failed to update property' : 'Failed to add property');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,50 +174,44 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     
     try {
       if (properties.length > 0) {
-        // Map property data to database schema
         const propertyData = {
           address: properties[0].address,
           city: properties[0].city,
           state: properties[0].state,
-          zip_code: properties[0].zipCode,
+          zip: properties[0].zipCode,
           price: properties[0].price || 0,
           bedrooms: properties[0].bedrooms || 0,
           bathrooms: properties[0].bathrooms || 0,
           square_feet: properties[0].sqft || 0,
           status: properties[0].status || 'For Sale',
-          image_uri: properties[0].imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          images: properties[0].imageUrl ? [properties[0].imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
           property_type: properties[0].propertyType || 'House',
-          user_id: 'system',  // This would be the actual user ID in a real app
+          user_id: 'system',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
 
-        // Save to Supabase
         const { data, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select()
           .single();
 
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
-        }
+        if (error) throw error;
 
-        // Format the response to match the Property interface
         if (data && onPropertyAdded) {
           const newProperty: Property = {
             id: data.id,
             address: data.address || '',
             city: data.city || '',
             state: data.state || '',
-            zipCode: data.zip_code || '',
+            zipCode: data.zip || '',
             price: data.price || 0,
             bedrooms: data.bedrooms || 0,
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl: data.images && data.images.length > 0 ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
           onPropertyAdded(newProperty);
@@ -191,27 +231,29 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen) {
-        // Reset form when closing the dialog
-        setProperty({
-          status: 'For Sale',
-          propertyType: 'House',
-        });
+        // Reset form when closing the dialog if not in edit mode
+        if (!isEditMode) {
+          setProperty({
+            status: 'For Sale',
+            propertyType: 'House',
+          });
+        }
         setActiveTab('manual');
       }
       onOpenChange(newOpen);
     }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Property</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Property' : 'Add New Property'}</DialogTitle>
           <DialogDescription>
-            Enter property details manually or import from MLS
+            {isEditMode ? 'Update property details' : 'Enter property details manually or import from MLS'}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-            <TabsTrigger value="import">Import from MLS</TabsTrigger>
+            {!isEditMode && <TabsTrigger value="import">Import from MLS</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="manual" className="space-y-4 mt-4">
@@ -353,16 +395,21 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
             </div>
           </TabsContent>
 
-          <TabsContent value="import" className="mt-4">
-            <MLSImporter onImportSuccess={handleImportSuccess} />
-          </TabsContent>
+          {!isEditMode && (
+            <TabsContent value="import" className="mt-4">
+              <MLSImporter onImportSuccess={handleImportSuccess} />
+            </TabsContent>
+          )}
         </Tabs>
 
         {activeTab === 'manual' && (
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Property'}
+              {isSubmitting 
+                ? (isEditMode ? 'Updating...' : 'Adding...') 
+                : (isEditMode ? 'Update Property' : 'Add Property')
+              }
             </Button>
           </DialogFooter>
         )}
