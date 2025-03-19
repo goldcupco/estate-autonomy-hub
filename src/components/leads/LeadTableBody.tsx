@@ -45,13 +45,15 @@ export function LeadTableBody({
                 return (
                   <td 
                     key={cell.id} 
-                    className={`px-4 py-3 ${isClickableColumn ? 'cursor-pointer hover:text-primary hover:underline' : ''}`}
+                    className={`px-4 py-3 min-w-[80px] ${isClickableColumn ? 'cursor-pointer hover:text-primary hover:underline' : ''}`}
                     onClick={isClickableColumn ? () => handleLeadClick(lead.id) : undefined}
                   >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    <div className="flex items-center space-x-2 overflow-hidden">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </div>
                   </td>
                 );
               })}

@@ -36,9 +36,9 @@ export function ActionButton({
               e.stopPropagation();
               onClick(e);
             }}
-            className={`h-8 w-8 ${colorClasses}`}
+            className={`h-8 w-8 flex items-center justify-center ${colorClasses}`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4 shrink-0" />
             <span className="sr-only">{label}</span>
           </Button>
         </TooltipTrigger>

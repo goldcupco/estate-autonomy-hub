@@ -41,8 +41,8 @@ export function LeadStageActions({
   };
   
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium">{nextStage}</span>
+    <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+      <span className="text-sm font-medium truncate">{nextStage}</span>
       
       <TooltipProvider>
         <Tooltip>
@@ -51,7 +51,7 @@ export function LeadStageActions({
               type="button"
               variant="outline" 
               size="icon" 
-              className={`h-7 w-7 transition-colors duration-200 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' : 'hover:bg-slate-100'}`}
+              className={`h-7 w-7 transition-colors duration-200 flex-shrink-0 ${lead.flaggedForNextStage ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' : 'hover:bg-slate-100'}`}
               onClick={handleFlagLead}
             >
               <Flag className={`h-4 w-4 transition-colors duration-200 ${lead.flaggedForNextStage ? 'fill-amber-500' : ''}`} />
@@ -72,7 +72,7 @@ export function LeadStageActions({
                 type="button"
                 variant="outline" 
                 size="icon" 
-                className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200 transition-colors duration-200"
+                className="h-7 w-7 bg-green-100 text-green-800 border-green-300 hover:bg-green-200 transition-colors duration-200 flex-shrink-0"
                 onClick={handleMoveToNextStage}
               >
                 <ArrowRight className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function LeadStageActions({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="ml-1 text-muted-foreground cursor-help">
+              <span className="ml-1 text-muted-foreground cursor-help flex-shrink-0">
                 <AlertCircle className="h-4 w-4" />
               </span>
             </TooltipTrigger>
