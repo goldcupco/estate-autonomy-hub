@@ -1,12 +1,8 @@
-
 import { supabase, executeSql } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
 
-// Define Supabase URL and key constants (same values used to initialize the client)
-const SUPABASE_URL = 'https://gdxzktqieasxxcocwsjh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHprdHFpZWFzeHhjb2N3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjc1MTEsImV4cCI6MjA1NzkwMzUxMX0.EKFCdp3mGjHsBalEWUcIApkHtcmbzR8876N8F3OhlKY';
-
-// SQL creation statements for each table
+// Define SQL creation statements for each table
 export const CREATE_TABLES_SQL = {
   communication_providers: `
     CREATE TABLE IF NOT EXISTS communication_providers (

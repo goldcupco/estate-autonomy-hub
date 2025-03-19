@@ -6,7 +6,7 @@ import { supabase, createTablesDirectly } from './utils/supabaseClient'
 import { Toaster } from './components/ui/toaster'
 import { toast } from '@/hooks/use-toast'
 import { ToastAction } from './components/ui/toast'
-import { Alert, AlertDescription } from './components/ui/alert'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './utils/env'
 
 // Get the root element
 const rootElement = document.getElementById("root");
@@ -24,9 +24,28 @@ createRoot(rootElement).render(
   </>
 );
 
+// Check if environment variables are properly set
+const checkEnvironmentVariables = () => {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('Missing Supabase environment variables');
+    toast({
+      title: 'Environment Configuration Error',
+      description: 'Missing Supabase environment variables. Please check your .env file.',
+      variant: 'destructive',
+    });
+    return false;
+  }
+  return true;
+};
+
 // Try to create tables and provide clear feedback to the user
 (async () => {
   console.log('Starting database initialization...');
+  
+  // Check environment variables before proceeding
+  if (!checkEnvironmentVariables()) {
+    return;
+  }
   
   try {
     // First check if tables already exist by trying to query one of them
