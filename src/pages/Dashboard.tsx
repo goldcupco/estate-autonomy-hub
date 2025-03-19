@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
@@ -84,7 +85,8 @@ export function Dashboard() {
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            imageUrl: property.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            // Changed from image_url to image_uri
+            imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
@@ -176,7 +178,8 @@ export function Dashboard() {
           bathrooms: property.bathrooms,
           square_feet: property.sqft,
           status: property.status,
-          image_url: property.imageUrl,
+          // Changed from image_url to image_uri
+          image_uri: property.imageUrl,
           property_type: property.propertyType || 'House',
           user_id: 'system', // Replace with actual user ID in a real app
           created_at: new Date().toISOString(),
@@ -198,7 +201,8 @@ export function Dashboard() {
           bathrooms: data[0].bathrooms || 0,
           sqft: data[0].square_feet || 0,
           status: (data[0].status as Property['status']) || 'For Sale',
-          imageUrl: data[0].image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          // Changed from image_url to image_uri
+          imageUrl: data[0].image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           propertyType: (data[0].property_type as Property['propertyType']) || 'House'
         };
         

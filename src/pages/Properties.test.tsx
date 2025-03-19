@@ -36,7 +36,8 @@ describe('Properties Page', () => {
           bathrooms: 2,
           square_feet: 1800,
           status: 'For Sale',
-          image_url: 'https://example.com/image.jpg',
+          // Changed from image_url to image_uri
+          image_uri: 'https://example.com/image.jpg',
           property_type: 'House',
           created_at: '2023-01-01T00:00:00.000Z',
           updated_at: '2023-01-01T00:00:00.000Z'

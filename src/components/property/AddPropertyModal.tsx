@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -6,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { MLSImporter } from './MLSImporter';
 import { supabase } from '@/utils/supabaseClient';
@@ -53,7 +51,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     setIsSubmitting(true);
 
     try {
-      // Save to Supabase
+      // Save to Supabase - using the correct database column names
       const { data, error } = await supabase.from('properties').insert({
         address: property.address,
         city: property.city,
@@ -64,7 +62,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
         bathrooms: property.bathrooms || 0,
         square_feet: property.sqft || 0,
         status: property.status || 'For Sale',
-        image_url: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+        // Changed from image_url to image_uri to match the database schema
+        image_uri: property.imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
         property_type: property.propertyType || 'House',
         user_id: 'system', // This would be the actual user ID in a real app
         created_at: new Date().toISOString(),
@@ -88,7 +87,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
           bathrooms: data.bathrooms || 0,
           sqft: data.square_feet || 0,
           status: (data.status as Property['status']) || 'For Sale',
-          imageUrl: data.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          // Changed from image_url to image_uri
+          imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           propertyType: (data.property_type as Property['propertyType']) || 'House'
         };
 
@@ -115,7 +115,7 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
     
     try {
       if (properties.length > 0) {
-        // Save to Supabase
+        // Save to Supabase - using the correct database column names
         const { data, error } = await supabase.from('properties').insert({
           address: properties[0].address,
           city: properties[0].city,
@@ -126,7 +126,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
           bathrooms: properties[0].bathrooms || 0,
           square_feet: properties[0].sqft || 0,
           status: properties[0].status || 'For Sale',
-          image_url: properties[0].imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          // Changed from image_url to image_uri
+          image_uri: properties[0].imageUrl || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           property_type: properties[0].propertyType || 'House',
           user_id: 'system', // This would be the actual user ID in a real app
           created_at: new Date().toISOString(),
@@ -150,7 +151,8 @@ export function AddPropertyModal({ open, onOpenChange, onPropertyAdded }: AddPro
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.image_url || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            // Changed from image_url to image_uri
+            imageUrl: data.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
           onPropertyAdded(newProperty);
