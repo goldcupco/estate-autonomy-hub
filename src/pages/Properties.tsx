@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -53,10 +52,8 @@ export function Properties() {
         
         if (data && data.length > 0) {
           const formattedProperties: Property[] = data.map(property => {
-            // Safely extract the first image URL from the images array or use a default
             let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
             if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-              // Ensure the first element is a string
               const firstImage = property.images[0];
               if (typeof firstImage === 'string') {
                 imageUrl = firstImage;
@@ -216,7 +213,6 @@ export function Properties() {
                             
                           if (data) {
                             const formattedProperties: Property[] = data.map(property => {
-                              // Safely extract the first image URL from the images array or use a default
                               let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
                               if (property.images && Array.isArray(property.images) && property.images.length > 0) {
                                 const firstImage = property.images[0];

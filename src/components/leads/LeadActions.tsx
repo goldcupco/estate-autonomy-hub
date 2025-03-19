@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MoreHorizontal, Pencil, MessageCircle, Phone, Mail, Trash, Flag, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -51,7 +50,7 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
     if (onAddNote) {
       const note: Omit<Note, 'id'> = {
         text: noteText,
-        type: 'other', // Changed from 'note' to 'other' to match the type definition
+        type: "other",
         timestamp: new Date().toISOString()
       };
       
@@ -82,7 +81,6 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
     setIsPopoverOpen(false);
   };
 
-  // Get the next stage for this lead
   const nextStage = getNextStage(lead.status);
 
   return (
@@ -171,7 +169,6 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
         </Popover>
       </div>
       
-      {/* Edit Lead Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -246,7 +243,6 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
         </DialogContent>
       </Dialog>
       
-      {/* Add Note Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -270,7 +266,6 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
