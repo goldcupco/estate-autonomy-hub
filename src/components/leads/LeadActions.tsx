@@ -51,7 +51,7 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
     if (onAddNote) {
       const note: Omit<Note, 'id'> = {
         text: noteText,
-        type: 'note',
+        type: 'other', // Changed from 'note' to 'other' to match the type definition
         timestamp: new Date().toISOString()
       };
       

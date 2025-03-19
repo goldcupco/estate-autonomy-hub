@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -48,11 +47,10 @@ export function AddPropertyModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!propertyToEdit;
 
-  // When a property is provided for editing, set the form values
   useEffect(() => {
     if (propertyToEdit) {
       setProperty(propertyToEdit);
-      setActiveTab('manual'); // Force manual tab when editing
+      setActiveTab('manual');
     }
   }, [propertyToEdit]);
 
@@ -73,13 +71,11 @@ export function AddPropertyModal({
 
     try {
       if (isEditMode && propertyToEdit && onPropertyUpdated) {
-        // Update existing property
         const updatedProperty = {
           ...propertyToEdit,
           ...property
         } as Property;
         
-        // Map property data to database schema
         const propertyData = {
           address: updatedProperty.address,
           city: updatedProperty.city,
@@ -105,7 +101,6 @@ export function AddPropertyModal({
         onPropertyUpdated(updatedProperty);
         toast.success('Property updated successfully');
       } else {
-        // Add new property
         const propertyData = {
           address: property.address,
           city: property.city,
@@ -143,7 +138,9 @@ export function AddPropertyModal({
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.images && data.images.length > 0 ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl: data.images && Array.isArray(data.images) && data.images.length > 0 
+              ? data.images[0] 
+              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
 
@@ -154,7 +151,6 @@ export function AddPropertyModal({
 
       onOpenChange(false);
       
-      // Reset the form after successful submission
       if (!isEditMode) {
         setProperty({
           status: 'For Sale',
@@ -211,7 +207,9 @@ export function AddPropertyModal({
             bathrooms: data.bathrooms || 0,
             sqft: data.square_feet || 0,
             status: (data.status as Property['status']) || 'For Sale',
-            imageUrl: data.images && data.images.length > 0 ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl: data.images && Array.isArray(data.images) && data.images.length > 0 
+              ? data.images[0] 
+              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (data.property_type as Property['propertyType']) || 'House'
           };
           onPropertyAdded(newProperty);
@@ -231,7 +229,6 @@ export function AddPropertyModal({
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen) {
-        // Reset form when closing the dialog if not in edit mode
         if (!isEditMode) {
           setProperty({
             status: 'For Sale',

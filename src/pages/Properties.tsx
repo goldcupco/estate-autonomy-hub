@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -14,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { MLSImporter } from '@/components/property/MLSImporter';
 import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 
-// Define the property type
 export interface Property {
   id: string;
   address: string;
@@ -39,7 +37,6 @@ export function Properties() {
   const [addPropertyOpen, setAddPropertyOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   
-  // Fetch properties from the database
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoading(true);
@@ -54,7 +51,6 @@ export function Properties() {
         }
         
         if (data && data.length > 0) {
-          // Map database properties to the Property interface
           const formattedProperties: Property[] = data.map(property => ({
             id: property.id,
             address: property.address || '',
@@ -66,20 +62,20 @@ export function Properties() {
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            imageUrl: property.images && property.images.length > 0 ? property.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', // Get first image from array
+            imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
+              ? property.images[0] 
+              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
           setProperties(formattedProperties);
         } else {
-          // If no properties found, show empty state
           setProperties([]);
           toast("No properties found. Add a new property to get started.");
         }
       } catch (err) {
         console.error('Error fetching properties:', err);
         toast.error("Error fetching properties.");
-        // Set empty array so UI doesn't stay in loading state
         setProperties([]);
       } finally {
         setIsLoading(false);
@@ -108,7 +104,6 @@ export function Properties() {
   }, []);
   
   const handlePropertyAdded = (newProperty: Property) => {
-    // Add the new property to the list and refresh the UI
     setProperties(prev => [newProperty, ...prev]);
     toast.success("Property added successfully");
   };
@@ -127,7 +122,6 @@ export function Properties() {
         
       if (error) throw error;
       
-      // Update local state
       setProperties(prev => prev.filter(property => property.id !== propertyId));
       
       toast.success("Property deleted successfully");
@@ -139,7 +133,6 @@ export function Properties() {
   
   const handleUpdateProperty = async (updatedProperty: Property) => {
     try {
-      // Map property data to database schema
       const propertyData = {
         address: updatedProperty.address,
         city: updatedProperty.city,
@@ -162,7 +155,6 @@ export function Properties() {
         
       if (error) throw error;
       
-      // Update local state
       setProperties(prev => 
         prev.map(property => 
           property.id === updatedProperty.id ? updatedProperty : property
@@ -205,7 +197,6 @@ export function Properties() {
                     </SheetHeader>
                     <div className="mt-6 space-y-6">
                       <MLSImporter onImportSuccess={(props) => {
-                        // After importing, refresh the properties list
                         const fetchProperties = async () => {
                           const { data } = await supabase
                             .from('properties')
@@ -224,7 +215,9 @@ export function Properties() {
                               bathrooms: property.bathrooms || 0,
                               sqft: property.square_feet || 0,
                               status: (property.status as Property['status']) || 'For Sale',
-                              imageUrl: property.images && property.images.length > 0 ? property.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994', // Changed from image_uri to images array
+                              imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
+                                ? property.images[0] 
+                                : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
                               propertyType: (property.property_type as Property['propertyType']) || 'House'
                             }));
                             
@@ -279,7 +272,6 @@ export function Properties() {
         </main>
       </div>
 
-      {/* Add/Edit Property Modal */}
       <AddPropertyModal
         open={addPropertyOpen}
         onOpenChange={setAddPropertyOpen}
