@@ -95,24 +95,16 @@ export const createLeadColumns = ({
       
       return (
         <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`w-8 h-8 ${doNotContact ? 'text-red-500' : 'text-gray-400'}`}
-            onClick={(e) => {
-              e.stopPropagation();
+          <ActionButton
+            icon={doNotContact ? PhoneOff : Phone}
+            label={doNotContact ? "Remove Do Not Contact flag" : "Mark as Do Not Contact"}
+            onClick={() => {
               if (onToggleDoNotContact) {
                 onToggleDoNotContact(lead.id, !doNotContact);
               }
             }}
-            title={doNotContact ? "Remove Do Not Contact flag" : "Mark as Do Not Contact"}
-          >
-            {doNotContact ? (
-              <PhoneOff className="h-5 w-5" />
-            ) : (
-              <Phone className="h-5 w-5" />
-            )}
-          </Button>
+            colorClasses={doNotContact ? 'text-red-500' : 'text-gray-400'}
+          />
         </div>
       );
     },
@@ -137,7 +129,7 @@ export const createLeadColumns = ({
     cell: ({ row }) => {
       const lead = row.original;
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1 h-7">
           <LeadActions 
             lead={lead} 
             onEdit={onEditLead || (() => {})}

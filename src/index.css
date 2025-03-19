@@ -95,17 +95,29 @@
     @apply h-4 w-4 shrink-0;
   }
   
+  .icon-button {
+    @apply h-7 w-7 p-0 flex items-center justify-center;
+  }
+  
   .button-with-icon {
-    @apply inline-flex items-center gap-1.5 whitespace-nowrap overflow-hidden;
+    @apply inline-flex items-center gap-1 whitespace-nowrap;
   }
   
   .text-with-icon {
     @apply truncate;
   }
   
-  /* Table cell alignment */
+  /* Table styling */
   .table-cell-align {
-    @apply align-middle whitespace-nowrap;
+    @apply align-middle py-2;
+  }
+  
+  .table-row {
+    @apply h-10 border-b hover:bg-muted/50 transition-colors;
+  }
+  
+  .table-cell {
+    @apply px-4 py-2 align-middle;
   }
   
   /* Animation utilities */
