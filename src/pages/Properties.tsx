@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { PropertyList } from '@/components/property/PropertyList';
 import { PropertyActions } from '@/components/property/PropertyActions';
@@ -57,15 +56,13 @@ export function Properties() {
     console.log("Properties component mounted, loading properties...");
     loadProperties();
     
-    // Set up a periodic refresh every 10 seconds
+    // Refresh every 5 seconds to ensure UI is in sync with database
     const refreshInterval = setInterval(() => {
       console.log("Automatic refresh of properties...");
       loadProperties();
-    }, 10000);
+    }, 5000);
     
-    return () => {
-      clearInterval(refreshInterval);
-    };
+    return () => clearInterval(refreshInterval);
   }, [loadProperties]);
 
   useEffect(() => {
@@ -88,29 +85,23 @@ export function Properties() {
   
   const handlePropertyAdded = (newProperty: Property) => {
     console.log("Property added, updating UI:", newProperty);
-    setProperties(prevProperties => [newProperty, ...prevProperties]);
+    setProperties((prevProperties: Property[]) => [...prevProperties, newProperty]);
     
-    // Refresh all properties to ensure we have the latest data
-    setTimeout(() => {
-      loadProperties();
-    }, 500);
+    // Refresh properties to ensure we have the latest data
+    loadProperties();
   };
   
   const handleUpdateProperty = (updatedProperty: Property) => {
     console.log("Property updated, updating UI:", updatedProperty);
-    
-    // Optimistic update
-    setProperties(prevProperties => 
+    setProperties((prevProperties: Property[]) => 
       prevProperties.map(property => 
         property.id === updatedProperty.id ? updatedProperty : property
       )
     );
     setEditingProperty(null);
     
-    // Refresh all properties to ensure we have the latest data
-    setTimeout(() => {
-      loadProperties();
-    }, 500);
+    // Refresh properties to ensure we have the latest data
+    loadProperties();
   };
   
   return (

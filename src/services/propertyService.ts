@@ -102,22 +102,15 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
 
     console.log("Sending to Supabase:", propertyData);
 
-    // Remove .select() which was causing issues with the response
-    const { error, data } = await supabase
+    const { error } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id)
-      .select('*');
+      .select();
       
     if (error) {
       console.error("Supabase update error:", error);
       throw error;
-    }
-    
-    console.log("Update response from Supabase:", data);
-    
-    if (!data || data.length === 0) {
-      console.warn("Property updated but no data returned");
     }
     
     console.log("Property updated successfully");
@@ -151,33 +144,31 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
 
     console.log("Sending to Supabase:", propertyData);
 
-    // Include select() to get the returned data
     const { data, error } = await supabase
       .from('properties')
       .insert(propertyData)
-      .select('*');
+      .select('*')
+      .single();
       
     if (error) {
       console.error("Supabase insert error:", error);
       throw error;
     }
     
-    console.log("Create response from Supabase:", data);
-    
-    if (data && data.length > 0) {
+    if (data) {
       const createdProperty: Property = {
-        id: data[0].id,
-        address: data[0].address || '',
-        city: data[0].city || '',
-        state: data[0].state || '',
-        zipCode: data[0].zip || '',
-        price: data[0].price || 0,
-        bedrooms: data[0].bedrooms || 0,
-        bathrooms: data[0].bathrooms || 0,
-        sqft: data[0].square_feet || 0,
-        status: (data[0].status as Property['status']) || 'For Sale',
-        imageUrl: data[0].images && data[0].images[0] ? data[0].images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        propertyType: (data[0].property_type as Property['propertyType']) || 'House'
+        id: data.id,
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || '',
+        zipCode: data.zip || '',
+        price: data.price || 0,
+        bedrooms: data.bedrooms || 0,
+        bathrooms: data.bathrooms || 0,
+        sqft: data.square_feet || 0,
+        status: (data.status as Property['status']) || 'For Sale',
+        imageUrl: data.images && data.images[0] ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+        propertyType: (data.property_type as Property['propertyType']) || 'House'
       };
       
       console.log("Property created successfully:", createdProperty);
