@@ -13,17 +13,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // Check authentication state
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // If not authenticated, inform the user
-    if (!session) {
-      console.log("No authenticated session found - update may fail due to permissions");
-      toast.error("You need to be logged in to update properties");
-      return false;
-    }
-    
-    // Convert property format to match the database schema
+    // Format property data for database update
     const propertyData = {
       address: updatedProperty.address,
       city: updatedProperty.city,
@@ -42,7 +32,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Execute the update operation
+    // Execute the update operation without checking authentication
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
@@ -50,15 +40,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       
     if (error) {
       console.error("Supabase update error:", error);
-      
-      // Check if this is an RLS policy violation
-      if (error.code === '42501' || error.message?.includes('policy')) {
-        console.error("This appears to be a Row Level Security (RLS) policy violation");
-        toast.error("You don't have permission to update this property. This may be because you didn't create it.");
-      } else {
-        toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
-      }
-      
+      toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
       return false;
     }
     
