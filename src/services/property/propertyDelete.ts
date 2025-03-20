@@ -15,14 +15,13 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     // Execute the delete operation with explicit console output for debugging
     console.log("Executing Supabase delete query with params:", { propertyId });
     
-    const { error, count } = await supabase
+    const { error } = await supabase
       .from('properties')
       .delete()
-      .eq('id', propertyId)
-      .select('count');
+      .eq('id', propertyId);
     
     // Log detailed response for debugging
-    console.log("Delete response:", { error, count });
+    console.log("Delete response:", { error });
     
     // Check for errors during deletion
     if (error) {

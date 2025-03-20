@@ -54,14 +54,12 @@ export function PropertyList() {
       if (success) {
         console.log("Deletion successful, updating UI");
         
-        // Update local state to remove the deleted property
-        const updatedProperties = properties.filter(p => p.id !== propertyId);
-        setProperties(updatedProperties);
+        // Remove the deleted property from state immediately
+        setProperties(prev => prev.filter(p => p.id !== propertyId));
         
-        // Force a refresh to ensure UI matches database
+        // Force a complete refresh from the database to ensure sync
         await refreshProperties();
         
-        // Show success message
         toast.success("Property deleted successfully");
       } else {
         console.error("Delete operation returned false");

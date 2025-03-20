@@ -33,7 +33,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Execute the update operation with simplified approach
+    // Execute the update operation without any secondary operations
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
