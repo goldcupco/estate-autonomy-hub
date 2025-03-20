@@ -7,14 +7,13 @@ export async function fetchProperties(): Promise<Property[]> {
   try {
     console.log("Making Supabase request to fetch properties...");
     
-    // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Check authentication state but don't require it
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!user) {
-      console.warn("No authenticated user found when fetching properties");
-      // We'll still make the request, as public properties might be accessible
+    if (!session) {
+      console.log("No authenticated session found when fetching properties - continuing as public access");
     } else {
-      console.log("Authenticated user ID for fetching properties:", user.id);
+      console.log("Authenticated session found for fetching properties");
     }
     
     const { data, error } = await supabase

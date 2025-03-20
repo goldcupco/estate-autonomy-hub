@@ -12,26 +12,11 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Get the current authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError) {
-      console.error("Authentication error:", authError);
-      toast.error("Delete failed: Authentication error");
-      return false;
-    }
-    
-    if (!user) {
-      console.error("No authenticated user found");
-      toast.error("Delete failed: You must be logged in");
-      return false;
-    }
-    
-    // Log the authenticated user for debugging
-    console.log("Current authenticated user ID for property deletion:", user.id);
+    // Check authentication state
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log("Authentication session check:", session ? "Session exists" : "No session");
     
     // Execute the delete operation directly
-    // We don't need to check ownership first because RLS will enforce this
     const { error } = await supabase
       .from('properties')
       .delete()
@@ -44,7 +29,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       // Check if this is an RLS policy violation
       if (error.code === '42501' || error.message?.includes('policy')) {
         console.error("This appears to be a Row Level Security (RLS) policy violation");
-        toast.error("You don't have permission to delete this property");
+        toast.error("You don't have permission to delete this property. Please log in or try a different property.");
       } else {
         toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
       }
