@@ -53,7 +53,7 @@ export function PropertyList() {
       const success = await deleteProperty(propertyId);
       
       if (success) {
-        // Remove the deleted property from state
+        // Remove the deleted property from state immediately
         setProperties(prev => prev.filter(p => p.id !== propertyId));
         toast.success("Property deleted successfully");
       } else {
@@ -65,7 +65,6 @@ export function PropertyList() {
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);
       toast.error("An error occurred while deleting the property");
-      await refreshProperties();
     } finally {
       setIsLoading(false);
     }
