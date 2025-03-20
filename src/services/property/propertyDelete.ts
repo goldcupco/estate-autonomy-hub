@@ -27,11 +27,14 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     
     console.log("Found property to delete:", existingProperty);
     
-    // Execute the delete operation
-    const { error } = await supabase
+    // Create the delete query based on the property's user_id
+    let deleteQuery = supabase
       .from('properties')
       .delete()
       .eq('id', propertyId);
+    
+    // Execute the delete operation
+    const { error } = await deleteQuery;
     
     // Log the delete response
     console.log("Delete response:", { error });

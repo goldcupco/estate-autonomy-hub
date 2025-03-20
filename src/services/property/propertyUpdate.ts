@@ -47,11 +47,14 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Execute the update operation
-    const { error } = await supabase
+    // Create the update query based on the property's user_id
+    let updateQuery = supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
+    
+    // Execute the update operation
+    const { error } = await updateQuery;
       
     if (error) {
       console.error("Supabase update error:", error);
