@@ -1,16 +1,11 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Campaign, mockCampaigns } from '../models/Campaign';
 import { useAuth } from './AuthContext';
-import { 
-  fetchCampaigns, 
-  createCampaign as createCampaignService, 
-  updateCampaign as updateCampaignService,
-  deleteCampaign as deleteCampaignService,
-  addLeadToCampaign as addLeadToCampaignService,
-  removeLeadFromCampaign as removeLeadFromCampaignService
-} from '../services/campaign';
-import { supabase } from '@/integrations/supabase/client';
+import { useCampaignLoader } from '@/hooks/useCampaignLoader';
+import { useCampaignOperations } from '@/hooks/useCampaignOperations';
+import { useCampaignLeads } from '@/hooks/useCampaignLeads';
+import { useCampaignUsers } from '@/hooks/useCampaignUsers';
 
 interface CampaignContextType {
   campaigns: Campaign[];
@@ -32,187 +27,47 @@ interface CampaignContextType {
 const CampaignContext = createContext<CampaignContextType | undefined>(undefined);
 
 export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const { currentUser, isAdmin, assignCampaignToUser, removeCampaignFromUser } = useAuth();
   
-  const loadCampaigns = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const fetchedCampaigns = await fetchCampaigns();
-      console.log("Fetched campaigns:", fetchedCampaigns);
-      setCampaigns(fetchedCampaigns.length > 0 ? fetchedCampaigns : mockCampaigns);
-    } catch (err: any) {
-      console.error("Failed to fetch campaigns:", err);
-      setError(err.message || "Failed to load campaigns");
-      setCampaigns(mockCampaigns);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Load campaigns
+  const { 
+    campaigns, 
+    setCampaigns, 
+    loading: loadingCampaigns, 
+    error: campaignsError, 
+    refreshCampaigns 
+  } = useCampaignLoader();
   
-  useEffect(() => {
-    loadCampaigns();
-  }, []);
+  // Set up campaign operations
+  const { 
+    getCampaign, 
+    addCampaign, 
+    updateCampaign, 
+    deleteCampaign, 
+    loading: operationsLoading, 
+    error: operationsError 
+  } = useCampaignOperations(campaigns, setCampaigns, refreshCampaigns);
   
-  const refreshCampaigns = async () => {
-    await loadCampaigns();
-  };
+  // Set up lead operations
+  const { 
+    addLeadToCampaign, 
+    removeLeadFromCampaign, 
+    loading: leadsLoading, 
+    error: leadsError 
+  } = useCampaignLeads(campaigns, setCampaigns);
   
-  const getCampaign = (id: string) => {
-    return campaigns.find(campaign => campaign.id === id);
-  };
+  // Set up user assignments
+  const { 
+    assignUserToCampaign, 
+    removeUserFromCampaign, 
+    getUserCampaigns 
+  } = useCampaignUsers(campaigns, setCampaigns, assignCampaignToUser, removeCampaignFromUser);
   
-  const addCampaign = async (campaignData: Omit<Campaign, 'id'>): Promise<string> => {
-    setLoading(true);
-    try {
-      console.log("Adding campaign with data:", campaignData);
-      
-      // Explicitly ensure we have current user auth before creating a campaign
-      const { data: authData } = await supabase.auth.getUser();
-      
-      if (!authData.user?.id && !campaignData.createdBy) {
-        console.error("No authenticated user found and no createdBy provided");
-        throw new Error("You must be logged in to create a campaign");
-      }
-      
-      // Use authenticated user ID for createdBy if not provided
-      const campaignWithAuthUser = {
-        ...campaignData,
-        createdBy: campaignData.createdBy || authData.user?.id
-      };
-      
-      const newCampaign = await createCampaignService(campaignWithAuthUser);
-      if (newCampaign) {
-        console.log("Campaign added successfully:", newCampaign);
-        await refreshCampaigns(); // Refresh all campaigns to ensure we have the latest data
-        return newCampaign.id;
-      } else {
-        throw new Error("Failed to create campaign");
-      }
-    } catch (err: any) {
-      console.error("Error in addCampaign:", err);
-      setError(err.message || "Failed to add campaign");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Calculate loading and error states
+  const loading = loadingCampaigns || operationsLoading || leadsLoading;
+  const error = campaignsError || operationsError || leadsError;
   
-  const updateCampaign = async (id: string, updates: Partial<Omit<Campaign, 'id'>>) => {
-    setLoading(true);
-    try {
-      const success = await updateCampaignService(id, updates);
-      if (success) {
-        setCampaigns(campaigns.map(campaign => 
-          campaign.id === id ? { ...campaign, ...updates } : campaign
-        ));
-      } else {
-        throw new Error("Failed to update campaign");
-      }
-    } catch (err: any) {
-      console.error("Error in updateCampaign:", err);
-      setError(err.message || "Failed to update campaign");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const deleteCampaign = async (id: string) => {
-    setLoading(true);
-    try {
-      const success = await deleteCampaignService(id);
-      if (success) {
-        setCampaigns(campaigns.filter(campaign => campaign.id !== id));
-      } else {
-        throw new Error("Failed to delete campaign");
-      }
-    } catch (err: any) {
-      console.error("Error in deleteCampaign:", err);
-      setError(err.message || "Failed to delete campaign");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const addLeadToCampaign = async (campaignId: string, leadId: string) => {
-    setLoading(true);
-    try {
-      const success = await addLeadToCampaignService(campaignId, leadId);
-      if (success) {
-        setCampaigns(campaigns.map(campaign => {
-          if (campaign.id === campaignId && !campaign.leads.includes(leadId)) {
-            return { ...campaign, leads: [...campaign.leads, leadId] };
-          }
-          return campaign;
-        }));
-      } else {
-        throw new Error("Failed to add lead to campaign");
-      }
-    } catch (err: any) {
-      console.error("Error in addLeadToCampaign:", err);
-      setError(err.message || "Failed to add lead to campaign");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const removeLeadFromCampaign = async (campaignId: string, leadId: string) => {
-    setLoading(true);
-    try {
-      const success = await removeLeadFromCampaignService(campaignId, leadId);
-      if (success) {
-        setCampaigns(campaigns.map(campaign => {
-          if (campaign.id === campaignId) {
-            return { ...campaign, leads: campaign.leads.filter(id => id !== leadId) };
-          }
-          return campaign;
-        }));
-      } else {
-        throw new Error("Failed to remove lead from campaign");
-      }
-    } catch (err: any) {
-      console.error("Error in removeLeadFromCampaign:", err);
-      setError(err.message || "Failed to remove lead from campaign");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const assignUserToCampaign = (campaignId: string, userId: string) => {
-    setCampaigns(campaigns.map(campaign => {
-      if (campaign.id === campaignId && !campaign.assignedUsers.includes(userId)) {
-        return { ...campaign, assignedUsers: [...campaign.assignedUsers, userId] };
-      }
-      return campaign;
-    }));
-    
-    assignCampaignToUser(userId, campaignId);
-  };
-  
-  const removeUserFromCampaign = (campaignId: string, userId: string) => {
-    setCampaigns(campaigns.map(campaign => {
-      if (campaign.id === campaignId) {
-        return { ...campaign, assignedUsers: campaign.assignedUsers.filter(id => id !== userId) };
-      }
-      return campaign;
-    }));
-    
-    removeCampaignFromUser(userId, campaignId);
-  };
-  
-  const getUserCampaigns = (userId: string) => {
-    return campaigns.filter(campaign => 
-      campaign.createdBy === userId || campaign.assignedUsers.includes(userId)
-    );
-  };
-  
+  // Calculate accessible campaigns based on user role
   const accessibleCampaigns = isAdmin 
     ? campaigns 
     : currentUser 
@@ -235,7 +90,7 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       removeUserFromCampaign,
       accessibleCampaigns,
       getUserCampaigns,
-      refreshCampaigns,
+      refreshCampaigns: async () => { await refreshCampaigns(); },
       loading,
       error
     }}>
