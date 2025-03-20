@@ -12,15 +12,30 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Direct single-step deletion approach
+    // Try to get the auth user ID to debug RLS issues
+    const { data: authData } = await supabase.auth.getUser();
+    console.log("Current auth user:", authData?.user?.id || "No authenticated user");
+    
+    // System properties may use "system" as user_id
+    console.log("Attempting direct property deletion:");
+    console.log("- Current timestamp:", new Date().toISOString());
+    console.log("- Property ID:", propertyId);
+    
+    // Explicit system property handling
     const { error } = await supabase
       .from('properties')
       .delete()
       .eq('id', propertyId);
     
+    console.log("Delete response:", error ? error : "Success (no error)");
+    
     // Check for errors during deletion
     if (error) {
       console.error("Supabase delete error:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Error details:", error.details);
+      
       toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
       return false;
     }

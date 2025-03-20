@@ -50,8 +50,10 @@ export function PropertyList() {
       console.log("Attempting to delete property with ID:", propertyId);
       setIsLoading(true);
       
-      // Attempt the database deletion with simplified approach
+      // Attempt the database deletion with enhanced debugging
+      console.log("Calling deleteProperty service function...");
       const success = await deleteProperty(propertyId);
+      console.log("deleteProperty result:", success);
       
       if (success) {
         // Remove the deleted property from state immediately
@@ -62,6 +64,7 @@ export function PropertyList() {
       }
       
       // Force a complete refresh to ensure UI is in sync with database
+      console.log("Forcing property refresh after delete operation");
       await refreshProperties();
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);

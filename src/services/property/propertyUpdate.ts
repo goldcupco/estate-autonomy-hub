@@ -13,6 +13,11 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
+    // Try to get the auth user ID to debug RLS issues
+    const { data: authData } = await supabase.auth.getUser();
+    console.log("Current auth user:", authData?.user?.id || "No authenticated user");
+    console.log("Property ID for update:", updatedProperty.id);
+    
     // Format property data for database update
     const propertyData = {
       address: updatedProperty.address,
@@ -29,17 +34,26 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       updated_at: new Date().toISOString()
     };
 
-    console.log("Sending to Supabase for update:", propertyData);
-    console.log("Property ID for update:", updatedProperty.id);
-
-    // Direct update approach
+    console.log("Formatted data for Supabase:", propertyData);
+    
+    // System properties may use "system" as user_id
+    console.log("Attempting direct property update:");
+    console.log("- Current timestamp:", new Date().toISOString());
+    
+    // Direct update without verifying user_id first
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
       
+    console.log("Update response:", error ? error : "Success (no error)");
+    
     if (error) {
       console.error("Supabase update error:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Error details:", error.details);
+      
       toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
       return false;
     }
