@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
 
@@ -7,6 +8,82 @@ export { supabase };
 // Export URL and key for convenience
 export const supabaseUrl = SUPABASE_URL;
 export const supabaseAnonKey = SUPABASE_ANON_KEY;
+
+// Type definitions for our database tables
+export type ProviderType = 'twilio' | 'callrail';
+
+export interface DbCommunicationProvider {
+  id: string;
+  user_id: string;
+  name: string;
+  type: ProviderType;
+  is_default: boolean;
+  config: {
+    accountSid?: string;
+    authToken?: string;
+    twilioNumber?: string;
+    apiKey?: string;
+    accountId?: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbCallRecord {
+  id: string;
+  user_id: string;
+  provider_id: string;
+  provider_type: ProviderType;
+  call_id: string;
+  phone_number: string;
+  contact_name: string;
+  timestamp: string;
+  duration: number;
+  recording_url?: string;
+  notes?: string;
+  lead_id?: string;
+  created_at: string;
+}
+
+export interface DbSmsRecord {
+  id: string;
+  user_id: string;
+  provider_id: string;
+  sms_id: string;
+  phone_number: string;
+  contact_name: string;
+  timestamp: string;
+  message: string;
+  direction: 'outgoing' | 'incoming';
+  lead_id?: string;
+  created_at: string;
+}
+
+export interface DbLetterRecord {
+  id: string;
+  user_id: string;
+  recipient: string;
+  address?: string;
+  timestamp: string;
+  content: string;
+  status: 'draft' | 'sent' | 'delivered';
+  tracking_number?: string;
+  lead_id?: string;
+  created_at: string;
+}
+
+export interface DbLead {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  lead_type: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
 
 // Improved table creation function using direct SQL for more reliability
 export async function createTablesDirectly() {
@@ -171,7 +248,7 @@ export async function createTablesDirectly() {
       for (const table of tables) {
         try {
           const { error } = await supabase
-            .from(table.name)
+            .from(table.name as any)
             .upsert(table.record, { onConflict: 'id' });
           
           if (!error || error.code === '23505') { // Ignore duplicate key errors
@@ -234,80 +311,4 @@ export async function executeSql(sql: string) {
     console.error('Exception during SQL execution:', error);
     return { success: false, error };
   }
-}
-
-// Type definitions for our database tables
-export type ProviderType = 'twilio' | 'callrail';
-
-export interface DbCommunicationProvider {
-  id: string;
-  user_id: string;
-  name: string;
-  type: ProviderType;
-  is_default: boolean;
-  config: {
-    accountSid?: string;
-    authToken?: string;
-    twilioNumber?: string;
-    apiKey?: string;
-    accountId?: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
-
-export interface DbCallRecord {
-  id: string;
-  user_id: string;
-  provider_id: string;
-  provider_type: ProviderType;
-  call_id: string;
-  phone_number: string;
-  contact_name: string;
-  timestamp: string;
-  duration: number;
-  recording_url?: string;
-  notes?: string;
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbSmsRecord {
-  id: string;
-  user_id: string;
-  provider_id: string;
-  sms_id: string;
-  phone_number: string;
-  contact_name: string;
-  timestamp: string;
-  message: string;
-  direction: 'outgoing' | 'incoming';
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbLetterRecord {
-  id: string;
-  user_id: string;
-  recipient: string;
-  address?: string;
-  timestamp: string;
-  content: string;
-  status: 'draft' | 'sent' | 'delivered';
-  tracking_number?: string;
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbLead {
-  id: string;
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  phone?: string;
-  lead_type: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
 }

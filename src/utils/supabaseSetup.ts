@@ -30,7 +30,7 @@ export async function verifyDatabaseSetup() {
     for (const table of tables) {
       try {
         console.log(`Checking if ${table} exists...`);
-        const { data, error } = await supabase.from(table).select('*').limit(1);
+        const { data, error } = await supabase.from(table as any).select('*').limit(1);
         
         if (error && error.code === '42P01') {
           console.log(`Table ${table} does not exist`);

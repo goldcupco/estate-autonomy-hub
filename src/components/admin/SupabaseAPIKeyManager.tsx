@@ -53,7 +53,13 @@ export const SupabaseAPIKeyManager = () => {
           throw error;
         }
         
-        setApiKeys(data || []);
+        // Convert the raw data to the correct type
+        const typedData: DbCommunicationProvider[] = (data || []).map(item => ({
+          ...item,
+          type: item.type as ProviderType
+        }));
+        
+        setApiKeys(typedData);
       } catch (error) {
         console.error('Error loading providers:', error);
         toast({
@@ -120,8 +126,14 @@ export const SupabaseAPIKeyManager = () => {
         if (error) throw error;
         
         if (data && data.length > 0) {
+          // Create a properly typed provider object from the response
+          const newProviderWithTypedFields: DbCommunicationProvider = {
+            ...data[0],
+            type: data[0].type as ProviderType
+          };
+          
           // Add the new key to state
-          setApiKeys([data[0], ...apiKeys]);
+          setApiKeys([newProviderWithTypedFields, ...apiKeys]);
         }
       }
       

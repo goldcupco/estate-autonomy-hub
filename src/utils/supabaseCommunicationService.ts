@@ -1,3 +1,4 @@
+
 import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CallRecord, SmsRecord } from './communicationUtils';
@@ -39,7 +40,12 @@ export class SupabaseCommunicationService {
       .eq('user_id', userId);
       
     if (error) throw error;
-    return data || [];
+    
+    // Convert the data to the correct type
+    return (data || []).map(provider => ({
+      ...provider,
+      type: provider.type as ProviderType
+    }));
   }
 
   async saveProvider(userId: string, provider: Omit<DbCommunicationProvider, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<string> {
@@ -252,7 +258,7 @@ export class SupabaseCommunicationService {
       contactName: record.contact_name,
       timestamp: record.timestamp,
       message: record.message,
-      direction: record.direction
+      direction: record.direction as 'outgoing' | 'incoming'
     }));
   }
 }

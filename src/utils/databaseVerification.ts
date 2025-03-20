@@ -15,7 +15,7 @@ export async function verifyTablesExist() {
     try {
       // Check if table exists by attempting to select from it
       const { data, error } = await supabase
-        .from(table)
+        .from(table as any)
         .select('*', { head: true, count: 'exact' });
       
       if (error) {

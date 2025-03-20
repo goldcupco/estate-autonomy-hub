@@ -79,14 +79,16 @@ export function Dashboard() {
             address: property.address || '',
             city: property.city || '',
             state: property.state || '',
-            zipCode: property.zip_code || '',
+            zipCode: property.zip || '', // Changed from zip_code to zip
             price: property.price || 0,
             bedrooms: property.bedrooms || 0,
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            // Changed from image_url to image_uri
-            imageUrl: property.image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            // Use images array first element or fallback URL
+            imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
+              ? property.images[0] 
+              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
@@ -172,14 +174,14 @@ export function Dashboard() {
           address: property.address,
           city: property.city,
           state: property.state,
-          zip_code: property.zipCode,
+          zip: property.zipCode, // Changed from zip_code to zip
           price: property.price,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
           square_feet: property.sqft,
           status: property.status,
-          // Changed from image_url to image_uri
-          image_uri: property.imageUrl,
+          // Store image URL in images array
+          images: property.imageUrl ? [property.imageUrl] : [],
           property_type: property.propertyType || 'House',
           user_id: 'system', // Replace with actual user ID in a real app
           created_at: new Date().toISOString(),
@@ -195,14 +197,16 @@ export function Dashboard() {
           address: data[0].address || '',
           city: data[0].city || '',
           state: data[0].state || '',
-          zipCode: data[0].zip_code || '',
+          zipCode: data[0].zip || '', // Changed from zip_code to zip
           price: data[0].price || 0,
           bedrooms: data[0].bedrooms || 0,
           bathrooms: data[0].bathrooms || 0,
           sqft: data[0].square_feet || 0,
           status: (data[0].status as Property['status']) || 'For Sale',
-          // Changed from image_url to image_uri
-          imageUrl: data[0].image_uri || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          // Use images array first element or fallback URL
+          imageUrl: data[0].images && Array.isArray(data[0].images) && data[0].images.length > 0 
+            ? data[0].images[0] 
+            : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
           propertyType: (data[0].property_type as Property['propertyType']) || 'House'
         };
         
