@@ -1,3 +1,4 @@
+
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -24,6 +25,7 @@ export function PropertyList() {
       setIsLoading(true);
       console.log("Refreshing properties from PropertyList component");
       const refreshedProperties = await fetchProperties();
+      console.log("Refreshed properties:", refreshedProperties);
       setProperties(refreshedProperties);
       toast.success("Properties refreshed");
     } catch (error) {
@@ -57,8 +59,11 @@ export function PropertyList() {
         // Remove the deleted property from state immediately
         setProperties(prev => prev.filter(p => p.id !== propertyId));
         
-        // Force a complete refresh from the database to ensure sync
-        await refreshProperties();
+        // Force a complete refresh from the database after a short delay
+        // This ensures the server has time to process the deletion
+        setTimeout(async () => {
+          await refreshProperties();
+        }, 500);
         
         toast.success("Property deleted successfully");
       } else {

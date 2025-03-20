@@ -13,6 +13,19 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
+    // Check if the property exists first
+    const { data: existingProperty, error: checkError } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('id', updatedProperty.id)
+      .single();
+    
+    if (checkError) {
+      console.error("Error checking if property exists:", checkError);
+      toast.error(`Update failed: Property not found or access denied`);
+      return false;
+    }
+    
     // Format property data for database update
     const propertyData = {
       address: updatedProperty.address,
@@ -26,18 +39,18 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       status: updatedProperty.status,
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
-      user_id: 'system', // Ensure this is set to bypass RLS
+      user_id: 'system', // Explicitly set to bypass RLS
       updated_at: new Date().toISOString()
     };
 
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Execute the update operation without any secondary operations
+    // Execute the update operation using match for more precise targeting
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id);
+      .match({ id: updatedProperty.id });
       
     if (error) {
       console.error("Supabase update error:", error);
@@ -45,7 +58,26 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    console.log("Property updated successfully in database");
+    // Verify the update actually worked
+    const { data: verifyProperty, error: verifyError } = await supabase
+      .from('properties')
+      .select('address, updated_at')
+      .eq('id', updatedProperty.id)
+      .single();
+    
+    if (verifyError) {
+      console.error("Error verifying update:", verifyError);
+      toast.warning("Update may have failed to persist");
+      return false;
+    }
+    
+    if (verifyProperty.address !== updatedProperty.address) {
+      console.error("Update verification failed - data mismatch");
+      toast.error("Update failed: Database doesn't reflect changes");
+      return false;
+    }
+    
+    console.log("Property updated successfully in database:", verifyProperty);
     toast.success("Property updated successfully");
     return true;
   } catch (error: any) {
