@@ -22,8 +22,10 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       budget: campaign.budget || 0,
       metrics: ensureMetricsFormat(campaign.metrics),
       access_restricted: campaign.accessRestricted || false,
-      user_id: campaign.createdBy // Using createdBy as the user_id for now
+      user_id: campaign.createdBy // Using createdBy as the user_id which is essential for RLS
     };
+    
+    console.log("Formatted campaign data for insert:", campaignData);
     
     // Create the campaign
     const { data, error } = await supabase

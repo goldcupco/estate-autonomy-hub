@@ -27,11 +27,28 @@ export const updateCampaign = async (id: string, campaign: Partial<Campaign>): P
     // Add updated_at timestamp
     updateData.updated_at = new Date().toISOString();
     
-    // Add the user_id field which is required by Supabase
-    // If createdBy is available use that, otherwise we need a fallback
+    // CRITICAL: Add the user_id field which is required by Supabase RLS policies
+    // If createdBy is available use that, otherwise we need to get the existing campaign's user_id
     if (campaign.createdBy !== undefined) {
       updateData.user_id = campaign.createdBy;
+    } else {
+      // Get the existing campaign to preserve its user_id
+      const { data: existingCampaign } = await supabase
+        .from('campaigns')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+      
+      if (existingCampaign && existingCampaign.user_id) {
+        updateData.user_id = existingCampaign.user_id;
+      } else {
+        console.error('Could not determine user_id for campaign update');
+        toast.error('Failed to update campaign: Could not determine ownership');
+        return false;
+      }
     }
+    
+    console.log("Final update data:", updateData);
     
     // Update the campaign
     const { error } = await supabase
