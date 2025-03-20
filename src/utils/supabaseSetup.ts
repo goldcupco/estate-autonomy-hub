@@ -3,21 +3,6 @@ import { supabase, safeFrom, executeSql, createTablesDirectly, isValidTableName,
 import { toast } from '@/hooks/use-toast';
 import { CREATE_TABLES_SQL } from './initializeApp';
 
-// Helper function to type-check table names
-function isValidTableName(tableName: string): tableName is 
-  "call_records" | "leads" | "campaign_leads" | "campaigns" | "communication_providers" | 
-  "contracts" | "documents" | "properties" | "letter_records" | "list_items" | 
-  "lists" | "phone_numbers" | "sms_records" {
-  
-  const validTables = [
-    "call_records", "leads", "campaign_leads", "campaigns", "communication_providers",
-    "contracts", "documents", "properties", "letter_records", "list_items",
-    "lists", "phone_numbers", "sms_records"
-  ];
-  
-  return validTables.includes(tableName);
-}
-
 // This function verifies database setup by checking if tables exist
 export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
