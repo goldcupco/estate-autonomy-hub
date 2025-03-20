@@ -27,6 +27,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
+      // Ensure user_id is always set
       user_id: 'system',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -64,6 +65,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       };
       
       console.log("Property created successfully:", createdProperty);
+      toast.success("Property created successfully");
       return createdProperty;
     }
     

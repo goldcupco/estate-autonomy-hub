@@ -26,7 +26,9 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       status: updatedProperty.status,
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // Add user_id if missing from the original data
+      user_id: 'system'
     };
 
     console.log("Sending to Supabase:", propertyData);

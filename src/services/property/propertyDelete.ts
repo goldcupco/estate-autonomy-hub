@@ -27,6 +27,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     
     // If we got here, the delete was successful
     console.log("Property deleted successfully from database");
+    toast.success("Property deleted successfully");
     return true;
   } catch (error) {
     console.error('Error deleting property:', error);
