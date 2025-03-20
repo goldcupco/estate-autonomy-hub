@@ -13,10 +13,26 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     }
     
     // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log("Current user ID for property deletion:", user?.id || 'system');
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error("Authentication error:", authError);
+      toast.error("Delete failed: Authentication error");
+      return false;
+    }
+    
+    // Use the actual user ID from authentication
+    const userId = user?.id;
+    console.log("Current authenticated user ID for property deletion:", userId);
+    
+    if (!userId) {
+      console.error("No authenticated user found");
+      toast.error("Delete failed: You must be logged in");
+      return false;
+    }
     
     // First check if the property exists and belongs to this user
+    console.log(`Checking if property ${propertyId} exists and belongs to user ${userId}`);
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
       .select('id, user_id')
@@ -25,7 +41,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       
     if (fetchError) {
       console.error("Property not found or fetch error:", fetchError);
-      toast.error("Delete failed: Property not found");
+      toast.error(`Delete failed: ${fetchError.message || "Property not found"}`);
       return false;
     }
     
@@ -36,15 +52,17 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     }
     
     console.log("Property exists, belongs to user:", existingProperty.user_id);
+    console.log("Current authenticated user:", userId);
     
     // Execute the delete operation
-    const { error, status, statusText } = await supabase
+    const { error, count } = await supabase
       .from('properties')
       .delete()
-      .eq('id', propertyId);
+      .eq('id', propertyId)
+      .select('count');
     
     // Log full response details
-    console.log("Supabase response:", { error, status, statusText });
+    console.log("Supabase delete response count:", count);
       
     // Check for errors during deletion
     if (error) {

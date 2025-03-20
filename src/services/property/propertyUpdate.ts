@@ -14,11 +14,46 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     }
     
     // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    // Use the actual user ID if available, otherwise use 'system'
-    const userId = user?.id || 'system';
-    console.log("Current user ID:", userId);
+    if (authError) {
+      console.error("Authentication error:", authError);
+      toast.error("Update failed: Authentication error");
+      return false;
+    }
+    
+    // Use the actual user ID from authentication
+    const userId = user?.id;
+    console.log("Current authenticated user ID:", userId);
+    
+    if (!userId) {
+      console.error("No authenticated user found");
+      toast.error("Update failed: You must be logged in");
+      return false;
+    }
+    
+    // First check if the property exists and belongs to this user
+    console.log(`Checking if property ${updatedProperty.id} exists and belongs to user ${userId}`);
+    const { data: existingProperty, error: fetchError } = await supabase
+      .from('properties')
+      .select('id, user_id')
+      .eq('id', updatedProperty.id)
+      .single();
+      
+    if (fetchError) {
+      console.error("Property fetch error:", fetchError);
+      toast.error(`Update failed: ${fetchError.message || "Property not found"}`);
+      return false;
+    }
+    
+    if (!existingProperty) {
+      console.error("Property not found");
+      toast.error("Update failed: Property not found");
+      return false;
+    }
+    
+    console.log("Property exists, belongs to user:", existingProperty.user_id);
+    console.log("Current authenticated user:", userId);
     
     // Convert property format to match the database schema
     const propertyData = {
@@ -34,48 +69,30 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
       updated_at: new Date().toISOString(),
-      user_id: userId
+      // Important: We don't update the user_id field as this would violate RLS
     };
 
-    console.log("Sending to Supabase:", propertyData);
+    console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // First check if the property exists
-    const { data: existingProperty, error: fetchError } = await supabase
-      .from('properties')
-      .select('id, user_id')
-      .eq('id', updatedProperty.id)
-      .single();
-      
-    if (fetchError) {
-      console.error("Property not found or fetch error:", fetchError);
-      toast.error("Update failed: Property not found");
-      return false;
-    }
-    
-    if (!existingProperty) {
-      console.error("Property not found");
-      toast.error("Update failed: Property not found");
-      return false;
-    }
-    
-    console.log("Property exists, belongs to user:", existingProperty.user_id);
-    console.log("Current user:", userId);
-    
-    // Perform the update
-    const { error: updateError } = await supabase
+    // Separate update operation
+    const { error: updateError, count } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id);
+      .eq('id', updatedProperty.id)
+      .select('count');
+      
+    console.log("Update response count:", count);
       
     if (updateError) {
       console.error("Supabase update error:", updateError);
-      toast.error(`Update failed: ${updateError.message || updateError.details || 'Unknown error'}`);
       
       // Check if this is an RLS policy violation
       if (updateError.code === '42501' || updateError.message?.includes('policy')) {
         console.error("This appears to be a Row Level Security (RLS) policy violation");
         toast.error("You don't have permission to update this property");
+      } else {
+        toast.error(`Update failed: ${updateError.message || updateError.details || 'Unknown error'}`);
       }
       
       return false;

@@ -15,11 +15,23 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     }
     
     // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    // Use the actual user ID if available, otherwise use 'system'
-    const userId = user?.id || 'system';
-    console.log("Current user ID for property creation:", userId);
+    if (authError) {
+      console.error("Authentication error:", authError);
+      toast.error("Creation failed: Authentication error");
+      return null;
+    }
+    
+    // Use the actual user ID from authentication
+    const userId = user?.id;
+    console.log("Current authenticated user ID for property creation:", userId);
+    
+    if (!userId) {
+      console.error("No authenticated user found");
+      toast.error("Creation failed: You must be logged in");
+      return null;
+    }
     
     // Format the data for the database
     const propertyData = {
@@ -39,7 +51,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       updated_at: new Date().toISOString()
     };
 
-    console.log("Sending to Supabase:", propertyData);
+    console.log("Sending to Supabase for creation:", propertyData);
 
     // Execute insert and await the response
     const { data, error, status, statusText } = await supabase
