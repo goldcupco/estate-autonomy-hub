@@ -21,7 +21,8 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       assigned_users: campaign.assignedUsers || [],
       budget: campaign.budget || 0,
       metrics: ensureMetricsFormat(campaign.metrics),
-      access_restricted: campaign.accessRestricted || false
+      access_restricted: campaign.accessRestricted || false,
+      user_id: campaign.createdBy // Using createdBy as the user_id for now
     };
     
     // Create the campaign
