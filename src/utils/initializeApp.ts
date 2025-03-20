@@ -1,4 +1,4 @@
-import { supabase, supabaseUrl, supabaseKey, safeFrom, executeSql } from './supabaseClient';
+import { supabase, supabaseUrl, supabaseKey, safeFrom, executeSql, createTablesDirectly, isValidTableName, ValidTableName } from './supabaseClient';
 import { verifyDatabaseSetup } from './supabaseSetup';
 
 // Function to execute SQL statements directly
@@ -53,21 +53,6 @@ async function insertData(table: string, data: any) {
     console.error(`Error inserting into ${table}:`, error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
-}
-
-// Type guard for valid table names
-function isValidTableName(tableName: string): tableName is 
-  "call_records" | "leads" | "campaign_leads" | "campaigns" | "communication_providers" | 
-  "contracts" | "documents" | "properties" | "letter_records" | "list_items" | 
-  "lists" | "phone_numbers" | "sms_records" {
-  
-  const validTables = [
-    "call_records", "leads", "campaign_leads", "campaigns", "communication_providers",
-    "contracts", "documents", "properties", "letter_records", "list_items",
-    "lists", "phone_numbers", "sms_records"
-  ];
-  
-  return validTables.includes(tableName);
 }
 
 // Function to check if a table exists
@@ -339,7 +324,7 @@ export async function initializeDatabase() {
 
     // Modified approach - try direct table creation via SQL
     try {
-      // Use createTablesDirectly from supabaseClient instead
+      // Use createTablesDirectly from supabaseClient
       const result = await createTablesDirectly();
       if (!result.success) {
         console.error('Failed to create tables directly:', result.error);

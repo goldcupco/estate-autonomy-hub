@@ -248,10 +248,26 @@ export async function createTablesDirectly() {
       
       -- Create RLS policies for campaigns (critical for our bug fix)
       DROP POLICY IF EXISTS "Enable all access to authenticated users" ON public.campaigns;
-      CREATE POLICY "Enable all access to authenticated users" 
+      CREATE POLICY "Enable read access to campaigns" 
         ON public.campaigns
+        FOR SELECT 
+        USING (auth.uid()::text = user_id OR user_id = 'system');
+      
+      CREATE POLICY "Enable insert access to campaigns" 
+        ON public.campaigns
+        FOR INSERT 
+        WITH CHECK (auth.uid()::text = user_id OR user_id = 'system');
+      
+      CREATE POLICY "Enable update access to campaigns" 
+        ON public.campaigns
+        FOR UPDATE
         USING (auth.uid()::text = user_id OR user_id = 'system')
         WITH CHECK (auth.uid()::text = user_id OR user_id = 'system');
+      
+      CREATE POLICY "Enable delete access to campaigns" 
+        ON public.campaigns
+        FOR DELETE
+        USING (auth.uid()::text = user_id OR user_id = 'system');
       
       COMMIT;
     `);
