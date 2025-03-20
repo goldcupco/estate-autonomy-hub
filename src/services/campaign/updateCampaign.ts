@@ -27,6 +27,12 @@ export const updateCampaign = async (id: string, campaign: Partial<Campaign>): P
     // Add updated_at timestamp
     updateData.updated_at = new Date().toISOString();
     
+    // Add the user_id field which is required by Supabase
+    // If createdBy is available use that, otherwise we need a fallback
+    if (campaign.createdBy !== undefined) {
+      updateData.user_id = campaign.createdBy;
+    }
+    
     // Update the campaign
     const { error } = await supabase
       .from('campaigns')
