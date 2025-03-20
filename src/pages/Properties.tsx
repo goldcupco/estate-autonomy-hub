@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { PropertyList } from '@/components/property/PropertyList';
 import { PropertyActions } from '@/components/property/PropertyActions';
@@ -8,7 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
 import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 import { usePropertyContext } from '@/contexts/PropertyContext';
-import { fetchProperties } from '@/services/propertyService';
+import { fetchProperties } from '@/services/property';
 
 export interface Property {
   id: string;
@@ -57,7 +56,6 @@ export function Properties() {
     console.log("Properties component mounted, loading properties...");
     loadProperties();
     
-    // Set up refresh interval
     const refreshInterval = setInterval(() => {
       console.log("Automatic refresh of properties...");
       loadProperties();
@@ -86,29 +84,19 @@ export function Properties() {
   
   const handlePropertyAdded = (newProperty: Property) => {
     console.log("Property added, updating UI:", newProperty);
-    // Update local state directly with the new property
     setProperties([...properties, newProperty]);
-    
-    // Refresh properties to ensure we have the latest data from the database
     loadProperties();
-    
-    // Provide feedback to the user
     toast.success("Property added successfully");
   };
   
   const handleUpdateProperty = (updatedProperty: Property) => {
     console.log("Property updated, updating UI:", updatedProperty);
-    // Update local state with the updated property
     const updatedProperties = properties.map(property => 
       property.id === updatedProperty.id ? updatedProperty : property
     );
     setProperties(updatedProperties);
     setEditingProperty(null);
-    
-    // Refresh properties to ensure we have the latest data from the database
     loadProperties();
-    
-    // Provide feedback to the user
     toast.success("Property updated successfully");
   };
   

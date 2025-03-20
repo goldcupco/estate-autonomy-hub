@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Property } from '@/pages/Properties';
 import { toast } from 'sonner';
-import { createProperty, updateProperty } from '@/services/propertyService';
+import { createProperty, updateProperty } from '@/services/property';
 
 export function usePropertyData(
   propertyToEdit: Property | null,

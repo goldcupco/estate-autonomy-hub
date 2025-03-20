@@ -1,11 +1,10 @@
-
 import { Button } from '@/components/ui/button';
 import { Building, Database, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MLSImporter } from '@/components/property/mls';
 import { toast } from 'sonner';
 import { usePropertyContext } from '@/contexts/PropertyContext';
-import { fetchProperties } from '@/services/propertyService';
+import { fetchProperties } from '@/services/property';
 
 interface PropertyActionsProps {
   onRefresh?: () => Promise<void>;

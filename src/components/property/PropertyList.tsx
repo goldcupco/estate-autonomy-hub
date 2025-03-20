@@ -1,4 +1,3 @@
-
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -6,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Property } from '@/pages/Properties';
 import { usePropertyContext } from '@/contexts/PropertyContext';
 import { useNavigate } from 'react-router-dom';
-import { deleteProperty, fetchProperties } from '@/services/propertyService';
+import { deleteProperty, fetchProperties } from '@/services/property';
 import { toast } from 'sonner';
 
 export function PropertyList() {
