@@ -58,6 +58,9 @@ export function PropertyList() {
         const updatedProperties = properties.filter(p => p.id !== propertyId);
         setProperties(updatedProperties);
         
+        // Force a refresh to ensure UI matches database
+        await refreshProperties();
+        
         // Show success message
         toast.success("Property deleted successfully");
       } else {

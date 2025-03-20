@@ -12,11 +12,17 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Execute the delete operation with simplified approach
-    const { error } = await supabase
+    // Execute the delete operation with explicit console output for debugging
+    console.log("Executing Supabase delete query with params:", { propertyId });
+    
+    const { error, count } = await supabase
       .from('properties')
       .delete()
-      .eq('id', propertyId);
+      .eq('id', propertyId)
+      .select('count');
+    
+    // Log detailed response for debugging
+    console.log("Delete response:", { error, count });
     
     // Check for errors during deletion
     if (error) {
@@ -26,7 +32,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     }
     
     // If we got here, the delete was successful
-    console.log("Property deleted successfully from database");
+    console.log(`Property ${propertyId} deleted successfully from database`);
     toast.success("Property deleted successfully");
     return true;
   } catch (error: any) {
