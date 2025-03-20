@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Plus, Truck, UserPlus } from 'lucide-react';
@@ -14,8 +13,8 @@ import { AddLeadModal } from '@/components/leads/AddLeadModal';
 import { ScheduleCallModal } from '@/components/calls/ScheduleCallModal';
 import { supabase } from '@/utils/supabaseClient';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Json } from '@/integrations/supabase/types';
 
-// Property interface (should match with Properties.tsx)
 interface Property {
   id: string;
   address: string;
@@ -31,22 +30,37 @@ interface Property {
   propertyType?: 'House' | 'Condo' | 'Land' | 'Commercial' | 'Apartment';
 }
 
+function getImageUrlFromSupabase(images: Json | null): string {
+  if (!images) return 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+  
+  if (Array.isArray(images) && images.length > 0) {
+    return typeof images[0] === 'string' 
+      ? images[0] 
+      : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+  }
+  
+  if (typeof images === 'object' && images !== null && 'url' in images) {
+    return typeof (images as any).url === 'string'
+      ? (images as any).url
+      : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+  }
+  
+  return 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Modal states
   const [addPropertyOpen, setAddPropertyOpen] = useState(false);
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [scheduleCallOpen, setScheduleCallOpen] = useState(false);
   
-  // Data states
   const [properties, setProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoadingProperties, setIsLoadingProperties] = useState(true);
   const [isLoadingLeads, setIsLoadingLeads] = useState(true);
 
-  // Subscribe to global sidebar state changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setSidebarOpen(e.detail);
@@ -58,7 +72,6 @@ export function Dashboard() {
     };
   }, []);
 
-  // Fetch properties from Supabase
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoadingProperties(true);
@@ -79,27 +92,22 @@ export function Dashboard() {
             address: property.address || '',
             city: property.city || '',
             state: property.state || '',
-            zipCode: property.zip || '', // Changed from zip_code to zip
+            zipCode: property.zip || '',
             price: property.price || 0,
             bedrooms: property.bedrooms || 0,
             bathrooms: property.bathrooms || 0,
             sqft: property.square_feet || 0,
             status: (property.status as Property['status']) || 'For Sale',
-            // Use images array first element or fallback URL
-            imageUrl: property.images && Array.isArray(property.images) && property.images.length > 0 
-              ? property.images[0] 
-              : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+            imageUrl: getImageUrlFromSupabase(property.images),
             propertyType: (property.property_type as Property['propertyType']) || 'House'
           }));
           
           setProperties(formattedProperties);
         } else {
-          // Show empty state
           setProperties([]);
         }
       } catch (err) {
         console.error('Error fetching properties:', err);
-        // Set empty array to avoid UI staying in loading state
         setProperties([]);
       } finally {
         setIsLoadingProperties(false);
@@ -109,7 +117,6 @@ export function Dashboard() {
     fetchProperties();
   }, []);
 
-  // Fetch leads from Supabase
   useEffect(() => {
     const fetchLeads = async () => {
       setIsLoadingLeads(true);
@@ -141,12 +148,10 @@ export function Dashboard() {
           
           setLeads(formattedLeads);
         } else {
-          // Show empty state
           setLeads([]);
         }
       } catch (err) {
         console.error('Error fetching leads:', err);
-        // Set empty array to avoid UI staying in loading state
         setLeads([]);
       } finally {
         setIsLoadingLeads(false);
@@ -156,7 +161,6 @@ export function Dashboard() {
     fetchLeads();
   }, []);
 
-  // On mount, initialize sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarState');
     if (savedState !== null) {
@@ -164,26 +168,23 @@ export function Dashboard() {
     }
   }, []);
 
-  // Handler for adding a new property
   const handlePropertyAdded = async (property: any) => {
     try {
-      // Save property to the database
       const { data, error } = await supabase
         .from('properties')
         .insert({
           address: property.address,
           city: property.city,
           state: property.state,
-          zip: property.zipCode, // Changed from zip_code to zip
+          zip: property.zipCode,
           price: property.price,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
           square_feet: property.sqft,
           status: property.status,
-          // Store image URL in images array
           images: property.imageUrl ? [property.imageUrl] : [],
           property_type: property.propertyType || 'House',
-          user_id: 'system', // Replace with actual user ID in a real app
+          user_id: 'system',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -197,16 +198,13 @@ export function Dashboard() {
           address: data[0].address || '',
           city: data[0].city || '',
           state: data[0].state || '',
-          zipCode: data[0].zip || '', // Changed from zip_code to zip
+          zipCode: data[0].zip || '',
           price: data[0].price || 0,
           bedrooms: data[0].bedrooms || 0,
           bathrooms: data[0].bathrooms || 0,
           sqft: data[0].square_feet || 0,
           status: (data[0].status as Property['status']) || 'For Sale',
-          // Use images array first element or fallback URL
-          imageUrl: data[0].images && Array.isArray(data[0].images) && data[0].images.length > 0 
-            ? data[0].images[0] 
-            : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+          imageUrl: getImageUrlFromSupabase(data[0].images),
           propertyType: (data[0].property_type as Property['propertyType']) || 'House'
         };
         
@@ -217,13 +215,11 @@ export function Dashboard() {
     }
   };
 
-  // Handler for adding a new lead
   const handleLeadAdded = async (lead: Lead) => {
     try {
       const [firstName, ...lastNameParts] = lead.name.split(' ');
       const lastName = lastNameParts.join(' ');
       
-      // Save lead to the database
       const { data, error } = await supabase
         .from('leads')
         .insert({
@@ -233,8 +229,8 @@ export function Dashboard() {
           phone: lead.phone,
           status: lead.status,
           lead_source: lead.source,
-          lead_type: 'buyer', // Default type
-          user_id: 'system', // Replace with actual user ID in a real app
+          lead_type: 'buyer',
+          user_id: 'system',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -273,7 +269,6 @@ export function Dashboard() {
         
         <main className="container mx-auto px-4 pt-24 pb-12">
           <div className="space-y-8 py-8 animate-fade-in">
-            {/* Quick action buttons */}
             <div className="flex flex-wrap gap-4">
               <Button 
                 className="flex items-center gap-2 animate-scale-in"
@@ -300,12 +295,10 @@ export function Dashboard() {
               </Button>
             </div>
             
-            {/* Metrics */}
             <section>
               <DashboardMetrics />
             </section>
             
-            {/* Recent Properties */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold tracking-tight">Recent Properties</h2>
@@ -344,7 +337,6 @@ export function Dashboard() {
               )}
             </section>
             
-            {/* Recent Leads */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold tracking-tight">Recent Leads</h2>
@@ -372,7 +364,6 @@ export function Dashboard() {
         </main>
       </div>
 
-      {/* Modals */}
       <AddPropertyModal 
         open={addPropertyOpen} 
         onOpenChange={setAddPropertyOpen} 

@@ -1,5 +1,4 @@
-
-import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord } from './supabaseClient';
+import { supabase, DbCommunicationProvider, ProviderType, DbCallRecord, DbSmsRecord, mapProviderData } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { CallRecord, SmsRecord } from './communicationUtils';
 import { useToast } from "@/hooks/use-toast";
@@ -41,11 +40,8 @@ export class SupabaseCommunicationService {
       
     if (error) throw error;
     
-    // Convert the data to the correct type
-    return (data || []).map(provider => ({
-      ...provider,
-      type: provider.type as ProviderType
-    }));
+    // Convert the data to the correct type using our mapper
+    return (data || []).map(mapProviderData);
   }
 
   async saveProvider(userId: string, provider: Omit<DbCommunicationProvider, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<string> {

@@ -1,5 +1,5 @@
 
-import { supabase, executeSql, createTablesDirectly } from './supabaseClient';
+import { supabase, executeSql, createTablesDirectly, safeFrom } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { CREATE_TABLES_SQL } from './initializeApp';
 
@@ -30,9 +30,10 @@ export async function verifyDatabaseSetup() {
     for (const table of tables) {
       try {
         console.log(`Checking if ${table} exists...`);
-        const { data, error } = await supabase.from(table as any).select('*').limit(1);
+        // Use the safeFrom helper to handle type safety with dynamic table names
+        const { data, error } = await safeFrom(table).select('*').limit(1);
         
-        if (error && error.code === '42P01') {
+        if (error && (error.code === '42P01' || error.message?.includes('does not exist'))) {
           console.log(`Table ${table} does not exist`);
           missingTables.push(table);
         } else {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useSupabaseCommunication } from '@/utils/supabaseCommunicationService';
-import { DbCommunicationProvider, ProviderType, supabase } from '@/utils/supabaseClient';
+import { DbCommunicationProvider, ProviderType, supabase, mapProviderData } from '@/utils/supabaseClient';
 import { 
   APIKeyForm, 
   APIKeyFormValues,
@@ -53,11 +52,8 @@ export const SupabaseAPIKeyManager = () => {
           throw error;
         }
         
-        // Convert the raw data to the correct type
-        const typedData: DbCommunicationProvider[] = (data || []).map(item => ({
-          ...item,
-          type: item.type as ProviderType
-        }));
+        // Convert the raw data to the correct type using our mapper
+        const typedData: DbCommunicationProvider[] = (data || []).map(mapProviderData);
         
         setApiKeys(typedData);
       } catch (error) {
@@ -127,10 +123,7 @@ export const SupabaseAPIKeyManager = () => {
         
         if (data && data.length > 0) {
           // Create a properly typed provider object from the response
-          const newProviderWithTypedFields: DbCommunicationProvider = {
-            ...data[0],
-            type: data[0].type as ProviderType
-          };
+          const newProviderWithTypedFields = mapProviderData(data[0]);
           
           // Add the new key to state
           setApiKeys([newProviderWithTypedFields, ...apiKeys]);

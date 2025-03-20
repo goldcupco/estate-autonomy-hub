@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
+import { Json } from '@/integrations/supabase/types';
 
 // Re-export the client
 export { supabase };
@@ -12,6 +12,7 @@ export const supabaseAnonKey = SUPABASE_ANON_KEY;
 // Type definitions for our database tables
 export type ProviderType = 'twilio' | 'callrail';
 
+// This interface defines what we expect in our application
 export interface DbCommunicationProvider {
   id: string;
   user_id: string;
@@ -27,6 +28,44 @@ export interface DbCommunicationProvider {
   };
   created_at: string;
   updated_at: string;
+}
+
+// Helper function to safely convert Supabase JSON to our expected config format
+export function mapProviderConfig(config: Json | null): DbCommunicationProvider['config'] {
+  if (!config) return {};
+  
+  // Handle the case where config could be any JSON value
+  if (typeof config !== 'object' || config === null) {
+    return {};
+  }
+  
+  // Now we know config is an object, safely extract properties
+  const typedConfig: DbCommunicationProvider['config'] = {};
+  
+  // We need to cast 'config' to any first to avoid TypeScript errors when accessing properties
+  const anyConfig = config as any;
+  
+  if (anyConfig.accountSid) typedConfig.accountSid = String(anyConfig.accountSid);
+  if (anyConfig.authToken) typedConfig.authToken = String(anyConfig.authToken);
+  if (anyConfig.twilioNumber) typedConfig.twilioNumber = String(anyConfig.twilioNumber);
+  if (anyConfig.apiKey) typedConfig.apiKey = String(anyConfig.apiKey);
+  if (anyConfig.accountId) typedConfig.accountId = String(anyConfig.accountId);
+  
+  return typedConfig;
+}
+
+// Helper function to convert raw Supabase provider data to our application type
+export function mapProviderData(data: any): DbCommunicationProvider {
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    name: data.name,
+    type: data.type as ProviderType,
+    is_default: !!data.is_default,
+    config: mapProviderConfig(data.config),
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.updated_at || new Date().toISOString()
+  };
 }
 
 export interface DbCallRecord {
@@ -83,6 +122,11 @@ export interface DbLead {
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+// Helper function to safely type Supabase queries with string table names
+export function safeFrom(table: string) {
+  return supabase.from(table as any);
 }
 
 // Improved table creation function using direct SQL for more reliability

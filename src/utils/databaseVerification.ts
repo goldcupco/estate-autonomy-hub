@@ -1,5 +1,5 @@
 
-import { supabase, supabaseUrl } from './supabaseClient';
+import { supabase, supabaseUrl, safeFrom } from './supabaseClient';
 
 /**
  * Simple function to check if tables exist
@@ -14,8 +14,8 @@ export async function verifyTablesExist() {
   for (const table of tables) {
     try {
       // Check if table exists by attempting to select from it
-      const { data, error } = await supabase
-        .from(table as any)
+      // Use safeFrom helper to handle type safety
+      const { data, error } = await safeFrom(table)
         .select('*', { head: true, count: 'exact' });
       
       if (error) {
