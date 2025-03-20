@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { Layout } from "./components/layout/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Properties from "./pages/Properties";
+import PropertyContainer from "./components/property/PropertyContainer";
 import Contracts from "./pages/Contracts";
 import Dashboard from "./pages/Dashboard";
 import PropertyDetails from "./pages/PropertyDetails";
@@ -76,9 +75,7 @@ const AppRoutes = () => {
       <Route 
         path="/properties" 
         element={
-          <ProtectedRoute>
-            <Properties />
-          </ProtectedRoute>
+          <PropertyContainer />
         } 
       />
       <Route 
