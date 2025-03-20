@@ -671,7 +671,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_delete_property: {
+        Args: {
+          property_id: string
+        }
+        Returns: boolean
+      }
+      admin_update_property: {
+        Args: {
+          property_id: string
+          property_data: Json
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
