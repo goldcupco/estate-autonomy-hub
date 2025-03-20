@@ -114,20 +114,23 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
       throw new Error(errorMsg);
     }
     
+    // Properly type the data returned from the RPC function
+    const leadRecord = data as any;
+    
     toast({
       title: 'Lead added successfully',
       description: `${lead.name} has been added as a new lead`,
     });
     
     return {
-      id: data.id,
-      name: `${data.first_name} ${data.last_name}`,
-      email: data.email || '',
-      phone: data.phone || '',
-      status: mapDatabaseStatusToLeadStatus(data.status),
-      source: data.lead_source || 'Unknown',
-      dateAdded: new Date(data.created_at).toISOString().split('T')[0],
-      lastContact: new Date(data.created_at).toISOString().split('T')[0],
+      id: leadRecord.id,
+      name: `${leadRecord.first_name} ${leadRecord.last_name}`,
+      email: leadRecord.email || '',
+      phone: leadRecord.phone || '',
+      status: mapDatabaseStatusToLeadStatus(leadRecord.status),
+      source: leadRecord.lead_source || 'Unknown',
+      dateAdded: new Date(leadRecord.created_at).toISOString().split('T')[0],
+      lastContact: new Date(leadRecord.created_at).toISOString().split('T')[0],
       notes: [initialNote],
       flaggedForNextStage: false,
       readyToMove: false,

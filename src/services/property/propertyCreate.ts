@@ -54,20 +54,23 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    console.log("Raw data returned from insert:", data);
+    // Cast the data to the correct type
+    const propertyRecord = data as any;
+    
+    console.log("Raw data returned from insert:", propertyRecord);
     const createdProperty: Property = {
-      id: data.id,
-      address: data.address || '',
-      city: data.city || '',
-      state: data.state || '',
-      zipCode: data.zip || '',
-      price: data.price || 0,
-      bedrooms: data.bedrooms || 0,
-      bathrooms: data.bathrooms || 0,
-      sqft: data.square_feet || 0,
-      status: (data.status as Property['status']) || 'For Sale',
-      imageUrl: data.images && data.images[0] ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-      propertyType: (data.property_type as Property['propertyType']) || 'House'
+      id: propertyRecord.id,
+      address: propertyRecord.address || '',
+      city: propertyRecord.city || '',
+      state: propertyRecord.state || '',
+      zipCode: propertyRecord.zip || '',
+      price: propertyRecord.price || 0,
+      bedrooms: propertyRecord.bedrooms || 0,
+      bathrooms: propertyRecord.bathrooms || 0,
+      sqft: propertyRecord.square_feet || 0,
+      status: (propertyRecord.status as Property['status']) || 'For Sale',
+      imageUrl: propertyRecord.images && propertyRecord.images[0] ? propertyRecord.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+      propertyType: (propertyRecord.property_type as Property['propertyType']) || 'House'
     };
     
     console.log("Property created successfully:", createdProperty);
