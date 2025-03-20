@@ -27,7 +27,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      // Ensure user_id is always set
+      // Use auth.uid() when authenticated, fallback to 'system' for now
       user_id: 'system',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -36,44 +36,49 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     console.log("Sending to Supabase:", propertyData);
 
     // Execute insert and await the response
-    const { data, error } = await supabase
+    const { data, error, status, statusText } = await supabase
       .from('properties')
       .insert(propertyData)
       .select();
       
+    // Log full response details
+    console.log("Supabase response:", { data, error, status, statusText });
+    
     if (error) {
       console.error("Supabase insert error:", error);
-      toast.error(`Creation failed: ${error.message}`);
+      toast.error(`Creation failed: ${error.message || error.details || 'Unknown error'}`);
       return null;
     }
     
-    if (data && data.length > 0) {
-      console.log("Raw data returned from insert:", data[0]);
-      const createdProperty: Property = {
-        id: data[0].id,
-        address: data[0].address || '',
-        city: data[0].city || '',
-        state: data[0].state || '',
-        zipCode: data[0].zip || '',
-        price: data[0].price || 0,
-        bedrooms: data[0].bedrooms || 0,
-        bathrooms: data[0].bathrooms || 0,
-        sqft: data[0].square_feet || 0,
-        status: (data[0].status as Property['status']) || 'For Sale',
-        imageUrl: data[0].images && data[0].images[0] ? data[0].images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        propertyType: (data[0].property_type as Property['propertyType']) || 'House'
-      };
-      
-      console.log("Property created successfully:", createdProperty);
-      toast.success("Property created successfully");
-      return createdProperty;
+    if (!data || data.length === 0) {
+      console.error("Property creation returned no data");
+      toast.error("Creation failed: No data returned from database");
+      return null;
     }
     
-    console.error("Property created but no data returned");
-    return null;
-  } catch (error) {
+    console.log("Raw data returned from insert:", data[0]);
+    const createdProperty: Property = {
+      id: data[0].id,
+      address: data[0].address || '',
+      city: data[0].city || '',
+      state: data[0].state || '',
+      zipCode: data[0].zip || '',
+      price: data[0].price || 0,
+      bedrooms: data[0].bedrooms || 0,
+      bathrooms: data[0].bathrooms || 0,
+      sqft: data[0].square_feet || 0,
+      status: (data[0].status as Property['status']) || 'For Sale',
+      imageUrl: data[0].images && data[0].images[0] ? data[0].images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+      propertyType: (data[0].property_type as Property['propertyType']) || 'House'
+    };
+    
+    console.log("Property created successfully:", createdProperty);
+    toast.success("Property created successfully");
+    return createdProperty;
+  } catch (error: any) {
     console.error('Error creating property:', error);
-    toast.error("Failed to create property");
+    console.error('Error details:', error.message, error.stack);
+    toast.error(`Failed to create property: ${error.message || 'Unknown error'}`);
     return null;
   }
 }

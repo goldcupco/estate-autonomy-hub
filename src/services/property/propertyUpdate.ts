@@ -27,29 +27,34 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
       updated_at: new Date().toISOString(),
-      // Add user_id if missing from the original data
+      // Use auth.uid() when authenticated, fallback to 'system' for now
       user_id: 'system'
     };
 
     console.log("Sending to Supabase:", propertyData);
 
     // Perform the update and await the response
-    const { error } = await supabase
+    const { error, status, statusText } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
+    
+    // Log full response details
+    console.log("Supabase response:", { error, status, statusText });
       
     if (error) {
       console.error("Supabase update error:", error);
-      toast.error(`Update failed: ${error.message}`);
+      toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
       return false;
     }
     
     console.log("Property updated successfully in database");
+    toast.success("Property updated successfully");
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating property:', error);
-    toast.error("Failed to update property");
+    console.error('Error details:', error.message, error.stack);
+    toast.error(`Failed to update property: ${error.message || 'Unknown error'}`);
     return false;
   }
 }

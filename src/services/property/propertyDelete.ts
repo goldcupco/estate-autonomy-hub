@@ -13,15 +13,18 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     }
     
     // Execute the delete operation
-    const { error } = await supabase
+    const { error, status, statusText } = await supabase
       .from('properties')
       .delete()
       .eq('id', propertyId);
+    
+    // Log full response details
+    console.log("Supabase response:", { error, status, statusText });
       
     // Check for errors during deletion
     if (error) {
       console.error("Supabase delete error:", error);
-      toast.error(`Delete failed: ${error.message}`);
+      toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
       return false;
     }
     
@@ -29,9 +32,10 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     console.log("Property deleted successfully from database");
     toast.success("Property deleted successfully");
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting property:', error);
-    toast.error("Failed to delete property");
+    console.error('Error details:', error.message, error.stack);
+    toast.error(`Failed to delete property: ${error.message || 'Unknown error'}`);
     return false;
   }
 }
