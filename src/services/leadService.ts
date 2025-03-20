@@ -22,7 +22,7 @@ export const fetchLeads = async (): Promise<Lead[]> => {
         name: `${lead.first_name} ${lead.last_name}`,
         email: lead.email || '',
         phone: lead.phone || '',
-        status: lead.status as Lead['status'],
+        status: mapDatabaseStatusToLeadStatus(lead.status),
         source: lead.lead_source || 'Unknown',
         dateAdded: new Date(lead.created_at).toISOString().split('T')[0],
         lastContact: lead.last_contact_date 
@@ -41,6 +41,19 @@ export const fetchLeads = async (): Promise<Lead[]> => {
     throw error;
   }
 };
+
+// Helper function to ensure status is one of the allowed values
+function mapDatabaseStatusToLeadStatus(status: string): Lead['status'] {
+  const validStatuses: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Negotiating', 'Closed', 'Lost'];
+  
+  if (validStatuses.includes(status as Lead['status'])) {
+    return status as Lead['status'];
+  }
+  
+  // Default to 'New' if the status is not valid
+  console.warn(`Invalid lead status: ${status}, defaulting to 'New'`);
+  return 'New';
+}
 
 // Add a new lead to the database
 export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact' | 'notes' | 'flaggedForNextStage' | 'readyToMove' | 'doNotContact'>): Promise<Lead> => {
@@ -89,7 +102,7 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
       name: `${data[0].first_name} ${data[0].last_name}`,
       email: data[0].email || '',
       phone: data[0].phone || '',
-      status: data[0].status,
+      status: mapDatabaseStatusToLeadStatus(data[0].status),
       source: data[0].lead_source || 'Unknown',
       dateAdded: new Date(data[0].created_at).toISOString().split('T')[0],
       lastContact: new Date(data[0].created_at).toISOString().split('T')[0],

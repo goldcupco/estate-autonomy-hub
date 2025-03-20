@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -47,9 +46,10 @@ export const getLists = async (): Promise<List[]> => {
         id: item.id,
         title: item.name,
         description: item.description || '',
-        count: item.count || 0,
+        // Use count property if it exists, otherwise default to 0
+        count: typeof item.count !== 'undefined' ? item.count : 0,
         lastUpdated: new Date(item.updated_at).toISOString().split('T')[0],
-        type: item.type as 'seller' | 'buyer'
+        type: mapDatabaseTypeToListType(item.type)
       }));
     }
     
@@ -60,6 +60,17 @@ export const getLists = async (): Promise<List[]> => {
     return getMockLists();
   }
 };
+
+// Helper function to ensure type is one of the allowed values
+function mapDatabaseTypeToListType(type: string): 'seller' | 'buyer' {
+  if (type === 'seller' || type === 'buyer') {
+    return type;
+  }
+  
+  // Default to 'buyer' if the type is not valid
+  console.warn(`Invalid list type: ${type}, defaulting to 'buyer'`);
+  return 'buyer';
+}
 
 // Get a single list by ID
 export const getListById = async (id: string): Promise<List | null> => {
@@ -80,9 +91,10 @@ export const getListById = async (id: string): Promise<List | null> => {
         id: data.id,
         title: data.name,
         description: data.description || '',
-        count: data.count || 0,
+        // Use count property if it exists, otherwise default to 0
+        count: typeof data.count !== 'undefined' ? data.count : 0,
         lastUpdated: new Date(data.updated_at).toISOString().split('T')[0],
-        type: data.type as 'seller' | 'buyer'
+        type: mapDatabaseTypeToListType(data.type)
       };
     }
     
@@ -126,9 +138,10 @@ export const createList = async (list: Omit<List, 'id' | 'lastUpdated'>): Promis
         id: data[0].id,
         title: data[0].name,
         description: data[0].description || '',
-        count: data[0].count || 0,
+        // Use count property if it exists, otherwise default to 0
+        count: typeof data[0].count !== 'undefined' ? data[0].count : 0,
         lastUpdated: new Date(data[0].updated_at).toISOString().split('T')[0],
-        type: data[0].type
+        type: mapDatabaseTypeToListType(data[0].type)
       };
     }
     
@@ -211,16 +224,23 @@ export const getCampaigns = async (): Promise<Campaign[]> => {
     }
     
     if (data && data.length > 0) {
-      return data.map(item => ({
-        id: item.id,
-        title: item.name,
-        description: item.description || '',
-        type: item.type as 'seller' | 'buyer',
-        contacts: item.metrics?.contacts || 0,
-        responses: item.metrics?.responses || 0,
-        lastUpdated: new Date(item.updated_at).toISOString().split('T')[0],
-        status: item.status
-      }));
+      return data.map(item => {
+        // Safely extract metrics values or default to 0
+        const metrics = item.metrics || {};
+        const contacts = typeof metrics === 'object' && metrics !== null ? (metrics.contacts || 0) : 0;
+        const responses = typeof metrics === 'object' && metrics !== null ? (metrics.responses || 0) : 0;
+        
+        return {
+          id: item.id,
+          title: item.name,
+          description: item.description || '',
+          type: mapDatabaseTypeToListType(item.type),
+          contacts: contacts,
+          responses: responses,
+          lastUpdated: new Date(item.updated_at).toISOString().split('T')[0],
+          status: item.status
+        };
+      });
     }
     
     return getMockCampaigns();
