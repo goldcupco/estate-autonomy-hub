@@ -32,15 +32,25 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     };
 
     console.log("Sending to Supabase:", propertyData);
+    console.log("Property ID for update:", updatedProperty.id);
 
-    // Perform the update and await the response
-    const { error, status, statusText } = await supabase
+    // Request the data back to confirm the update and add count option
+    const { data, error, status, statusText, count } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id);
+      .eq('id', updatedProperty.id)
+      .select()
+      .returns<any>();
     
-    // Log full response details
-    console.log("Supabase response:", { error, status, statusText });
+    // Detailed logging for debugging
+    console.log("Supabase update response:", { 
+      data, 
+      error, 
+      status, 
+      statusText,
+      count,
+      affectedRows: data?.length || 0
+    });
       
     if (error) {
       console.error("Supabase update error:", error);
@@ -48,7 +58,13 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    console.log("Property updated successfully in database");
+    if (!data || data.length === 0) {
+      console.error("No rows updated. Property might not exist or you don't have permission.");
+      toast.error("Update failed: Property couldn't be updated");
+      return false;
+    }
+    
+    console.log("Property updated successfully in database, updated data:", data);
     toast.success("Property updated successfully");
     return true;
   } catch (error: any) {
