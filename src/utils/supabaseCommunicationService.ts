@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DbCommunicationProvider, DbCallRecord, DbSmsRecord, SmsRecord, mapProviderData } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
 
 // Get all communication providers for the current user
 export async function getCommunicationProviders(userId: string): Promise<DbCommunicationProvider[]> {
@@ -376,4 +377,164 @@ export async function updateSmsRecordLeadId(smsId: string, leadId: string): Prom
     console.error('Error in updateSmsRecordLeadId:', error);
     toast.error(`Failed to update SMS record: ${error.message}`);
   }
+}
+
+/**
+ * React hook to interact with communication providers using Supabase
+ */
+export function useSupabaseCommunication() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Get all providers
+  const getProviders = useCallback(async (): Promise<DbCommunicationProvider[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      const providers = await getCommunicationProviders(userId);
+      return providers;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to get providers'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Save a provider (create or update)
+  const saveProvider = useCallback(async (provider: Omit<DbCommunicationProvider, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<DbCommunicationProvider> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      
+      // Create a new provider
+      const newProvider = await createCommunicationProvider(
+        userId,
+        provider.name,
+        provider.type,
+        provider.is_default,
+        provider.config
+      );
+      
+      return newProvider;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to save provider'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Delete a provider
+  const deleteProvider = useCallback(async (providerId: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await deleteCommunicationProvider(providerId);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to delete provider'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Make a call
+  const makeSupabaseCall = useCallback(async (
+    providerId: string,
+    providerType: string,
+    phoneNumber: string,
+    contactName: string
+  ): Promise<string> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      const result = await makeCall(userId, phoneNumber, contactName, providerId, providerType);
+      return result.callId;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to make call'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // End a call (placeholder for future implementation)
+  const endSupabaseCall = useCallback(async (callId: string, duration: number): Promise<void> => {
+    // This would be implemented to update call records with duration, etc.
+    console.log(`Call ${callId} ended after ${duration} seconds`);
+  }, []);
+
+  // Get call history
+  const getCallHistory = useCallback(async (): Promise<DbCallRecord[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      return await getCallRecords(userId);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to get call history'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Send SMS
+  const sendSupabaseSms = useCallback(async (
+    phoneNumber: string,
+    message: string,
+    contactName: string = 'Unknown',
+    providerId?: string,
+    leadId?: string
+  ): Promise<SmsRecord> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      return await sendSms(userId, phoneNumber, message, contactName, providerId, leadId);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to send SMS'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Get SMS history
+  const getSmsHistory = useCallback(async (): Promise<DbSmsRecord[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For development purposes, use "system" as the user ID
+      const userId = 'system';
+      return await getSmsRecords(userId);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to get SMS history'));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    loading,
+    error,
+    getProviders,
+    saveProvider,
+    deleteProvider,
+    makeCall: makeSupabaseCall,
+    endCall: endSupabaseCall,
+    getCallHistory,
+    sendSms: sendSupabaseSms,
+    getSmsHistory
+  };
 }
