@@ -72,22 +72,27 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
       }
     };
     
-    const { data, error } = await supabase
-      .from('leads')
-      .insert({
-        first_name: firstName,
-        last_name: lastName || '',
-        email: lead.email,
-        phone: lead.phone,
-        status: lead.status,
-        lead_type: 'buyer',
-        lead_source: lead.source,
-        user_id: 'system',
-        notes: JSON.stringify([initialNote]),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select();
+    // Format the data for the database
+    const leadData = {
+      first_name: firstName,
+      last_name: lastName || '',
+      email: lead.email,
+      phone: lead.phone,
+      status: lead.status,
+      lead_type: 'buyer',
+      lead_source: lead.source,
+      user_id: 'system',
+      notes: JSON.stringify([initialNote]),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log("Creating new lead:", leadData);
+    
+    // Use the admin RPC function to bypass RLS for system leads
+    const { data, error } = await supabase.rpc('admin_create_lead', {
+      lead_data: leadData
+    });
     
     if (error) {
       console.error('Error adding lead:', error);
@@ -99,7 +104,7 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
       throw error;
     }
     
-    if (!data || data.length === 0) {
+    if (!data) {
       const errorMsg = 'No data returned from insert';
       toast({
         title: 'Error adding lead',
@@ -115,14 +120,14 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
     });
     
     return {
-      id: data[0].id,
-      name: `${data[0].first_name} ${data[0].last_name}`,
-      email: data[0].email || '',
-      phone: data[0].phone || '',
-      status: mapDatabaseStatusToLeadStatus(data[0].status),
-      source: data[0].lead_source || 'Unknown',
-      dateAdded: new Date(data[0].created_at).toISOString().split('T')[0],
-      lastContact: new Date(data[0].created_at).toISOString().split('T')[0],
+      id: data.id,
+      name: `${data.first_name} ${data.last_name}`,
+      email: data.email || '',
+      phone: data.phone || '',
+      status: mapDatabaseStatusToLeadStatus(data.status),
+      source: data.lead_source || 'Unknown',
+      dateAdded: new Date(data.created_at).toISOString().split('T')[0],
+      lastContact: new Date(data.created_at).toISOString().split('T')[0],
       notes: [initialNote],
       flaggedForNextStage: false,
       readyToMove: false,
@@ -140,9 +145,32 @@ export const updateLead = async (lead: Lead): Promise<void> => {
     const [firstName, ...lastNameParts] = lead.name.split(' ');
     const lastName = lastNameParts.join(' ');
     
-    const { error } = await supabase
+    // First, let's check if this is a system lead
+    const { data: leadCheck, error: fetchError } = await supabase
       .from('leads')
-      .update({
+      .select('user_id')
+      .eq('id', lead.id)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error fetching lead before update:", fetchError);
+      toast({
+        title: 'Error updating lead',
+        description: fetchError.message,
+        variant: 'destructive'
+      });
+      throw fetchError;
+    }
+    
+    console.log("Lead belongs to user_id:", leadCheck?.user_id);
+    
+    let error;
+    
+    // For system leads, we need to use the admin RPC function
+    if (leadCheck?.user_id === 'system') {
+      console.log("This is a system lead, using admin API");
+      
+      const leadData = {
         first_name: firstName,
         last_name: lastName || '',
         email: lead.email,
@@ -151,8 +179,32 @@ export const updateLead = async (lead: Lead): Promise<void> => {
         lead_source: lead.source,
         notes: JSON.stringify(lead.notes || []),
         updated_at: new Date().toISOString()
-      })
-      .eq('id', lead.id);
+      };
+      
+      const { error: rpcError } = await supabase.rpc('admin_update_lead', {
+        lead_id: lead.id,
+        lead_data: leadData
+      });
+      
+      error = rpcError;
+    } else {
+      // Standard update for user-owned leads
+      const { error: updateError } = await supabase
+        .from('leads')
+        .update({
+          first_name: firstName,
+          last_name: lastName || '',
+          email: lead.email,
+          phone: lead.phone,
+          status: lead.status,
+          lead_source: lead.source,
+          notes: JSON.stringify(lead.notes || []),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id);
+      
+      error = updateError;
+    }
     
     if (error) {
       console.error('Error updating lead:', error);
@@ -177,10 +229,10 @@ export const updateLead = async (lead: Lead): Promise<void> => {
 // Add a note to a lead
 export const addNote = async (leadId: string, note: Omit<Note, 'id'>): Promise<Note> => {
   try {
-    // First, fetch the current lead to get the existing notes
+    // First, fetch the current lead to get the existing notes and check if it's a system lead
     const { data: leadData, error: leadError } = await supabase
       .from('leads')
-      .select('notes')
+      .select('notes, user_id')
       .eq('id', leadId)
       .single();
     
@@ -203,15 +255,33 @@ export const addNote = async (leadId: string, note: Omit<Note, 'id'>): Promise<N
     const existingNotes: Note[] = leadData.notes ? JSON.parse(leadData.notes) : [];
     const updatedNotes = [...existingNotes, newNote];
     
-    // Update the lead with the new notes
-    const { error } = await supabase
-      .from('leads')
-      .update({
-        notes: JSON.stringify(updatedNotes),
-        last_contact_date: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', leadId);
+    const noteUpdateData = {
+      notes: JSON.stringify(updatedNotes),
+      last_contact_date: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    let error;
+    
+    // For system leads, we need to use the admin RPC function
+    if (leadData.user_id === 'system') {
+      console.log("This is a system lead, using admin API for adding note");
+      
+      const { error: rpcError } = await supabase.rpc('admin_update_lead', {
+        lead_id: leadId,
+        lead_data: noteUpdateData
+      });
+      
+      error = rpcError;
+    } else {
+      // Standard update for user-owned leads
+      const { error: updateError } = await supabase
+        .from('leads')
+        .update(noteUpdateData)
+        .eq('id', leadId);
+      
+      error = updateError;
+    }
     
     if (error) {
       console.error('Error adding note to lead:', error);
@@ -238,10 +308,45 @@ export const addNote = async (leadId: string, note: Omit<Note, 'id'>): Promise<N
 // Delete a lead
 export const deleteLead = async (leadId: string): Promise<void> => {
   try {
-    const { error } = await supabase
+    // First, let's check if this is a system lead
+    const { data: lead, error: fetchError } = await supabase
       .from('leads')
-      .delete()
-      .eq('id', leadId);
+      .select('user_id')
+      .eq('id', leadId)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error fetching lead before delete:", fetchError);
+      toast({
+        title: 'Error deleting lead',
+        description: fetchError.message,
+        variant: 'destructive'
+      });
+      throw fetchError;
+    }
+    
+    console.log("Lead belongs to user_id:", lead?.user_id);
+    
+    let error;
+    
+    // For system leads, we need to use the admin RPC function
+    if (lead?.user_id === 'system') {
+      console.log("This is a system lead, using admin API");
+      
+      const { error: rpcError } = await supabase.rpc('admin_delete_lead', {
+        lead_id: leadId
+      });
+      
+      error = rpcError;
+    } else {
+      // Standard delete for user-owned leads
+      const { error: deleteError } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', leadId);
+      
+      error = deleteError;
+    }
     
     if (error) {
       console.error('Error deleting lead:', error);

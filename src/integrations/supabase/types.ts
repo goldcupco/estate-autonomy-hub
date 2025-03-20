@@ -671,9 +671,110 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_campaign: {
+        Args: {
+          campaign_data: Json
+        }
+        Returns: Json
+      }
+      admin_create_contract: {
+        Args: {
+          contract_data: Json
+        }
+        Returns: Json
+      }
+      admin_create_document: {
+        Args: {
+          document_data: Json
+        }
+        Returns: Json
+      }
+      admin_create_lead: {
+        Args: {
+          lead_data: Json
+        }
+        Returns: Json
+      }
+      admin_create_list: {
+        Args: {
+          list_data: Json
+        }
+        Returns: Json
+      }
+      admin_create_property: {
+        Args: {
+          property_data: Json
+        }
+        Returns: Json
+      }
+      admin_delete_campaign: {
+        Args: {
+          campaign_id: string
+        }
+        Returns: boolean
+      }
+      admin_delete_contract: {
+        Args: {
+          contract_id: string
+        }
+        Returns: boolean
+      }
+      admin_delete_document: {
+        Args: {
+          document_id: string
+        }
+        Returns: boolean
+      }
+      admin_delete_lead: {
+        Args: {
+          lead_id: string
+        }
+        Returns: boolean
+      }
+      admin_delete_list: {
+        Args: {
+          list_id: string
+        }
+        Returns: boolean
+      }
       admin_delete_property: {
         Args: {
           property_id: string
+        }
+        Returns: boolean
+      }
+      admin_update_campaign: {
+        Args: {
+          campaign_id: string
+          campaign_data: Json
+        }
+        Returns: boolean
+      }
+      admin_update_contract: {
+        Args: {
+          contract_id: string
+          contract_data: Json
+        }
+        Returns: boolean
+      }
+      admin_update_document: {
+        Args: {
+          document_id: string
+          document_data: Json
+        }
+        Returns: boolean
+      }
+      admin_update_lead: {
+        Args: {
+          lead_id: string
+          lead_data: Json
+        }
+        Returns: boolean
+      }
+      admin_update_list: {
+        Args: {
+          list_id: string
+          list_data: Json
         }
         Returns: boolean
       }
