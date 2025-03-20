@@ -89,7 +89,7 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
         toast.error('Permission denied: You do not have access to create campaigns');
       } else if (error.code === '23505') {
         toast.error('A campaign with this name already exists');
-      } else if (error.code === '401' || error.status === 401) {
+      } else if (error.code === '401' || error.code.toString() === '401') {
         console.log('Authentication error - attempting to refresh session');
         
         // Force refresh the session
