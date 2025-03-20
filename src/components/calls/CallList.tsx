@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +64,8 @@ import {
   getSmsHistory,
   SmsRecord
 } from '@/utils/communicationUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { DbCallRecord } from '@/utils/supabaseClient';
 
 export type CallDirection = 'incoming' | 'outgoing' | 'missed';
 export type CallStatus = 'scheduled' | 'completed' | 'cancelled';
@@ -83,81 +84,39 @@ export interface Call {
   isRecorded?: boolean;
 }
 
-const DEMO_CALLS: Call[] = [
-  {
-    id: '1',
-    contactName: 'John Smith',
-    contactPhone: '(555) 123-4567',
-    direction: 'incoming',
-    status: 'completed',
-    date: '2025-03-12',
-    time: '10:30',
-    duration: 15,
-    notes: 'Discussed property on 123 Main St.'
-  },
-  {
-    id: '2',
-    contactName: 'Sarah Johnson',
-    contactPhone: '(555) 987-6543',
-    direction: 'outgoing',
-    status: 'completed',
-    date: '2025-03-13',
-    time: '14:45',
-    duration: 8,
-    notes: 'Called about listing their home.'
-  },
-  {
-    id: '3',
-    contactName: 'Michael Brown',
-    contactPhone: '(555) 456-7890',
-    direction: 'missed',
-    status: 'cancelled',
-    date: '2025-03-14',
-    time: '09:15',
-    duration: null,
-    notes: 'Missed call, need to follow up.'
-  },
-  {
-    id: '4',
-    contactName: 'Emma Wilson',
-    contactPhone: '(555) 234-5678',
-    direction: 'outgoing',
-    status: 'scheduled',
-    date: '2025-03-16',
-    time: '11:00',
-    duration: null,
-    notes: 'Scheduled to discuss financing options.'
-  },
-  {
-    id: '5',
-    contactName: 'David Lee',
-    contactPhone: '(555) 876-5432',
-    direction: 'incoming',
-    status: 'completed',
-    date: '2025-03-11',
-    time: '13:20',
-    duration: 23,
-    notes: 'Called about property viewing.'
-  },
-  {
-    id: '6',
-    contactName: 'Jennifer Garcia',
-    contactPhone: '(555) 345-6789',
-    direction: 'outgoing',
-    status: 'scheduled',
-    date: '2025-03-17',
-    time: '15:30',
-    duration: null,
-    notes: 'Scheduled call to discuss contract terms.'
+const mapCallRecordToCall = (record: DbCallRecord): Call => {
+  const timestamp = new Date(record.timestamp);
+  const date = timestamp.toISOString().split('T')[0];
+  const time = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  
+  let direction: CallDirection = 'outgoing';
+  
+  if (record.provider_type === 'twilio') {
+    direction = 'outgoing';
   }
-];
+  
+  return {
+    id: record.id,
+    contactName: record.contact_name,
+    contactPhone: record.phone_number,
+    direction: direction,
+    status: 'completed',
+    date,
+    time,
+    duration: record.duration || null,
+    notes: record.notes || '',
+    recordingUrl: record.recording_url,
+    isRecorded: !!record.recording_url
+  };
+};
 
 interface CallListProps {
   // Props can be added here if needed
 }
 
 export const CallList = ({}: CallListProps) => {
-  const [calls, setCalls] = useState<Call[]>(DEMO_CALLS);
+  const [calls, setCalls] = useState<Call[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [smsDialogOpen, setSmsDialogOpen] = useState(false);
   const [editingCall, setEditingCall] = useState<Call | null>(null);
@@ -197,7 +156,41 @@ export const CallList = ({}: CallListProps) => {
   
   const [newCall, setNewCall] = useState<Omit<Call, 'id'>>(initialNewCall);
 
-  // Timer for call duration
+  useEffect(() => {
+    const fetchCallRecords = async () => {
+      setIsLoading(true);
+      try {
+        const userId = 'system';
+        
+        const { data, error } = await supabase
+          .from('call_records')
+          .select('*')
+          .eq('user_id', userId)
+          .order('timestamp', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          const mappedCalls = data.map(record => mapCallRecordToCall(record as DbCallRecord));
+          setCalls(mappedCalls);
+        }
+      } catch (error) {
+        console.error('Error fetching call records:', error);
+        toast({
+          title: "Failed to load calls",
+          description: "There was an error loading your call history.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCallRecords();
+  }, []);
+
   useEffect(() => {
     if (isRecording && callStartTime) {
       const intervalId = window.setInterval(() => {
@@ -241,14 +234,12 @@ export const CallList = ({}: CallListProps) => {
 
   const toggleCallRecording = () => {
     if (isRecording) {
-      // Stop recording
       if (currentCallId && callStartTime) {
         const duration = Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000);
         try {
           const callRecord = endCallRecording(currentCallId, duration);
           
           if (editingCall) {
-            // Update the editing call with recording information
             setNewCall({
               ...newCall,
               isRecorded: true,
@@ -270,7 +261,6 @@ export const CallList = ({}: CallListProps) => {
       setCallStartTime(null);
       setCallDuration(0);
     } else {
-      // Start recording
       if (!editingCall && !newCall.contactPhone) {
         toast({
           title: "Missing information",
@@ -305,8 +295,6 @@ export const CallList = ({}: CallListProps) => {
   };
   
   const handleMakeCall = (call: Call) => {
-    // In a real app, this would integrate with a phone API
-    // For demo purposes, we'll just show a notification
     window.location.href = `tel:${call.contactPhone}`;
     
     toast({
@@ -314,7 +302,6 @@ export const CallList = ({}: CallListProps) => {
       description: `Calling ${call.contactName} at ${call.contactPhone}`,
     });
     
-    // Add this call to history as an outgoing call
     const newOutgoingCall: Call = {
       id: uuidv4(),
       contactName: call.contactName,
@@ -323,7 +310,7 @@ export const CallList = ({}: CallListProps) => {
       status: 'completed',
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-      duration: 0, // This would be updated after call ends in a real app
+      duration: 0,
       notes: 'Call initiated from call management screen',
       isRecorded: false
     };
@@ -338,7 +325,6 @@ export const CallList = ({}: CallListProps) => {
   };
 
   const handleViewSmsHistory = (call: Call) => {
-    // Get SMS history for this contact
     const history = getSmsHistory(call.contactPhone);
     setSmsHistory(history);
     setSmsHistoryDialogOpen(true);
@@ -355,7 +341,6 @@ export const CallList = ({}: CallListProps) => {
     }
     
     try {
-      // Log the SMS
       const smsRecord = logSmsMessage(
         smsRecipient.contactPhone, 
         smsText, 
@@ -363,7 +348,6 @@ export const CallList = ({}: CallListProps) => {
         smsRecipient.contactName
       );
       
-      // Update call notes
       setCalls(prev => prev.map(call => {
         if (call.id === smsRecipient.id) {
           return {
@@ -407,11 +391,8 @@ export const CallList = ({}: CallListProps) => {
       return;
     }
     
-    // In a real app, this would integrate with a letter/mail service API
-    // For demo purposes, we'll just show a notification
     const trackingNumber = `LTR-${Math.floor(100000 + Math.random() * 900000)}`;
     
-    // Update call notes with letter information
     setCalls(prev => prev.map(call => {
       if (call.id === letterRecipient.id) {
         return {
@@ -430,7 +411,7 @@ export const CallList = ({}: CallListProps) => {
     setLetterDialogOpen(false);
   };
   
-  const handleSaveCall = () => {
+  const handleSaveCall = async () => {
     if (!newCall.contactName || !newCall.contactPhone || !newCall.date || !newCall.time) {
       toast({
         title: "Missing information",
@@ -440,11 +421,14 @@ export const CallList = ({}: CallListProps) => {
       return;
     }
     
+    const callToSave = editingCall 
+      ? { ...newCall, id: editingCall.id } 
+      : { ...newCall, id: uuidv4() };
+    
     if (editingCall) {
-      // Update existing call
       setCalls(prevCalls => 
         prevCalls.map(call => 
-          call.id === editingCall.id ? { ...newCall, id: call.id } : call
+          call.id === editingCall.id ? callToSave : call
         )
       );
       toast({
@@ -452,16 +436,17 @@ export const CallList = ({}: CallListProps) => {
         description: "The call has been updated successfully."
       });
     } else {
-      // Add new call
       setCalls(prevCalls => [
-        ...prevCalls, 
-        { ...newCall, id: uuidv4() }
+        callToSave,
+        ...prevCalls
       ]);
       toast({
         title: "Call added",
         description: "New call has been added successfully."
       });
     }
+    
+    await saveCallToDatabase(callToSave);
     
     setDialogOpen(false);
     resetForm();
@@ -471,12 +456,8 @@ export const CallList = ({}: CallListProps) => {
     setCallDuration(0);
   };
   
-  const handleDeleteCall = (id: string) => {
-    setCalls(prevCalls => prevCalls.filter(call => call.id !== id));
-    toast({
-      title: "Call deleted",
-      description: "The call has been removed."
-    });
+  const handleDeleteCall = async (id: string) => {
+    await deleteCallFromDatabase(id);
   };
   
   const getCallIcon = (direction: CallDirection) => {
@@ -518,6 +499,88 @@ export const CallList = ({}: CallListProps) => {
     }
   };
   
+  const saveCallToDatabase = async (call: Call) => {
+    try {
+      const userId = 'system';
+      
+      const callRecord = {
+        user_id: userId,
+        provider_id: 'manual',
+        provider_type: 'local',
+        call_id: call.id,
+        phone_number: call.contactPhone,
+        contact_name: call.contactName,
+        timestamp: new Date(`${call.date}T${call.time}`).toISOString(),
+        duration: call.duration || 0,
+        notes: call.notes,
+        recording_url: call.recordingUrl
+      };
+      
+      const { error } = await supabase
+        .from('call_records')
+        .upsert([callRecord]);
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Call saved",
+        description: "Call record has been saved to the database."
+      });
+      
+      const { data, error: fetchError } = await supabase
+        .from('call_records')
+        .select('*')
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false });
+        
+      if (fetchError) {
+        throw fetchError;
+      }
+      
+      if (data) {
+        const mappedCalls = data.map(record => mapCallRecordToCall(record as DbCallRecord));
+        setCalls(mappedCalls);
+      }
+      
+    } catch (error) {
+      console.error('Error saving call to database:', error);
+      toast({
+        title: "Failed to save call",
+        description: "There was an error saving the call record.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteCallFromDatabase = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('call_records')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setCalls(prevCalls => prevCalls.filter(call => call.id !== id));
+      
+      toast({
+        title: "Call deleted",
+        description: "Call record has been removed from the database."
+      });
+    } catch (error) {
+      console.error('Error deleting call from database:', error);
+      toast({
+        title: "Failed to delete call",
+        description: "There was an error removing the call record.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -528,7 +591,12 @@ export const CallList = ({}: CallListProps) => {
         </Button>
       </div>
       
-      {calls.length > 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12 border rounded-md">
+          <Phone className="h-12 w-12 mx-auto text-muted-foreground mb-4 animate-pulse" />
+          <h3 className="text-lg font-medium mb-2">Loading calls...</h3>
+        </div>
+      ) : calls.length > 0 ? (
         <>
           <div className="border rounded-md overflow-hidden">
             <Table>
@@ -676,7 +744,6 @@ export const CallList = ({}: CallListProps) => {
       )}
       
       <Dialog open={dialogOpen} onOpenChange={(open) => {
-        // Only allow closing if not recording
         if (!isRecording || !open) {
           setDialogOpen(open);
         }
@@ -855,7 +922,6 @@ export const CallList = ({}: CallListProps) => {
         </DialogContent>
       </Dialog>
       
-      {/* SMS Dialog */}
       <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -907,7 +973,6 @@ export const CallList = ({}: CallListProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* SMS History Dialog */}
       <Dialog open={smsHistoryDialogOpen} onOpenChange={setSmsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -953,7 +1018,6 @@ export const CallList = ({}: CallListProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Letter Dialog */}
       <Dialog open={letterDialogOpen} onOpenChange={setLetterDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
