@@ -39,14 +39,33 @@ export function Properties() {
   } = usePropertyContext();
   
   const loadProperties = useCallback(async () => {
-    setIsLoading(true);
-    const fetchedProperties = await fetchProperties();
-    setProperties(fetchedProperties);
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      console.log("Initial loading of properties from database...");
+      const fetchedProperties = await fetchProperties();
+      console.log("Properties loaded:", fetchedProperties);
+      setProperties(fetchedProperties);
+    } catch (error) {
+      console.error("Error loading properties:", error);
+      toast.error("Failed to load properties");
+    } finally {
+      setIsLoading(false);
+    }
   }, [setIsLoading, setProperties]);
   
   useEffect(() => {
+    console.log("Properties component mounted, loading properties...");
     loadProperties();
+    
+    // Set up a periodic refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      console.log("Automatic refresh of properties...");
+      loadProperties();
+    }, 30000);
+    
+    return () => {
+      clearInterval(refreshInterval);
+    };
   }, [loadProperties]);
 
   useEffect(() => {
@@ -68,11 +87,16 @@ export function Properties() {
   }, []);
   
   const handlePropertyAdded = (newProperty: Property) => {
+    console.log("Property added:", newProperty);
     setProperties([newProperty, ...properties]);
     toast.success("Property added successfully");
+    
+    // Refresh all properties to ensure we have the latest data
+    loadProperties();
   };
   
   const handleUpdateProperty = async (updatedProperty: Property) => {
+    console.log("Updating property:", updatedProperty);
     const success = await updateProperty(updatedProperty);
     if (success) {
       setProperties(
@@ -81,6 +105,9 @@ export function Properties() {
         )
       );
       setEditingProperty(null);
+      
+      // Refresh all properties to ensure we have the latest data
+      loadProperties();
     }
   };
   

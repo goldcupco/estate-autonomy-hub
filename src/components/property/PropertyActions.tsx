@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Building, Database } from 'lucide-react';
+import { Building, Database, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MLSImporter } from '@/components/property/mls';
 import { toast } from 'sonner';
@@ -11,10 +11,19 @@ export function PropertyActions() {
   const { setProperties, setIsLoading, setEditingProperty, setAddPropertyOpen } = usePropertyContext();
 
   const refreshProperties = async () => {
-    setIsLoading(true);
-    const properties = await fetchProperties();
-    setProperties(properties);
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      console.log("Fetching properties from database...");
+      const properties = await fetchProperties();
+      console.log("Properties fetched:", properties);
+      setProperties(properties);
+      toast.success("Properties refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing properties:", error);
+      toast.error("Failed to refresh properties");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,6 +60,15 @@ export function PropertyActions() {
       >
         <Building className="h-4 w-4" />
         <span>Add Property</span>
+      </Button>
+
+      <Button 
+        variant="outline"
+        className="flex items-center gap-2 animate-scale-in ml-auto" 
+        onClick={refreshProperties}
+      >
+        <RefreshCw className="h-4 w-4" />
+        <span>Refresh</span>
       </Button>
     </div>
   );
