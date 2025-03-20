@@ -41,6 +41,7 @@ export function PropertyList() {
   const handleDeleteProperty = async (propertyId: string) => {
     try {
       console.log("Attempting to delete property with ID:", propertyId);
+      setIsLoading(true);
       
       // Wait for the delete operation to complete before updating UI
       const success = await deleteProperty(propertyId);
@@ -48,18 +49,26 @@ export function PropertyList() {
       if (success) {
         console.log("Delete operation successful for property ID:", propertyId);
         
-        // Update UI after successful database operation
-        setProperties(properties.filter(property => property.id !== propertyId));
+        // Refresh properties from database to ensure data consistency
+        await refreshProperties();
         
         // Show success toast after confirmation of database update
         toast.success("Property deleted successfully");
       } else {
         console.error("Delete operation failed for property ID:", propertyId);
         toast.error("Failed to delete property");
+        
+        // Refresh anyway to ensure UI is in sync with database
+        await refreshProperties();
       }
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);
       toast.error("An error occurred while deleting the property");
+      
+      // Refresh properties to ensure UI state matches database
+      await refreshProperties();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,6 +109,12 @@ export function PropertyList() {
 
   return (
     <div>
+      <div className="mb-4 flex justify-end">
+        <Button variant="outline" onClick={refreshProperties} size="sm">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh Properties
+        </Button>
+      </div>
       <PropertyGrid 
         properties={properties} 
         onPropertyClick={handlePropertyClick}
