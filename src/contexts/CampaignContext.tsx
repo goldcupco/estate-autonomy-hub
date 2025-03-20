@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Campaign, mockCampaigns } from '../models/Campaign';
 import { useAuth } from './AuthContext';
@@ -40,6 +41,7 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setError(null);
     try {
       const fetchedCampaigns = await fetchCampaigns();
+      console.log("Fetched campaigns:", fetchedCampaigns);
       setCampaigns(fetchedCampaigns.length > 0 ? fetchedCampaigns : mockCampaigns);
     } catch (err: any) {
       console.error("Failed to fetch campaigns:", err);
@@ -65,9 +67,11 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addCampaign = async (campaignData: Omit<Campaign, 'id'>): Promise<string> => {
     setLoading(true);
     try {
+      console.log("Adding campaign with data:", campaignData);
       const newCampaign = await createCampaignService(campaignData);
       if (newCampaign) {
-        setCampaigns(prev => [...prev, newCampaign]);
+        console.log("Campaign added successfully:", newCampaign);
+        await refreshCampaigns(); // Refresh all campaigns to ensure we have the latest data
         return newCampaign.id;
       } else {
         throw new Error("Failed to create campaign");

@@ -27,6 +27,19 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     
     console.log("Formatted campaign data for insert:", campaignData);
     
+    // First check if a similar campaign already exists to avoid duplicates
+    const { data: existingCampaigns } = await supabase
+      .from('campaigns')
+      .select('id')
+      .eq('name', campaignData.name)
+      .eq('user_id', campaignData.user_id);
+    
+    if (existingCampaigns && existingCampaigns.length > 0) {
+      console.log("Campaign with this name already exists:", existingCampaigns);
+      toast.error(`A campaign with the name "${campaignData.name}" already exists`);
+      return null;
+    }
+    
     // Create the campaign
     const { data, error } = await supabase
       .from('campaigns')
@@ -46,6 +59,7 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     }
     
     toast.success('Campaign created successfully');
+    console.log("Campaign created successfully:", data);
     return mapDbRowToCampaign(data);
   } catch (error: any) {
     console.error('Error in createCampaign:', error);
