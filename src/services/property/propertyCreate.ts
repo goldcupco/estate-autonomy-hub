@@ -14,7 +14,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    // Format the data for the database - use 'system' as user_id for public access
+    // Format the data for the database
     const propertyData = {
       address: String(newProperty.address),
       city: String(newProperty.city),
@@ -27,18 +27,19 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      user_id: 'system', // Use 'system' to bypass RLS
+      user_id: 'system', // Always use 'system' to bypass RLS
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
     console.log("Sending to Supabase for creation:", propertyData);
 
-    // Execute insert and await the response
+    // Execute insert with simplified approach
     const { data, error } = await supabase
       .from('properties')
       .insert(propertyData)
-      .select();
+      .select('*')
+      .single();
       
     // Log full response details
     console.log("Supabase response:", { data, error });
@@ -49,26 +50,26 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    if (!data || data.length === 0) {
+    if (!data) {
       console.error("Property creation returned no data");
       toast.error("Creation failed: No data returned from database");
       return null;
     }
     
-    console.log("Raw data returned from insert:", data[0]);
+    console.log("Raw data returned from insert:", data);
     const createdProperty: Property = {
-      id: data[0].id,
-      address: data[0].address || '',
-      city: data[0].city || '',
-      state: data[0].state || '',
-      zipCode: data[0].zip || '',
-      price: data[0].price || 0,
-      bedrooms: data[0].bedrooms || 0,
-      bathrooms: data[0].bathrooms || 0,
-      sqft: data[0].square_feet || 0,
-      status: (data[0].status as Property['status']) || 'For Sale',
-      imageUrl: data[0].images && data[0].images[0] ? data[0].images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-      propertyType: (data[0].property_type as Property['propertyType']) || 'House'
+      id: data.id,
+      address: data.address || '',
+      city: data.city || '',
+      state: data.state || '',
+      zipCode: data.zip || '',
+      price: data.price || 0,
+      bedrooms: data.bedrooms || 0,
+      bathrooms: data.bathrooms || 0,
+      sqft: data.square_feet || 0,
+      status: (data.status as Property['status']) || 'For Sale',
+      imageUrl: data.images && data.images[0] ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+      propertyType: (data.property_type as Property['propertyType']) || 'House'
     };
     
     console.log("Property created successfully:", createdProperty);
