@@ -51,7 +51,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id)
-      .is('user_id', 'system'); // Override RLS policy by targeting system properties
+      .eq('user_id', 'system'); // Override RLS policy by targeting system properties
       
     if (error) {
       console.error("Supabase update error:", error);

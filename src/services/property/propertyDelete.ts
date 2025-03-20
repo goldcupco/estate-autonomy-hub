@@ -30,7 +30,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       .from('properties')
       .delete()
       .eq('id', propertyId)
-      .is('user_id', 'system'); // Override RLS policy by targeting system properties
+      .eq('user_id', 'system'); // Override RLS policy by targeting system properties
     
     // Log the delete response
     console.log("Delete response:", { error });
