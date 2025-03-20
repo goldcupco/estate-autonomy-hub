@@ -69,13 +69,18 @@ export function AddPropertyModal({
           updated_at: new Date().toISOString()
         };
 
+        console.log("Inserting property data:", propertyData);
+
         const { data, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
 
         if (data && onPropertyAdded) {
           const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
@@ -131,6 +136,8 @@ export function AddPropertyModal({
           ...property
         } as Property;
         
+        console.log("Updating property with data:", updatedProperty);
+        
         const propertyData = {
           address: updatedProperty.address,
           city: updatedProperty.city,
@@ -151,7 +158,10 @@ export function AddPropertyModal({
           .update(propertyData)
           .eq('id', updatedProperty.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
         
         onPropertyUpdated(updatedProperty);
         toast.success('Property updated successfully');
@@ -173,13 +183,18 @@ export function AddPropertyModal({
           updated_at: new Date().toISOString()
         };
 
+        console.log("Inserting new property data:", propertyData);
+
         const { data, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
 
         if (data && onPropertyAdded) {
           const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
@@ -416,4 +431,3 @@ export function AddPropertyModal({
     </Dialog>
   );
 }
-

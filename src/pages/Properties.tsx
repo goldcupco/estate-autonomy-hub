@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
@@ -37,61 +38,61 @@ export function Properties() {
   const [addPropertyOpen, setAddPropertyOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   
-  useEffect(() => {
-    const fetchProperties = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          throw error;
-        }
+  const fetchProperties = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
         
-        if (data && data.length > 0) {
-          const formattedProperties: Property[] = data.map(property => {
-            let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
-            if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-              const firstImage = property.images[0];
-              if (typeof firstImage === 'string') {
-                imageUrl = firstImage;
-              }
-            }
-            
-            return {
-              id: property.id,
-              address: property.address || '',
-              city: property.city || '',
-              state: property.state || '',
-              zipCode: property.zip || '',
-              price: property.price || 0,
-              bedrooms: property.bedrooms || 0,
-              bathrooms: property.bathrooms || 0,
-              sqft: property.square_feet || 0,
-              status: (property.status as Property['status']) || 'For Sale',
-              imageUrl,
-              propertyType: (property.property_type as Property['propertyType']) || 'House'
-            };
-          });
-          
-          setProperties(formattedProperties);
-        } else {
-          setProperties([]);
-          toast("No properties found. Add a new property to get started.");
-        }
-      } catch (err) {
-        console.error('Error fetching properties:', err);
-        toast.error("Error fetching properties.");
-        setProperties([]);
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        throw error;
       }
-    };
-    
-    fetchProperties();
+      
+      if (data && data.length > 0) {
+        const formattedProperties: Property[] = data.map(property => {
+          let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
+          if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+            const firstImage = property.images[0];
+            if (typeof firstImage === 'string') {
+              imageUrl = firstImage;
+            }
+          }
+          
+          return {
+            id: property.id,
+            address: property.address || '',
+            city: property.city || '',
+            state: property.state || '',
+            zipCode: property.zip || '',
+            price: property.price || 0,
+            bedrooms: property.bedrooms || 0,
+            bathrooms: property.bathrooms || 0,
+            sqft: property.square_feet || 0,
+            status: (property.status as Property['status']) || 'For Sale',
+            imageUrl,
+            propertyType: (property.property_type as Property['propertyType']) || 'House'
+          };
+        });
+        
+        setProperties(formattedProperties);
+      } else {
+        setProperties([]);
+        toast("No properties found. Add a new property to get started.");
+      }
+    } catch (err) {
+      console.error('Error fetching properties:', err);
+      toast.error("Error fetching properties.");
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+  
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -141,15 +142,17 @@ export function Properties() {
   
   const handleUpdateProperty = async (updatedProperty: Property) => {
     try {
+      console.log("Updating property:", updatedProperty);
+      
       const propertyData = {
         address: updatedProperty.address,
         city: updatedProperty.city,
         state: updatedProperty.state,
         zip: updatedProperty.zipCode,
-        price: updatedProperty.price,
-        bedrooms: updatedProperty.bedrooms,
-        bathrooms: updatedProperty.bathrooms,
-        square_feet: updatedProperty.sqft,
+        price: updatedProperty.price || 0,
+        bedrooms: updatedProperty.bedrooms || 0,
+        bathrooms: updatedProperty.bathrooms || 0,
+        square_feet: updatedProperty.sqft || 0,
         status: updatedProperty.status,
         images: [updatedProperty.imageUrl],
         property_type: updatedProperty.propertyType,
@@ -161,7 +164,10 @@ export function Properties() {
         .update(propertyData)
         .eq('id', updatedProperty.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
+      }
       
       setProperties(prev => 
         prev.map(property => 
@@ -205,42 +211,6 @@ export function Properties() {
                     </SheetHeader>
                     <div className="mt-6 space-y-6">
                       <MLSImporter onImportSuccess={(props) => {
-                        const fetchProperties = async () => {
-                          const { data } = await supabase
-                            .from('properties')
-                            .select('*')
-                            .order('created_at', { ascending: false });
-                            
-                          if (data) {
-                            const formattedProperties: Property[] = data.map(property => {
-                              let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
-                              if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-                                const firstImage = property.images[0];
-                                if (typeof firstImage === 'string') {
-                                  imageUrl = firstImage;
-                                }
-                              }
-                              
-                              return {
-                                id: property.id,
-                                address: property.address || '',
-                                city: property.city || '',
-                                state: property.state || '',
-                                zipCode: property.zip || '',
-                                price: property.price || 0,
-                                bedrooms: property.bedrooms || 0,
-                                bathrooms: property.bathrooms || 0,
-                                sqft: property.square_feet || 0,
-                                status: (property.status as Property['status']) || 'For Sale',
-                                imageUrl,
-                                propertyType: (property.property_type as Property['propertyType']) || 'House'
-                              };
-                            });
-                            
-                            setProperties(formattedProperties);
-                          }
-                        };
-                        
                         fetchProperties();
                         toast.success(`Successfully imported ${props.length} properties from MLS`);
                       }} />
