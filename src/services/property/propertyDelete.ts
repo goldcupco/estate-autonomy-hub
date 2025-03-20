@@ -12,10 +12,10 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // First verify if the property exists (using a select query without RLS restriction)
+    // First verify if the property exists
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
-      .select('id')
+      .select('id, user_id')
       .eq('id', propertyId)
       .single();
     
@@ -24,6 +24,8 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       toast.error(`Cannot delete: Property not found or not accessible`);
       return false;
     }
+    
+    console.log("Found property to delete:", existingProperty);
     
     // Execute the delete operation
     const { error } = await supabase

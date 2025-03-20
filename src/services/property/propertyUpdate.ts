@@ -13,10 +13,10 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // First verify if the property exists (using a select query)
+    // First verify if the property exists
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
-      .select('id')
+      .select('id, user_id')
       .eq('id', updatedProperty.id)
       .single();
     
@@ -25,6 +25,8 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       toast.error(`Cannot update: Property not found or not accessible`);
       return false;
     }
+    
+    console.log("Found property to update:", existingProperty);
     
     // Format property data for database update
     const propertyData = {
