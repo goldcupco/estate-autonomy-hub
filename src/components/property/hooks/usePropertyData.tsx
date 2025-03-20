@@ -20,6 +20,8 @@ export function usePropertyData(
   useEffect(() => {
     if (propertyToEdit) {
       setProperty(propertyToEdit);
+    } else {
+      resetProperty();
     }
   }, [propertyToEdit]);
 
@@ -105,10 +107,7 @@ export function usePropertyData(
       }
       
       if (!isEditMode) {
-        setProperty({
-          status: 'For Sale',
-          propertyType: 'House',
-        });
+        resetProperty();
       }
     } catch (error) {
       console.error('Error saving property:', error);
@@ -119,12 +118,10 @@ export function usePropertyData(
   };
 
   const resetProperty = () => {
-    if (!isEditMode) {
-      setProperty({
-        status: 'For Sale',
-        propertyType: 'House',
-      });
-    }
+    setProperty({
+      status: 'For Sale',
+      propertyType: 'House',
+    });
   };
 
   return {

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/pages/Properties';
 import { toast } from 'sonner';
@@ -47,7 +48,6 @@ export async function fetchProperties(): Promise<Property[]> {
       return formattedProperties;
     } else {
       console.log("No properties found");
-      toast("No properties found. Add a new property to get started.");
       return [];
     }
   } catch (err) {
@@ -105,8 +105,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id)
-      .select();
+      .eq('id', updatedProperty.id);
       
     if (error) {
       console.error("Supabase update error:", error);
@@ -117,6 +116,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     return true;
   } catch (error) {
     console.error('Error updating property:', error);
+    toast.error("Failed to update property");
     return false;
   }
 }
@@ -179,6 +179,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     return null;
   } catch (error) {
     console.error('Error creating property:', error);
+    toast.error("Failed to create property");
     return null;
   }
 }

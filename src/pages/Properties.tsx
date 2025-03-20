@@ -57,7 +57,7 @@ export function Properties() {
     console.log("Properties component mounted, loading properties...");
     loadProperties();
     
-    // Refresh every 5 seconds to ensure UI is in sync with database
+    // Set up refresh interval
     const refreshInterval = setInterval(() => {
       console.log("Automatic refresh of properties...");
       loadProperties();
@@ -86,24 +86,30 @@ export function Properties() {
   
   const handlePropertyAdded = (newProperty: Property) => {
     console.log("Property added, updating UI:", newProperty);
-    // Fix: Direct array update instead of using a callback function
+    // Update local state directly with the new property
     setProperties([...properties, newProperty]);
     
-    // Refresh properties to ensure we have the latest data
+    // Refresh properties to ensure we have the latest data from the database
     loadProperties();
+    
+    // Provide feedback to the user
+    toast.success("Property added successfully");
   };
   
   const handleUpdateProperty = (updatedProperty: Property) => {
     console.log("Property updated, updating UI:", updatedProperty);
-    // Fix: Direct array update instead of using a callback function
+    // Update local state with the updated property
     const updatedProperties = properties.map(property => 
       property.id === updatedProperty.id ? updatedProperty : property
     );
     setProperties(updatedProperties);
     setEditingProperty(null);
     
-    // Refresh properties to ensure we have the latest data
+    // Refresh properties to ensure we have the latest data from the database
     loadProperties();
+    
+    // Provide feedback to the user
+    toast.success("Property updated successfully");
   };
   
   return (
