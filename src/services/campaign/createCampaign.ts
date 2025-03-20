@@ -10,7 +10,14 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     console.log("Creating new campaign with data:", campaign);
     
     // Get current authenticated user
-    const { data: authData } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      toast.error('Authentication error: ' + authError.message);
+      return null;
+    }
+    
     const authenticatedUserId = authData?.user?.id;
     
     // Make sure we have a valid user ID for RLS
@@ -42,11 +49,17 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     console.log("Formatted campaign data for insert:", campaignData);
     
     // First check if a similar campaign already exists to avoid duplicates
-    const { data: existingCampaigns } = await supabase
+    const { data: existingCampaigns, error: checkError } = await supabase
       .from('campaigns')
       .select('id')
       .eq('name', campaignData.name)
       .eq('user_id', campaignData.user_id);
+    
+    if (checkError) {
+      console.error('Error checking for existing campaigns:', checkError);
+      toast.error('Error checking for existing campaigns: ' + checkError.message);
+      return null;
+    }
     
     if (existingCampaigns && existingCampaigns.length > 0) {
       console.log("Campaign with this name already exists:", existingCampaigns);

@@ -39,8 +39,8 @@ export function useCampaignOperations(
       const session = sessionData?.session;
       const userId = session?.user?.id;
       
-      if (!userId && !campaignData.createdBy) {
-        console.error("No authenticated user found and no createdBy provided");
+      if (!userId) {
+        console.error("No authenticated user found");
         throw new Error("You must be logged in to create a campaign");
       }
       
