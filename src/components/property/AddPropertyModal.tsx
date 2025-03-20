@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -136,7 +137,7 @@ export function AddPropertyModal({
           ...property
         } as Property;
         
-        console.log("Updating property with data:", updatedProperty);
+        console.log("Preparing to update property with data:", updatedProperty);
         
         const propertyData = {
           address: updatedProperty.address,
@@ -153,14 +154,23 @@ export function AddPropertyModal({
           updated_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
+        console.log("Sending property update to Supabase:", propertyData);
+
+        const { data, error } = await supabase
           .from('properties')
           .update(propertyData)
-          .eq('id', updatedProperty.id);
+          .eq('id', updatedProperty.id)
+          .select();
           
         if (error) {
           console.error("Supabase update error:", error);
           throw error;
+        }
+        
+        console.log("Supabase update response:", data);
+        
+        if (!data || data.length === 0) {
+          console.warn("No data returned from update operation");
         }
         
         onPropertyUpdated(updatedProperty);

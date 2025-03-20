@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
@@ -159,15 +158,20 @@ export function Properties() {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      console.log("Sending to Supabase:", propertyData);
+
+      const { data, error } = await supabase
         .from('properties')
         .update(propertyData)
-        .eq('id', updatedProperty.id);
+        .eq('id', updatedProperty.id)
+        .select();
         
       if (error) {
         console.error("Supabase update error:", error);
         throw error;
       }
+      
+      console.log("Supabase update response:", data);
       
       setProperties(prev => 
         prev.map(property => 
