@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { Campaign } from '../models/Campaign';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
   createCampaign as createCampaignService, 
   updateCampaign as updateCampaignService,
@@ -27,19 +27,30 @@ export function useCampaignOperations(
     try {
       console.log("Adding campaign with data:", campaignData);
       
-      // Explicitly ensure we have current user auth before creating a campaign
-      const { data: authData } = await supabase.auth.getUser();
+      // Get current authenticated user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!authData.user?.id && !campaignData.createdBy) {
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Authentication error: " + sessionError.message);
+      }
+      
+      const session = sessionData?.session;
+      const userId = session?.user?.id;
+      
+      if (!userId && !campaignData.createdBy) {
         console.error("No authenticated user found and no createdBy provided");
         throw new Error("You must be logged in to create a campaign");
       }
       
-      // Use authenticated user ID for createdBy if not provided
+      // Use authenticated user ID for both createdBy and user_id if not provided
       const campaignWithAuthUser = {
         ...campaignData,
-        createdBy: campaignData.createdBy || authData.user?.id
+        createdBy: campaignData.createdBy || userId,
+        user_id: userId // This is crucial for Supabase RLS!
       };
+      
+      console.log("Sending campaign with auth data:", campaignWithAuthUser);
       
       const newCampaign = await createCampaignService(campaignWithAuthUser);
       if (newCampaign) {
@@ -52,6 +63,7 @@ export function useCampaignOperations(
     } catch (err: any) {
       console.error("Error in addCampaign:", err);
       setError(err.message || "Failed to add campaign");
+      toast.error(err.message || "Failed to add campaign");
       throw err;
     } finally {
       setLoading(false);
