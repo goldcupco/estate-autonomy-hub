@@ -113,11 +113,11 @@ export class SupabaseCommunicationService {
       if (error) throw error;
       
       // Save call record to database
-      const callRecord: Omit<DbCallRecord, 'id' | 'created_at'> = {
+      const callRecord = {
         user_id: userId,
         provider_id: providerId,
         provider_type: providerType,
-        call_id: data.callId || uuidv4(), // Fallback to generated ID if edge function doesn't return one
+        call_id: data?.callId || uuidv4(), // Fallback to generated ID if edge function doesn't return one
         phone_number: phoneNumber,
         contact_name: contactName,
         timestamp: new Date().toISOString(),
@@ -207,15 +207,15 @@ export class SupabaseCommunicationService {
     if (error) throw error;
     
     // Save SMS record to database
-    const smsRecord: Omit<DbSmsRecord, 'id' | 'created_at'> = {
+    const smsRecord = {
       user_id: userId,
       provider_id: providerId,
-      sms_id: data.smsId,
+      sms_id: data?.smsId || uuidv4(),
       phone_number: phoneNumber,
       contact_name: contactName || 'Unknown',
       timestamp: new Date().toISOString(),
       message,
-      direction: 'outgoing'
+      direction: 'outgoing' as const
     };
     
     const { error: insertError } = await supabase
@@ -225,7 +225,7 @@ export class SupabaseCommunicationService {
     if (insertError) throw insertError;
     
     return {
-      id: data.smsId,
+      id: smsRecord.sms_id,
       phoneNumber,
       contactName: contactName || 'Unknown',
       timestamp: new Date().toISOString(),

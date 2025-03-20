@@ -1,4 +1,4 @@
-import { supabase, supabaseUrl, supabaseAnonKey, safeFrom } from './supabaseClient';
+import { supabase, supabaseUrl, supabaseKey, safeFrom } from './supabaseClient';
 import { verifyDatabaseSetup } from './supabaseSetup';
 
 // Function to execute SQL statements directly
@@ -8,8 +8,8 @@ async function executeSQL(sql: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
         'Prefer': 'return=minimal',
       },
       body: JSON.stringify({ query: sql }),

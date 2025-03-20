@@ -6,6 +6,8 @@ import { Json } from '@/integrations/supabase/types';
 // URL and key should match those in the main Supabase client
 export const supabaseUrl = "https://gdxzktqieasxxcocwsjh.supabase.co";
 export const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHprdHFpZWFzeHhjb2N3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjc1MTEsImV4cCI6MjA1NzkwMzUxMX0.EKFCdp3mGjHsBalEWUcIApkHtcmbzR8876N8F3OhlKY";
+// Alias for backward compatibility
+export const supabaseAnonKey = supabaseKey;
 
 // Re-export the client from integrations for backward compatibility
 export { supabase } from '@/integrations/supabase/client';
@@ -30,10 +32,41 @@ export interface DbCommunicationProvider {
   updated_at: string;
 }
 
-export interface SmsRecord {
+// Define types for call and SMS records
+export interface DbCallRecord {
   id: string;
+  user_id: string;
+  provider_id: string;
+  provider_type: string;
+  call_id: string;
   phone_number: string;
   contact_name: string;
+  timestamp: string;
+  duration: number;
+  recording_url?: string;
+  notes?: string;
+  lead_id?: string;
+  created_at?: string;
+}
+
+export interface DbSmsRecord {
+  id: string;
+  user_id: string;
+  provider_id: string;
+  sms_id: string;
+  phone_number: string;
+  contact_name: string;
+  timestamp: string;
+  message: string;
+  direction: 'outgoing' | 'incoming';
+  lead_id?: string;
+  created_at?: string;
+}
+
+export interface SmsRecord {
+  id: string;
+  phoneNumber: string;
+  contactName: string;
   timestamp: string;
   message: string;
   direction: 'outgoing' | 'incoming';
@@ -65,6 +98,7 @@ export function mapProviderData(data: any): DbCommunicationProvider {
 
 // Helper function to handle dynamic table names with type safety
 export function safeFrom(table: string) {
+  const { supabase } = require('@/integrations/supabase/client');
   // This is a hack to get around TypeScript's type system
   // by asserting the table name is a valid key in the Database["public"]["Tables"]
   return supabase.from(table as any);
@@ -72,6 +106,7 @@ export function safeFrom(table: string) {
 
 // Function to execute SQL directly via Supabase
 export async function executeSql(sql: string) {
+  const { supabase } = require('@/integrations/supabase/client');
   try {
     const { data, error } = await supabase.rpc('execute_sql', { query: sql });
     
