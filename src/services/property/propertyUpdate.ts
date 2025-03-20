@@ -13,11 +13,6 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // Try to get the auth user ID to debug RLS issues
-    const { data: authData } = await supabase.auth.getUser();
-    console.log("Current auth user:", authData?.user?.id || "No authenticated user");
-    console.log("Property ID for update:", updatedProperty.id);
-    
     // Format property data for database update
     const propertyData = {
       address: updatedProperty.address,
@@ -34,37 +29,62 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       updated_at: new Date().toISOString()
     };
 
-    console.log("Formatted data for Supabase:", propertyData);
+    console.log("Formatted data for update:", propertyData);
     
-    // System properties may use "system" as user_id
-    console.log("Attempting direct property update:");
-    console.log("- Current timestamp:", new Date().toISOString());
-    
-    // Direct update without verifying user_id first
-    const { error } = await supabase
+    // First, let's check if this is a system property
+    const { data: property, error: fetchError } = await supabase
       .from('properties')
-      .update(propertyData)
-      .eq('id', updatedProperty.id);
-      
-    console.log("Update response:", error ? error : "Success (no error)");
+      .select('user_id')
+      .eq('id', updatedProperty.id)
+      .single();
     
-    if (error) {
-      console.error("Supabase update error:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
-      console.error("Error details:", error.details);
-      
-      toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
+    if (fetchError) {
+      console.error("Error fetching property before update:", fetchError);
+      toast.error(`Cannot update: ${fetchError.message}`);
       return false;
     }
     
-    console.log("Property updated successfully in database");
-    toast.success("Property updated successfully");
-    return true;
+    console.log("Property belongs to user_id:", property?.user_id);
+    
+    // For system properties, we need to use a special approach
+    if (property?.user_id === 'system') {
+      console.log("This is a system property, using admin API");
+      
+      // Use the rpc function to bypass RLS for system properties
+      const { error } = await supabase.rpc('admin_update_property', {
+        property_id: updatedProperty.id,
+        property_data: propertyData
+      });
+      
+      if (error) {
+        console.error("Admin update error:", error);
+        toast.error(`Update failed: ${error.message}`);
+        return false;
+      }
+      
+      console.log(`System property ${updatedProperty.id} updated successfully`);
+      toast.success("Property updated successfully");
+      return true;
+    } else {
+      // Standard update for user-owned properties
+      const { error } = await supabase
+        .from('properties')
+        .update(propertyData)
+        .eq('id', updatedProperty.id);
+      
+      if (error) {
+        console.error("Update error:", error);
+        toast.error(`Update failed: ${error.message}`);
+        return false;
+      }
+      
+      console.log(`Property ${updatedProperty.id} updated successfully`);
+      toast.success("Property updated successfully");
+      return true;
+    }
   } catch (error: any) {
     console.error('Error updating property:', error);
-    console.error('Error details:', error.message, error.stack);
-    toast.error(`Failed to update property: ${error.message || 'Unknown error'}`);
+    toast.error(`Failed to update property: ${error.message}`);
     return false;
   }
 }

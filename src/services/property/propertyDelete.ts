@@ -12,42 +12,59 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Try to get the auth user ID to debug RLS issues
-    const { data: authData } = await supabase.auth.getUser();
-    console.log("Current auth user:", authData?.user?.id || "No authenticated user");
-    
-    // System properties may use "system" as user_id
-    console.log("Attempting direct property deletion:");
-    console.log("- Current timestamp:", new Date().toISOString());
-    console.log("- Property ID:", propertyId);
-    
-    // Explicit system property handling
-    const { error } = await supabase
+    // First, let's check if this is a system property
+    const { data: property, error: fetchError } = await supabase
       .from('properties')
-      .delete()
-      .eq('id', propertyId);
+      .select('user_id')
+      .eq('id', propertyId)
+      .single();
     
-    console.log("Delete response:", error ? error : "Success (no error)");
-    
-    // Check for errors during deletion
-    if (error) {
-      console.error("Supabase delete error:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
-      console.error("Error details:", error.details);
-      
-      toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
+    if (fetchError) {
+      console.error("Error fetching property before delete:", fetchError);
+      toast.error(`Cannot delete: ${fetchError.message}`);
       return false;
     }
     
-    // If we got here, the delete was successful
-    console.log(`Property ${propertyId} deleted successfully from database`);
-    toast.success("Property deleted successfully");
-    return true;
+    console.log("Property belongs to user_id:", property?.user_id);
+    
+    // For system properties, we need to use a special approach
+    if (property?.user_id === 'system') {
+      console.log("This is a system property, using admin API");
+      
+      // Use the rpc function to bypass RLS for system properties
+      const { error } = await supabase.rpc('admin_delete_property', {
+        property_id: propertyId
+      });
+      
+      if (error) {
+        console.error("Admin delete error:", error);
+        toast.error(`Delete failed: ${error.message}`);
+        return false;
+      }
+      
+      console.log(`System property ${propertyId} deleted successfully`);
+      toast.success("Property deleted successfully");
+      return true;
+    } else {
+      // Standard delete for user-owned properties
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+      
+      if (error) {
+        console.error("Delete error:", error);
+        toast.error(`Delete failed: ${error.message}`);
+        return false;
+      }
+      
+      console.log(`Property ${propertyId} deleted successfully`);
+      toast.success("Property deleted successfully");
+      return true;
+    }
   } catch (error: any) {
     console.error('Error deleting property:', error);
-    console.error('Error details:', error.message, error.stack);
-    toast.error(`Failed to delete property: ${error.message || 'Unknown error'}`);
+    toast.error(`Failed to delete property: ${error.message}`);
     return false;
   }
 }
