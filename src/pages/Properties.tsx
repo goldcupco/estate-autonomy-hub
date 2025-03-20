@@ -8,7 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
 import { AddPropertyModal } from '@/components/property/AddPropertyModal';
 import { usePropertyContext } from '@/contexts/PropertyContext';
-import { fetchProperties, updateProperty } from '@/services/propertyService';
+import { fetchProperties } from '@/services/propertyService';
 
 export interface Property {
   id: string;
@@ -57,11 +57,11 @@ export function Properties() {
     console.log("Properties component mounted, loading properties...");
     loadProperties();
     
-    // Set up a periodic refresh every 30 seconds
+    // Set up a periodic refresh every 15 seconds (reduced from 30)
     const refreshInterval = setInterval(() => {
       console.log("Automatic refresh of properties...");
       loadProperties();
-    }, 30000);
+    }, 15000);
     
     return () => {
       clearInterval(refreshInterval);
@@ -89,26 +89,26 @@ export function Properties() {
   const handlePropertyAdded = (newProperty: Property) => {
     console.log("Property added:", newProperty);
     setProperties([newProperty, ...properties]);
-    toast.success("Property added successfully");
     
     // Refresh all properties to ensure we have the latest data
     loadProperties();
   };
   
   const handleUpdateProperty = async (updatedProperty: Property) => {
-    console.log("Updating property:", updatedProperty);
-    const success = await updateProperty(updatedProperty);
-    if (success) {
-      setProperties(
-        properties.map(property => 
-          property.id === updatedProperty.id ? updatedProperty : property
-        )
-      );
-      setEditingProperty(null);
-      
-      // Refresh all properties to ensure we have the latest data
+    console.log("Handling updated property:", updatedProperty);
+    
+    // Update the UI immediately (optimistic update)
+    setProperties(
+      properties.map(property => 
+        property.id === updatedProperty.id ? updatedProperty : property
+      )
+    );
+    setEditingProperty(null);
+    
+    // Refresh all properties to ensure we have the latest data from the DB
+    setTimeout(() => {
       loadProperties();
-    }
+    }, 500);
   };
   
   return (

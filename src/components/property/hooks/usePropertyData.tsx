@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/pages/Properties';
 import { toast } from 'sonner';
+import { createProperty, updateProperty } from '@/services/propertyService';
 
 export function usePropertyData(
   propertyToEdit: Property | null,
@@ -35,65 +35,14 @@ export function usePropertyData(
     
     try {
       if (properties.length > 0) {
-        const propertyData = {
-          address: properties[0].address,
-          city: properties[0].city,
-          state: properties[0].state,
-          zip: properties[0].zipCode,
-          price: properties[0].price || 0,
-          bedrooms: properties[0].bedrooms || 0,
-          bathrooms: properties[0].bathrooms || 0,
-          square_feet: properties[0].sqft || 0,
-          status: properties[0].status || 'For Sale',
-          images: properties[0].imageUrl ? [properties[0].imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
-          property_type: properties[0].propertyType || 'House',
-          user_id: 'system',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        console.log("Inserting property data:", propertyData);
-
-        const { data, error } = await supabase
-          .from('properties')
-          .insert(propertyData)
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
-        }
-
-        if (data && onPropertyAdded) {
-          const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
-          let imageUrl = defaultImageUrl;
-          
-          if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-            const firstImage = data.images[0];
-            if (typeof firstImage === 'string') {
-              imageUrl = firstImage;
-            }
-          }
-          
-          const newProperty: Property = {
-            id: data.id,
-            address: data.address || '',
-            city: data.city || '',
-            state: data.state || '',
-            zipCode: data.zip || '',
-            price: data.price || 0,
-            bedrooms: data.bedrooms || 0,
-            bathrooms: data.bathrooms || 0,
-            sqft: data.square_feet || 0,
-            status: (data.status as Property['status']) || 'For Sale',
-            imageUrl,
-            propertyType: (data.property_type as Property['propertyType']) || 'House'
-          };
+        const newProperty = await createProperty(properties[0]);
+        
+        if (newProperty && onPropertyAdded) {
           onPropertyAdded(newProperty);
+          toast.success(`Imported ${properties.length} properties successfully`);
+        } else {
+          toast.error('Failed to import property');
         }
-
-        toast.success(`Imported ${properties.length} properties successfully`);
         onOpenChange(false);
       }
     } catch (error) {
@@ -126,105 +75,26 @@ export function usePropertyData(
         
         console.log("Preparing to update property with data:", updatedProperty);
         
-        const propertyData = {
-          address: updatedProperty.address,
-          city: updatedProperty.city,
-          state: updatedProperty.state,
-          zip: updatedProperty.zipCode,
-          price: updatedProperty.price || 0,
-          bedrooms: updatedProperty.bedrooms || 0,
-          bathrooms: updatedProperty.bathrooms || 0,
-          square_feet: updatedProperty.sqft || 0,
-          status: updatedProperty.status,
-          images: [updatedProperty.imageUrl],
-          property_type: updatedProperty.propertyType,
-          updated_at: new Date().toISOString()
-        };
-
-        console.log("Sending property update to Supabase:", propertyData);
-
-        const { data, error } = await supabase
-          .from('properties')
-          .update(propertyData)
-          .eq('id', updatedProperty.id)
-          .select();
-          
-        if (error) {
-          console.error("Supabase update error:", error);
-          throw error;
+        const success = await updateProperty(updatedProperty);
+        
+        if (success) {
+          onPropertyUpdated(updatedProperty);
+          toast.success('Property updated successfully');
+          onOpenChange(false);
+        } else {
+          toast.error('Failed to update property');
         }
-        
-        console.log("Supabase update response:", data);
-        
-        if (!data || data.length === 0) {
-          console.warn("No data returned from update operation");
-        }
-        
-        onPropertyUpdated(updatedProperty);
-        toast.success('Property updated successfully');
       } else {
-        const propertyData = {
-          address: property.address,
-          city: property.city,
-          state: property.state,
-          zip: property.zipCode,
-          price: property.price || 0,
-          bedrooms: property.bedrooms || 0,
-          bathrooms: property.bathrooms || 0,
-          square_feet: property.sqft || 0,
-          status: property.status || 'For Sale',
-          images: property.imageUrl ? [property.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
-          property_type: property.propertyType || 'House',
-          user_id: 'system',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        console.log("Inserting new property data:", propertyData);
-
-        const { data, error } = await supabase
-          .from('properties')
-          .insert(propertyData)
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
-        }
-
-        if (data && onPropertyAdded) {
-          const defaultImageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994';
-          let imageUrl = defaultImageUrl;
-          
-          if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-            const firstImage = data.images[0];
-            if (typeof firstImage === 'string') {
-              imageUrl = firstImage;
-            }
-          }
-          
-          const newProperty: Property = {
-            id: data.id,
-            address: data.address || '',
-            city: data.city || '',
-            state: data.state || '',
-            zipCode: data.zip || '',
-            price: data.price || 0,
-            bedrooms: data.bedrooms || 0,
-            bathrooms: data.bathrooms || 0,
-            sqft: data.square_feet || 0,
-            status: (data.status as Property['status']) || 'For Sale',
-            imageUrl,
-            propertyType: (data.property_type as Property['propertyType']) || 'House'
-          };
-
+        const newProperty = await createProperty(property);
+        
+        if (newProperty && onPropertyAdded) {
           onPropertyAdded(newProperty);
           toast.success('Property added successfully');
+          onOpenChange(false);
+        } else {
+          toast.error('Failed to add property');
         }
       }
-
-      onOpenChange(false);
       
       if (!isEditMode) {
         setProperty({

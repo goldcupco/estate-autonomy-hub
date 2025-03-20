@@ -85,6 +85,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
   try {
     console.log("Updating property:", updatedProperty);
     
+    // Convert property format to match the database schema
     const propertyData = {
       address: updatedProperty.address,
       city: updatedProperty.city,
@@ -102,19 +103,18 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
 
     console.log("Sending to Supabase:", propertyData);
 
-    const { data, error } = await supabase
+    // Fixed PATCH request by removing .select() which was causing issues
+    const { error } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id)
-      .select();
+      .eq('id', updatedProperty.id);
       
     if (error) {
       console.error("Supabase update error:", error);
       throw error;
     }
     
-    console.log("Supabase update response:", data);
-    
+    console.log("Property updated successfully");
     toast.success("Property updated successfully");
     return true;
   } catch (error) {
@@ -147,39 +147,54 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
 
     console.log("Sending to Supabase:", propertyData);
 
-    const { data, error } = await supabase
+    // Fixed INSERT request by separating insertion and selection
+    const { error } = await supabase
       .from('properties')
-      .insert(propertyData)
-      .select()
-      .single();
+      .insert(propertyData);
       
     if (error) {
       console.error("Supabase insert error:", error);
       throw error;
     }
     
-    console.log("Supabase insert response:", data);
+    // Fetch the newly created property
+    const { data: newData, error: fetchError } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('address', newProperty.address)
+      .eq('city', newProperty.city)
+      .eq('state', newProperty.state)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
     
-    if (data) {
-      const newProperty: Property = {
-        id: data.id,
-        address: data.address || '',
-        city: data.city || '',
-        state: data.state || '',
-        zipCode: data.zip || '',
-        price: data.price || 0,
-        bedrooms: data.bedrooms || 0,
-        bathrooms: data.bathrooms || 0,
-        sqft: data.square_feet || 0,
-        status: (data.status as Property['status']) || 'For Sale',
-        imageUrl: data.images && data.images[0] ? data.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        propertyType: (data.property_type as Property['propertyType']) || 'House'
-      };
-      
-      toast.success("Property created successfully");
-      return newProperty;
+    if (fetchError) {
+      console.error("Error fetching new property:", fetchError);
     }
     
+    if (newData) {
+      const createdProperty: Property = {
+        id: newData.id,
+        address: newData.address || '',
+        city: newData.city || '',
+        state: newData.state || '',
+        zipCode: newData.zip || '',
+        price: newData.price || 0,
+        bedrooms: newData.bedrooms || 0,
+        bathrooms: newData.bathrooms || 0,
+        sqft: newData.square_feet || 0,
+        status: (newData.status as Property['status']) || 'For Sale',
+        imageUrl: newData.images && newData.images[0] ? newData.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+        propertyType: (newData.property_type as Property['propertyType']) || 'House'
+      };
+      
+      console.log("Property created successfully:", createdProperty);
+      toast.success("Property created successfully");
+      return createdProperty;
+    }
+    
+    console.log("Property created but not retrieved");
+    toast.success("Property created successfully");
     return null;
   } catch (error) {
     console.error('Error creating property:', error);
