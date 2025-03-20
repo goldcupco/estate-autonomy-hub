@@ -21,49 +21,22 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Use the actual user ID from authentication
-    const userId = user?.id;
-    console.log("Current authenticated user ID for property deletion:", userId);
-    
-    if (!userId) {
+    if (!user) {
       console.error("No authenticated user found");
       toast.error("Delete failed: You must be logged in");
       return false;
     }
     
-    // First check if the property exists and belongs to this user
-    console.log(`Checking if property ${propertyId} exists and belongs to user ${userId}`);
-    const { data: existingProperty, error: fetchError } = await supabase
-      .from('properties')
-      .select('id, user_id')
-      .eq('id', propertyId)
-      .single();
-      
-    if (fetchError) {
-      console.error("Property not found or fetch error:", fetchError);
-      toast.error(`Delete failed: ${fetchError.message || "Property not found"}`);
-      return false;
-    }
+    // Log the authenticated user for debugging
+    console.log("Current authenticated user ID for property deletion:", user.id);
     
-    if (!existingProperty) {
-      console.error("Property not found");
-      toast.error("Delete failed: Property not found");
-      return false;
-    }
-    
-    console.log("Property exists, belongs to user:", existingProperty.user_id);
-    console.log("Current authenticated user:", userId);
-    
-    // Execute the delete operation
-    const { error, count } = await supabase
+    // Execute the delete operation directly
+    // We don't need to check ownership first because RLS will enforce this
+    const { error } = await supabase
       .from('properties')
       .delete()
-      .eq('id', propertyId)
-      .select('count');
+      .eq('id', propertyId);
     
-    // Log full response details
-    console.log("Supabase delete response count:", count);
-      
     // Check for errors during deletion
     if (error) {
       console.error("Supabase delete error:", error);

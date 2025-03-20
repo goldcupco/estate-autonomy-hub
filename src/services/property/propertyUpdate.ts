@@ -22,40 +22,16 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // Use the actual user ID from authentication
-    const userId = user?.id;
-    console.log("Current authenticated user ID:", userId);
-    
-    if (!userId) {
+    if (!user) {
       console.error("No authenticated user found");
       toast.error("Update failed: You must be logged in");
       return false;
     }
     
-    // First check if the property exists and belongs to this user
-    console.log(`Checking if property ${updatedProperty.id} exists and belongs to user ${userId}`);
-    const { data: existingProperty, error: fetchError } = await supabase
-      .from('properties')
-      .select('id, user_id')
-      .eq('id', updatedProperty.id)
-      .single();
-      
-    if (fetchError) {
-      console.error("Property fetch error:", fetchError);
-      toast.error(`Update failed: ${fetchError.message || "Property not found"}`);
-      return false;
-    }
-    
-    if (!existingProperty) {
-      console.error("Property not found");
-      toast.error("Update failed: Property not found");
-      return false;
-    }
-    
-    console.log("Property exists, belongs to user:", existingProperty.user_id);
-    console.log("Current authenticated user:", userId);
+    console.log("Current authenticated user ID for property update:", user.id);
     
     // Convert property format to match the database schema
+    // IMPORTANT: Do not include user_id in the update to avoid RLS issues
     const propertyData = {
       address: updatedProperty.address,
       city: updatedProperty.city,
@@ -68,56 +44,34 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       status: updatedProperty.status,
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
-      updated_at: new Date().toISOString(),
-      // Important: We don't update the user_id field as this would violate RLS
+      updated_at: new Date().toISOString()
+      // Deliberately NOT updating user_id as this could break RLS
     };
 
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Separate update operation
-    const { error: updateError, count } = await supabase
+    // Execute the update operation
+    const { error } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id)
-      .select('count');
+      .eq('id', updatedProperty.id);
       
-    console.log("Update response count:", count);
-      
-    if (updateError) {
-      console.error("Supabase update error:", updateError);
+    if (error) {
+      console.error("Supabase update error:", error);
       
       // Check if this is an RLS policy violation
-      if (updateError.code === '42501' || updateError.message?.includes('policy')) {
+      if (error.code === '42501' || error.message?.includes('policy')) {
         console.error("This appears to be a Row Level Security (RLS) policy violation");
         toast.error("You don't have permission to update this property");
       } else {
-        toast.error(`Update failed: ${updateError.message || updateError.details || 'Unknown error'}`);
+        toast.error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
       }
       
       return false;
     }
     
-    // If update succeeded, fetch the updated record to confirm
-    const { data: updatedData, error: fetchUpdatedError } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', updatedProperty.id)
-      .single();
-      
-    if (fetchUpdatedError) {
-      console.error("Failed to fetch updated property:", fetchUpdatedError);
-      toast.warning("Property may have been updated but couldn't confirm");
-      return true; // Assume it worked since the update didn't error
-    }
-    
-    if (!updatedData) {
-      console.error("Updated property not found");
-      toast.warning("Property may have been updated but couldn't confirm");
-      return true; // Assume it worked since the update didn't error
-    }
-    
-    console.log("Property updated successfully in database, updated data:", updatedData);
+    console.log("Property updated successfully in database");
     toast.success("Property updated successfully");
     return true;
   } catch (error: any) {

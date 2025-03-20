@@ -6,6 +6,17 @@ import { toast } from 'sonner';
 export async function fetchProperties(): Promise<Property[]> {
   try {
     console.log("Making Supabase request to fetch properties...");
+    
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn("No authenticated user found when fetching properties");
+      // We'll still make the request, as public properties might be accessible
+    } else {
+      console.log("Authenticated user ID for fetching properties:", user.id);
+    }
+    
     const { data, error } = await supabase
       .from('properties')
       .select('*')

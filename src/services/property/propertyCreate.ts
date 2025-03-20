@@ -23,15 +23,14 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    // Use the actual user ID from authentication
-    const userId = user?.id;
-    console.log("Current authenticated user ID for property creation:", userId);
-    
-    if (!userId) {
+    if (!user) {
       console.error("No authenticated user found");
       toast.error("Creation failed: You must be logged in");
       return null;
     }
+    
+    // Use the authenticated user ID
+    console.log("Current authenticated user ID for property creation:", user.id);
     
     // Format the data for the database
     const propertyData = {
@@ -46,7 +45,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      user_id: userId,
+      user_id: user.id, // Use the authenticated user's ID
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -54,13 +53,13 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     console.log("Sending to Supabase for creation:", propertyData);
 
     // Execute insert and await the response
-    const { data, error, status, statusText } = await supabase
+    const { data, error } = await supabase
       .from('properties')
       .insert(propertyData)
       .select();
       
     // Log full response details
-    console.log("Supabase response:", { data, error, status, statusText });
+    console.log("Supabase response:", { data, error });
     
     if (error) {
       console.error("Supabase insert error:", error);
