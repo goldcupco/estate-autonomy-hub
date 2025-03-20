@@ -9,6 +9,20 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
   try {
     console.log("Creating new campaign with data:", campaign);
     
+    // Get current authenticated user
+    const { data: authData } = await supabase.auth.getUser();
+    const authenticatedUserId = authData?.user?.id;
+    
+    // Make sure we have a valid user ID for RLS
+    if (!authenticatedUserId && !campaign.createdBy) {
+      console.error('No authenticated user or createdBy found');
+      toast.error('You must be logged in to create a campaign');
+      return null;
+    }
+    
+    // Use authenticated user ID if createdBy is not provided
+    const userIdToUse = campaign.createdBy || authenticatedUserId;
+    
     // Format the campaign data for the database
     const campaignData = {
       name: campaign.name,
@@ -17,12 +31,12 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       type: campaign.type,
       start_date: campaign.startDate || null,
       end_date: campaign.endDate || null,
-      created_by: campaign.createdBy,
+      created_by: userIdToUse,
       assigned_users: campaign.assignedUsers || [],
       budget: campaign.budget || 0,
       metrics: ensureMetricsFormat(campaign.metrics),
       access_restricted: campaign.accessRestricted || false,
-      user_id: campaign.createdBy // Using createdBy as the user_id which is essential for RLS
+      user_id: userIdToUse // Critical for RLS
     };
     
     console.log("Formatted campaign data for insert:", campaignData);
@@ -49,7 +63,16 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     
     if (error) {
       console.error('Error creating campaign:', error);
-      toast.error(`Failed to create campaign: ${error.message}`);
+      
+      // Enhanced error message based on error code
+      if (error.code === '42501') {
+        toast.error('Permission denied: You do not have access to create campaigns');
+      } else if (error.code === '23505') {
+        toast.error('A campaign with this name already exists');
+      } else {
+        toast.error(`Failed to create campaign: ${error.message}`);
+      }
+      
       return null;
     }
     
