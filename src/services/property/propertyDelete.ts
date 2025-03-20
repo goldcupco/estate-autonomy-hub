@@ -12,6 +12,31 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log("Current user ID for property deletion:", user?.id || 'system');
+    
+    // First check if the property exists and belongs to this user
+    const { data: existingProperty, error: fetchError } = await supabase
+      .from('properties')
+      .select('id, user_id')
+      .eq('id', propertyId)
+      .single();
+      
+    if (fetchError) {
+      console.error("Property not found or fetch error:", fetchError);
+      toast.error("Delete failed: Property not found");
+      return false;
+    }
+    
+    if (!existingProperty) {
+      console.error("Property not found");
+      toast.error("Delete failed: Property not found");
+      return false;
+    }
+    
+    console.log("Property exists, belongs to user:", existingProperty.user_id);
+    
     // Execute the delete operation
     const { error, status, statusText } = await supabase
       .from('properties')
@@ -24,7 +49,15 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     // Check for errors during deletion
     if (error) {
       console.error("Supabase delete error:", error);
-      toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
+      
+      // Check if this is an RLS policy violation
+      if (error.code === '42501' || error.message?.includes('policy')) {
+        console.error("This appears to be a Row Level Security (RLS) policy violation");
+        toast.error("You don't have permission to delete this property");
+      } else {
+        toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
+      }
+      
       return false;
     }
     

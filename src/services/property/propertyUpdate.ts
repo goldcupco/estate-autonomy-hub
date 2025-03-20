@@ -13,6 +13,13 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Use the actual user ID if available, otherwise use 'system'
+    const userId = user?.id || 'system';
+    console.log("Current user ID:", userId);
+    
     // Convert property format to match the database schema
     const propertyData = {
       address: updatedProperty.address,
@@ -27,8 +34,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
       updated_at: new Date().toISOString(),
-      // Use auth.uid() when authenticated, fallback to 'system' for now
-      user_id: 'system'
+      user_id: userId
     };
 
     console.log("Sending to Supabase:", propertyData);
@@ -37,39 +43,59 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     // First check if the property exists
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
-      .select('id')
+      .select('id, user_id')
       .eq('id', updatedProperty.id)
       .single();
       
-    if (fetchError || !existingProperty) {
+    if (fetchError) {
       console.error("Property not found or fetch error:", fetchError);
       toast.error("Update failed: Property not found");
       return false;
     }
     
-    console.log("Property exists, proceeding with update");
+    if (!existingProperty) {
+      console.error("Property not found");
+      toast.error("Update failed: Property not found");
+      return false;
+    }
     
-    // Perform a direct update without returning data first to see if it works
+    console.log("Property exists, belongs to user:", existingProperty.user_id);
+    console.log("Current user:", userId);
+    
+    // Perform the update
     const { error: updateError } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
       
     if (updateError) {
-      console.error("Supabase direct update error:", updateError);
+      console.error("Supabase update error:", updateError);
       toast.error(`Update failed: ${updateError.message || updateError.details || 'Unknown error'}`);
+      
+      // Check if this is an RLS policy violation
+      if (updateError.code === '42501' || updateError.message?.includes('policy')) {
+        console.error("This appears to be a Row Level Security (RLS) policy violation");
+        toast.error("You don't have permission to update this property");
+      }
+      
       return false;
     }
     
-    // If direct update succeeded, fetch the updated record to confirm
+    // If update succeeded, fetch the updated record to confirm
     const { data: updatedData, error: fetchUpdatedError } = await supabase
       .from('properties')
       .select('*')
       .eq('id', updatedProperty.id)
       .single();
       
-    if (fetchUpdatedError || !updatedData) {
+    if (fetchUpdatedError) {
       console.error("Failed to fetch updated property:", fetchUpdatedError);
+      toast.warning("Property may have been updated but couldn't confirm");
+      return true; // Assume it worked since the update didn't error
+    }
+    
+    if (!updatedData) {
+      console.error("Updated property not found");
       toast.warning("Property may have been updated but couldn't confirm");
       return true; // Assume it worked since the update didn't error
     }

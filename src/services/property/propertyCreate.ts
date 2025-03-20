@@ -14,6 +14,13 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Use the actual user ID if available, otherwise use 'system'
+    const userId = user?.id || 'system';
+    console.log("Current user ID for property creation:", userId);
+    
     // Format the data for the database
     const propertyData = {
       address: String(newProperty.address),
@@ -27,8 +34,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      // Use auth.uid() when authenticated, fallback to 'system' for now
-      user_id: 'system',
+      user_id: userId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -46,7 +52,15 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     
     if (error) {
       console.error("Supabase insert error:", error);
-      toast.error(`Creation failed: ${error.message || error.details || 'Unknown error'}`);
+      
+      // Check if this is an RLS policy violation
+      if (error.code === '42501' || error.message?.includes('policy')) {
+        console.error("This appears to be a Row Level Security (RLS) policy violation");
+        toast.error("You don't have permission to create properties");
+      } else {
+        toast.error(`Creation failed: ${error.message || error.details || 'Unknown error'}`);
+      }
+      
       return null;
     }
     
