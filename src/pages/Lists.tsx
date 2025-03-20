@@ -12,6 +12,16 @@ import { Badge } from '@/components/ui/badge';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { toggleSidebar } from '@/utils/sidebarUtils';
+import { 
+  getLists, 
+  getCampaigns, 
+  createList, 
+  updateList, 
+  deleteList, 
+  exportListToCsv,
+  List,
+  Campaign
+} from '@/services/listService';
 
 export function Lists() {
   const { toast } = useToast();
@@ -21,8 +31,11 @@ export function Lists() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [exportType, setExportType] = useState<'all' | 'seller' | 'buyer'>('all');
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [selectedList, setSelectedList] = useState<any | null>(null);
+  const [selectedList, setSelectedList] = useState<List | null>(null);
   const [listDetailDialog, setListDetailDialog] = useState(false);
+  const [listsSummary, setListsSummary] = useState<List[]>([]);
+  const [campaignsData, setCampaignsData] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -42,109 +55,94 @@ export function Lists() {
     }
   }, []);
 
-  const handleSellerUploadComplete = (data: any[]) => {
+  // Load data from database
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load lists
+        const lists = await getLists();
+        setListsSummary(lists);
+        
+        // Load campaigns
+        const campaigns = await getCampaigns();
+        setCampaignsData(campaigns);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          title: 'Error loading data',
+          description: 'Failed to load lists and campaigns',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [toast]);
+
+  const handleSellerUploadComplete = async (data: any[]) => {
     setSellerData(data);
-    toast({
-      title: "Seller List Uploaded",
-      description: `Successfully imported ${data.length} seller records.`,
-    });
+
+    // Create a new list in the database
+    try {
+      const newList = await createList({
+        title: `Seller List - ${new Date().toLocaleDateString()}`,
+        description: `Imported seller list with ${data.length} records`,
+        count: data.length,
+        type: 'seller'
+      });
+      
+      if (newList) {
+        // Refresh the lists
+        const lists = await getLists();
+        setListsSummary(lists);
+        
+        toast({
+          title: "Seller List Uploaded",
+          description: `Successfully imported ${data.length} seller records and created a new list.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating seller list:', error);
+      toast({
+        title: "Seller List Uploaded",
+        description: `Successfully imported ${data.length} seller records. However, failed to save to database.`,
+      });
+    }
   };
 
-  const handleBuyerUploadComplete = (data: any[]) => {
+  const handleBuyerUploadComplete = async (data: any[]) => {
     setBuyerData(data);
-    toast({
-      title: "Buyer List Uploaded",
-      description: `Successfully imported ${data.length} buyer records.`,
-    });
+
+    // Create a new list in the database
+    try {
+      const newList = await createList({
+        title: `Buyer List - ${new Date().toLocaleDateString()}`,
+        description: `Imported buyer list with ${data.length} records`,
+        count: data.length,
+        type: 'buyer'
+      });
+      
+      if (newList) {
+        // Refresh the lists
+        const lists = await getLists();
+        setListsSummary(lists);
+        
+        toast({
+          title: "Buyer List Uploaded",
+          description: `Successfully imported ${data.length} buyer records and created a new list.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating buyer list:', error);
+      toast({
+        title: "Buyer List Uploaded",
+        description: `Successfully imported ${data.length} buyer records. However, failed to save to database.`,
+      });
+    }
   };
-
-  const campaignsData = [
-    {
-      id: "1",
-      title: "Spring Sellers",
-      description: "Campaign targeting spring sellers",
-      type: "seller",
-      contacts: 342,
-      responses: 87,
-      lastUpdated: "2023-06-12",
-      status: "active"
-    },
-    {
-      id: "2",
-      title: "First-Time Buyers",
-      description: "Campaign for first-time home buyers",
-      type: "buyer",
-      contacts: 178,
-      responses: 63,
-      lastUpdated: "2023-06-10",
-      status: "active"
-    },
-    {
-      id: "3",
-      title: "Expired Listings",
-      description: "Follow-up with expired listings",
-      type: "seller",
-      contacts: 98,
-      responses: 29,
-      lastUpdated: "2023-06-05",
-      status: "paused"
-    },
-    {
-      id: "4",
-      title: "Investment Properties",
-      description: "Campaign for investment property buyers",
-      type: "buyer",
-      contacts: 124,
-      responses: 41,
-      lastUpdated: "2023-06-08",
-      status: "active"
-    },
-  ];
-
-  const listsSummary = [
-    {
-      title: "All Sellers",
-      description: "Complete list of property sellers",
-      count: 342,
-      lastUpdated: "2023-06-12",
-      type: "seller"
-    },
-    {
-      title: "All Buyers",
-      description: "Complete list of property buyers",
-      count: 278,
-      lastUpdated: "2023-06-10",
-      type: "buyer"
-    },
-    {
-      title: "High Value Sellers",
-      description: "Sellers with properties > $500k",
-      count: 124,
-      lastUpdated: "2023-06-08",
-      type: "seller"
-    },
-    {
-      title: "Cash Buyers",
-      description: "Buyers ready to purchase with cash",
-      count: 86,
-      lastUpdated: "2023-06-05",
-      type: "buyer"
-    },
-    {
-      title: "Motivated Sellers",
-      description: "Sellers needing to move quickly",
-      count: 53,
-      lastUpdated: "2023-06-07",
-      type: "seller"
-    },
-    {
-      title: "First-Time Buyers",
-      description: "Buyers looking for their first home",
-      count: 112,
-      lastUpdated: "2023-06-09",
-      type: "buyer"
-    },
-  ];
 
   const filterListsByType = (type: string) => {
     if (type === 'all') return listsSummary;
@@ -156,7 +154,7 @@ export function Lists() {
     return campaignsData.filter(campaign => campaign.type === type);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     let dataToExport;
     
     if (exportType === 'seller') {
@@ -190,31 +188,65 @@ export function Lists() {
     });
   };
 
-  const handleViewList = (list: any) => {
+  const handleViewList = (list: List) => {
     setSelectedList(list);
     setListDetailDialog(true);
   };
 
-  const handleExportList = (list: any) => {
-    const headers = ['title', 'description', 'count', 'lastUpdated', 'type'];
-    const csvContent = [
-      headers.join(','),
-      headers.map(header => `"${(list as any)[header]}"`).join(',')
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${list.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "List Exported",
-      description: `Successfully exported ${list.title} list.`,
-    });
+  const handleExportList = async (list: List) => {
+    try {
+      const csvContent = await exportListToCsv(list);
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${list.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "List Exported",
+        description: `Successfully exported ${list.title} list.`,
+      });
+    } catch (error) {
+      console.error('Error exporting list:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export the list. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteList = async (id: string) => {
+    try {
+      const success = await deleteList(id);
+      
+      if (success) {
+        // Update the UI by filtering out the deleted list
+        setListsSummary(prev => prev.filter(list => list.id !== id));
+        
+        // Close the dialog if it's open
+        if (selectedList?.id === id) {
+          setListDetailDialog(false);
+          setSelectedList(null);
+        }
+        
+        toast({
+          title: "List Deleted",
+          description: "The list has been successfully deleted."
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting list:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the list. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -264,149 +296,267 @@ export function Lists() {
                 <TabsTrigger value="upload">Upload New</TabsTrigger>
               </TabsList>
               
+              {/* All Lists Tab */}
               <TabsContent value="all" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterListsByType('all').map((list, index) => (
-                    <Card key={index} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
-                      <CardHeader>
-                        <CardTitle>{list.title}</CardTitle>
-                        <CardDescription>{list.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{list.count}</div>
-                        <p className="text-sm text-muted-foreground">
-                          Last updated: {list.lastUpdated}
-                        </p>
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Export
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  {isLoading ? (
+                    // Loading state
+                    Array(6).fill(0).map((_, index) => (
+                      <Card key={index} className="glass-card animate-pulse">
+                        <CardHeader>
+                          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : filterListsByType('all').length > 0 ? (
+                    filterListsByType('all').map((list, index) => (
+                      <Card key={list.id} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <CardHeader>
+                          <CardTitle>{list.title}</CardTitle>
+                          <CardDescription>{list.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{list.count}</div>
+                          <p className="text-sm text-muted-foreground">
+                            Last updated: {list.lastUpdated}
+                          </p>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
+                            <Download className="h-4 w-4 mr-1" />
+                            Export
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-10">
+                      <p className="text-muted-foreground">No lists found. Upload some data to create lists.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
+              {/* Seller Lists Tab */}
               <TabsContent value="seller" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterListsByType('seller').map((list, index) => (
-                    <Card key={index} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
-                      <CardHeader>
-                        <CardTitle>{list.title}</CardTitle>
-                        <CardDescription>{list.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{list.count}</div>
-                        <p className="text-sm text-muted-foreground">
-                          Last updated: {list.lastUpdated}
-                        </p>
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Export
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  {isLoading ? (
+                    // Loading state
+                    Array(3).fill(0).map((_, index) => (
+                      <Card key={index} className="glass-card animate-pulse">
+                        <CardHeader>
+                          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : filterListsByType('seller').length > 0 ? (
+                    filterListsByType('seller').map((list, index) => (
+                      <Card key={list.id} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <CardHeader>
+                          <CardTitle>{list.title}</CardTitle>
+                          <CardDescription>{list.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{list.count}</div>
+                          <p className="text-sm text-muted-foreground">
+                            Last updated: {list.lastUpdated}
+                          </p>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
+                            <Download className="h-4 w-4 mr-1" />
+                            Export
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-10">
+                      <p className="text-muted-foreground">No seller lists found. Upload some seller data to create lists.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
+              {/* Buyer Lists Tab */}
               <TabsContent value="buyer" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterListsByType('buyer').map((list, index) => (
-                    <Card key={index} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
-                      <CardHeader>
-                        <CardTitle>{list.title}</CardTitle>
-                        <CardDescription>{list.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{list.count}</div>
-                        <p className="text-sm text-muted-foreground">
-                          Last updated: {list.lastUpdated}
-                        </p>
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Export
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  {isLoading ? (
+                    // Loading state
+                    Array(3).fill(0).map((_, index) => (
+                      <Card key={index} className="glass-card animate-pulse">
+                        <CardHeader>
+                          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                          <div className="h-8 bg-gray-200 rounded w-20"></div>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : filterListsByType('buyer').length > 0 ? (
+                    filterListsByType('buyer').map((list, index) => (
+                      <Card key={list.id} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <CardHeader>
+                          <CardTitle>{list.title}</CardTitle>
+                          <CardDescription>{list.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{list.count}</div>
+                          <p className="text-sm text-muted-foreground">
+                            Last updated: {list.lastUpdated}
+                          </p>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
+                            <Download className="h-4 w-4 mr-1" />
+                            Export
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-10">
+                      <p className="text-muted-foreground">No buyer lists found. Upload some buyer data to create lists.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
+              {/* Campaigns Tab */}
               <TabsContent value="campaigns" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterCampaignsByType('all').map((campaign, index) => (
-                    <Card key={index} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <CardTitle>{campaign.title}</CardTitle>
-                          <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                            {campaign.status}
-                          </Badge>
-                        </div>
-                        <CardDescription>{campaign.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Contacts</p>
-                            <p className="text-2xl font-bold">{campaign.contacts}</p>
+                  {isLoading ? (
+                    // Loading state
+                    Array(4).fill(0).map((_, index) => (
+                      <Card key={index} className="glass-card animate-pulse">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div className="h-5 bg-gray-200 rounded w-20"></div>
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Responses</p>
-                            <p className="text-2xl font-bold">{campaign.responses}</p>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </CardHeader>
+                        <CardContent className="pb-2">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+                              <div className="h-8 bg-gray-200 rounded w-12"></div>
+                            </div>
+                            <div>
+                              <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+                              <div className="h-8 bg-gray-200 rounded w-12"></div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="mt-4">
-                          <p className="text-sm text-muted-foreground">
-                            {campaign.type === 'seller' ? 'Seller Campaign' : 'Buyer Campaign'} • Last updated: {campaign.lastUpdated}
-                          </p>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between pt-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setActiveCampaign(campaign.id)}
-                            >
-                              View Details
+                          <div className="mt-4">
+                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between pt-2">
+                          <div className="h-8 bg-gray-200 rounded w-28"></div>
+                          <div className="flex gap-1">
+                            <div className="h-8 bg-gray-200 rounded w-8"></div>
+                            <div className="h-8 bg-gray-200 rounded w-8"></div>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : filterCampaignsByType('all').length > 0 ? (
+                    filterCampaignsByType('all').map((campaign, index) => (
+                      <Card key={campaign.id} className="glass-card animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <CardTitle>{campaign.title}</CardTitle>
+                            <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+                              {campaign.status}
+                            </Badge>
+                          </div>
+                          <CardDescription>{campaign.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-2">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Contacts</p>
+                              <p className="text-2xl font-bold">{campaign.contacts}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Responses</p>
+                              <p className="text-2xl font-bold">{campaign.responses}</p>
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <p className="text-sm text-muted-foreground">
+                              {campaign.type === 'seller' ? 'Seller Campaign' : 'Buyer Campaign'} • Last updated: {campaign.lastUpdated}
+                            </p>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between pt-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setActiveCampaign(campaign.id)}
+                              >
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[900px]">
+                              <DialogHeader>
+                                <DialogTitle>{campaign.title}</DialogTitle>
+                                <DialogDescription>
+                                  {campaign.description}
+                                </DialogDescription>
+                              </DialogHeader>
+                              {activeCampaign && <CampaignTracker campaignId={activeCampaign} />}
+                            </DialogContent>
+                          </Dialog>
+                          <div className="flex gap-1">
+                            <Button variant="outline" size="icon">
+                              <BarChart className="h-4 w-4" />
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[900px]">
-                            <DialogHeader>
-                              <DialogTitle>{campaign.title}</DialogTitle>
-                              <DialogDescription>
-                                {campaign.description}
-                              </DialogDescription>
-                            </DialogHeader>
-                            {activeCampaign && <CampaignTracker campaignId={activeCampaign} />}
-                          </DialogContent>
-                        </Dialog>
-                        <div className="flex gap-1">
-                          <Button variant="outline" size="icon">
-                            <BarChart className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon">
-                            <Calendar className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                            <Button variant="outline" size="icon">
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-10">
+                      <p className="text-muted-foreground">No campaigns found. Create a campaign from your lists.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
+              {/* Upload Tab */}
               <TabsContent value="upload" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <Card className="glass-card animate-scale-in">
@@ -492,8 +642,61 @@ export function Lists() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex flex-col sm:flex-row gap-4 justify-end">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Add to List</Button>
+                      <Button variant="outline" onClick={() => {
+                        setSellerData(null);
+                        setBuyerData(null);
+                      }}>Cancel</Button>
+                      <Button onClick={async () => {
+                        try {
+                          // Create a new list for any uploaded data
+                          if (sellerData) {
+                            const newList = await createList({
+                              title: `Seller List - ${new Date().toLocaleDateString()}`,
+                              description: `Imported seller list with ${sellerData.length} records`,
+                              count: sellerData.length,
+                              type: 'seller'
+                            });
+                            
+                            if (newList) {
+                              toast({
+                                title: "Seller List Created",
+                                description: `Created a new list with ${sellerData.length} seller records.`,
+                              });
+                            }
+                          }
+                          
+                          if (buyerData) {
+                            const newList = await createList({
+                              title: `Buyer List - ${new Date().toLocaleDateString()}`,
+                              description: `Imported buyer list with ${buyerData.length} records`,
+                              count: buyerData.length,
+                              type: 'buyer'
+                            });
+                            
+                            if (newList) {
+                              toast({
+                                title: "Buyer List Created",
+                                description: `Created a new list with ${buyerData.length} buyer records.`,
+                              });
+                            }
+                          }
+                          
+                          // Refresh the lists
+                          const lists = await getLists();
+                          setListsSummary(lists);
+                          
+                          // Clear the uploaded data
+                          setSellerData(null);
+                          setBuyerData(null);
+                        } catch (error) {
+                          console.error('Error adding to list:', error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to create list from uploaded data.",
+                            variant: "destructive"
+                          });
+                        }
+                      }}>Add to List</Button>
                       <Button>Create Campaign</Button>
                     </CardFooter>
                   </Card>
@@ -582,16 +785,28 @@ export function Lists() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setListDetailDialog(false)}>Close</Button>
-            <Button onClick={() => {
-              if (selectedList) {
-                handleExportList(selectedList);
-              }
-            }}>
-              <Download className="mr-2 h-4 w-4" />
-              Export List
+          <DialogFooter className="flex justify-between">
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (selectedList) {
+                  handleDeleteList(selectedList.id);
+                }
+              }}
+            >
+              Delete List
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setListDetailDialog(false)}>Close</Button>
+              <Button onClick={() => {
+                if (selectedList) {
+                  handleExportList(selectedList);
+                }
+              }}>
+                <Download className="mr-2 h-4 w-4" />
+                Export List
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

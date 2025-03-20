@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
 import { Lead, Note } from '@/components/leads/types';
-import { v4 as uuidv4 } from 'uuid';
 import { getNextStage } from '@/components/leads/LeadData';
-import { supabase } from '@/utils/supabaseClient';
 import { useToast } from "@/hooks/use-toast";
+import { updateLead, addNote, addLead, deleteLead } from '@/services/leadService';
+import { v4 as uuidv4 } from 'uuid';
 
 export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatch<React.SetStateAction<Lead[]>>) {
   const { toast } = useToast();
@@ -17,9 +17,8 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
       const leadToUpdate = leadsData.find(lead => lead.id === updatedLead.id);
       const statusChanged = leadToUpdate && leadToUpdate.status !== updatedLead.status;
       
-      let newNote: Note | null = null;
       if (statusChanged) {
-        newNote = {
+        const newNote: Note = {
           id: uuidv4(),
           text: `Status changed from ${leadToUpdate?.status} to ${updatedLead.status}`,
           type: 'stage_change',
@@ -33,26 +32,10 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
         updatedLead.notes = [...(updatedLead.notes || []), newNote];
       }
       
-      const [firstName, ...lastNameParts] = updatedLead.name.split(' ');
-      const lastName = lastNameParts.join(' ');
+      // Update in the database
+      await updateLead(updatedLead);
       
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          first_name: firstName,
-          last_name: lastName || '',
-          email: updatedLead.email,
-          phone: updatedLead.phone,
-          status: updatedLead.status,
-          lead_source: updatedLead.source,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', updatedLead.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      // Update the UI
       setLeadsData(prevLeads => 
         prevLeads.map(lead => 
           lead.id === updatedLead.id ? updatedLead : lead
@@ -65,9 +48,17 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
       });
     } catch (error) {
       console.error('Error updating lead:', error);
+      
+      // Still update the UI for better UX
+      setLeadsData(prevLeads => 
+        prevLeads.map(lead => 
+          lead.id === updatedLead.id ? updatedLead : lead
+        )
+      );
+      
       toast({
-        title: "Update failed",
-        description: "Failed to update lead in database",
+        title: "Update partially successful",
+        description: "Lead updated in UI but database update failed",
         variant: "destructive"
       });
     }
@@ -75,11 +66,10 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
 
   const handleAddNote = async (leadId: string, note: Omit<Note, 'id'>) => {
     try {
-      const newNote: Note = {
-        ...note,
-        id: uuidv4()
-      };
+      // Add note to the database
+      const newNote = await addNote(leadId, note);
       
+      // Update the UI
       setLeadsData(prevLeads =>
         prevLeads.map(lead => {
           if (lead.id === leadId) {
@@ -94,24 +84,32 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
         })
       );
       
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          last_contact_date: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
-      
-      if (error) {
-        throw error;
-      }
-      
       toast({
         title: "Note added",
         description: "Your note has been added to the lead."
       });
     } catch (error) {
       console.error('Error adding note:', error);
+      
+      // Still update the UI with a temporary note for better UX
+      const tempNote: Note = {
+        ...note,
+        id: `temp-${Date.now()}`
+      };
+      
+      setLeadsData(prevLeads =>
+        prevLeads.map(lead => {
+          if (lead.id === leadId) {
+            return {
+              ...lead,
+              lastContact: new Date().toISOString().split('T')[0],
+              notes: [...(lead.notes || []), tempNote]
+            };
+          }
+          return lead;
+        })
+      );
+      
       toast({
         title: "Failed to save note",
         description: "The note was added locally but not saved to the database",
@@ -120,51 +118,13 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
     }
   };
 
-  const handleAddLead = async (newLead: Lead) => {
+  const handleAddLead = async (newLeadData: Omit<Lead, 'id' | 'dateAdded' | 'lastContact' | 'notes' | 'flaggedForNextStage' | 'readyToMove' | 'doNotContact'>) => {
     try {
-      const initialNote: Note = {
-        id: uuidv4(),
-        text: `Lead created with status: ${newLead.status}`,
-        type: 'stage_change',
-        timestamp: new Date().toISOString(),
-        metadata: {
-          newStage: newLead.status
-        }
-      };
+      // Add lead to the database
+      const newLead = await addLead(newLeadData);
       
-      const leadWithNote = {
-        ...newLead,
-        notes: [initialNote]
-      };
-      
-      const [firstName, ...lastNameParts] = newLead.name.split(' ');
-      const lastName = lastNameParts.join(' ');
-      
-      const { data, error } = await supabase
-        .from('leads')
-        .insert({
-          first_name: firstName,
-          last_name: lastName || '',
-          email: newLead.email,
-          phone: newLead.phone,
-          status: newLead.status,
-          lead_type: 'buyer',
-          lead_source: newLead.source,
-          user_id: 'system',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select();
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
-        leadWithNote.id = data[0].id;
-      }
-      
-      setLeadsData(prevLeads => [leadWithNote, ...prevLeads]);
+      // Update the UI
+      setLeadsData(prevLeads => [newLead, ...prevLeads]);
       
       toast({
         title: "Lead added",
@@ -173,7 +133,19 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
     } catch (error) {
       console.error('Error adding lead:', error);
       
-      setLeadsData(prevLeads => [newLead, ...prevLeads]);
+      // Create a temporary lead for the UI
+      const tempLead: Lead = {
+        ...newLeadData,
+        id: `temp-${Date.now()}`,
+        dateAdded: new Date().toISOString().split('T')[0],
+        lastContact: new Date().toISOString().split('T')[0],
+        notes: [],
+        flaggedForNextStage: false,
+        readyToMove: false,
+        doNotContact: false
+      };
+      
+      setLeadsData(prevLeads => [tempLead, ...prevLeads]);
       
       toast({
         title: "Database error",
@@ -209,41 +181,90 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
     }
   };
 
-  const handleToggleDoNotContact = (leadId: string, doNotContact: boolean) => {
-    setLeadsData(prevLeads =>
-      prevLeads.map(lead => {
-        if (lead.id === leadId) {
-          const newNote: Note = {
-            id: uuidv4(),
-            text: doNotContact 
-              ? 'Lead marked as Do Not Contact'
-              : 'Do Not Contact flag removed',
-            type: 'other',
-            timestamp: new Date().toISOString()
-          };
-          
-          return {
-            ...lead,
-            doNotContact,
-            notes: [...(lead.notes || []), newNote]
-          };
-        }
-        return lead;
-      })
-    );
-
-    const lead = leadsData.find(l => l.id === leadId);
-    if (lead) {
-      toast({
-        title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed",
-        description: doNotContact
-          ? `${lead.name} has been marked as Do Not Contact.`
-          : `${lead.name} can now be contacted.`
-      });
+  const handleToggleDoNotContact = async (leadId: string, doNotContact: boolean) => {
+    try {
+      // Find the lead to update
+      const leadToUpdate = leadsData.find(lead => lead.id === leadId);
+      if (!leadToUpdate) {
+        throw new Error('Lead not found');
+      }
+      
+      // Add a note about the change
+      const newNote: Note = {
+        id: uuidv4(),
+        text: doNotContact 
+          ? 'Lead marked as Do Not Contact'
+          : 'Do Not Contact flag removed',
+        type: 'other',
+        timestamp: new Date().toISOString()
+      };
+      
+      const updatedLead: Lead = {
+        ...leadToUpdate,
+        doNotContact,
+        notes: [...(leadToUpdate.notes || []), newNote]
+      };
+      
+      // Update in database
+      await updateLead(updatedLead);
+      
+      // Update the UI
+      setLeadsData(prevLeads =>
+        prevLeads.map(lead => {
+          if (lead.id === leadId) {
+            return updatedLead;
+          }
+          return lead;
+        })
+      );
+      
+      const lead = leadsData.find(l => l.id === leadId);
+      if (lead) {
+        toast({
+          title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed",
+          description: doNotContact
+            ? `${lead.name} has been marked as Do Not Contact.`
+            : `${lead.name} can now be contacted.`
+        });
+      }
+    } catch (error) {
+      console.error('Error updating do not contact status:', error);
+      
+      // Still update the UI for better UX
+      setLeadsData(prevLeads =>
+        prevLeads.map(lead => {
+          if (lead.id === leadId) {
+            const newNote: Note = {
+              id: `temp-${Date.now()}`,
+              text: doNotContact 
+                ? 'Lead marked as Do Not Contact'
+                : 'Do Not Contact flag removed',
+              type: 'other',
+              timestamp: new Date().toISOString()
+            };
+            
+            return {
+              ...lead,
+              doNotContact,
+              notes: [...(lead.notes || []), newNote]
+            };
+          }
+          return lead;
+        })
+      );
+      
+      const lead = leadsData.find(l => l.id === leadId);
+      if (lead) {
+        toast({
+          title: doNotContact ? "Do Not Contact flag added" : "Do Not Contact flag removed",
+          description: `Updated locally but failed to save to database.`,
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const handleMoveToNextStage = (lead: Lead) => {
+  const handleMoveToNextStage = async (lead: Lead) => {
     const nextStage = getNextStage(lead.status);
     
     if (!nextStage) {
@@ -255,47 +276,108 @@ export function useLeadOperations(leadsData: Lead[], setLeadsData: React.Dispatc
       return;
     }
     
-    const stageChangeNote: Note = {
-      id: uuidv4(),
-      text: `Status changed from ${lead.status} to ${nextStage}`,
-      type: 'stage_change',
-      timestamp: new Date().toISOString(),
-      metadata: {
-        previousStage: lead.status,
-        newStage: nextStage as Lead['status']
-      }
-    };
-    
-    setLeadsData(prevLeads =>
-      prevLeads.map(l => {
-        if (l.id === lead.id) {
-          return {
-            ...l,
-            status: nextStage as Lead['status'],
-            flaggedForNextStage: false,
-            notes: [...(l.notes || []), stageChangeNote]
-          };
+    try {
+      const stageChangeNote: Note = {
+        id: uuidv4(),
+        text: `Status changed from ${lead.status} to ${nextStage}`,
+        type: 'stage_change',
+        timestamp: new Date().toISOString(),
+        metadata: {
+          previousStage: lead.status,
+          newStage: nextStage as Lead['status']
         }
-        return l;
-      })
-    );
-    
-    toast({
-      title: "Lead moved",
-      description: `${lead.name} has been moved to ${nextStage}.`
-    });
+      };
+      
+      const updatedLead: Lead = {
+        ...lead,
+        status: nextStage as Lead['status'],
+        flaggedForNextStage: false,
+        notes: [...(lead.notes || []), stageChangeNote]
+      };
+      
+      // Update in database
+      await updateLead(updatedLead);
+      
+      // Update the UI
+      setLeadsData(prevLeads =>
+        prevLeads.map(l => {
+          if (l.id === lead.id) {
+            return updatedLead;
+          }
+          return l;
+        })
+      );
+      
+      toast({
+        title: "Lead moved",
+        description: `${lead.name} has been moved to ${nextStage}.`
+      });
+    } catch (error) {
+      console.error('Error moving lead to next stage:', error);
+      
+      // Still update the UI for better UX
+      setLeadsData(prevLeads =>
+        prevLeads.map(l => {
+          if (l.id === lead.id) {
+            const stageChangeNote: Note = {
+              id: `temp-${Date.now()}`,
+              text: `Status changed from ${lead.status} to ${nextStage}`,
+              type: 'stage_change',
+              timestamp: new Date().toISOString(),
+              metadata: {
+                previousStage: lead.status,
+                newStage: nextStage as Lead['status']
+              }
+            };
+            
+            return {
+              ...l,
+              status: nextStage as Lead['status'],
+              flaggedForNextStage: false,
+              notes: [...(l.notes || []), stageChangeNote]
+            };
+          }
+          return l;
+        })
+      );
+      
+      toast({
+        title: "Lead moved locally",
+        description: `${lead.name} was moved in UI but database update failed.`,
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteLead = (leadId: string) => {
+  const handleDeleteLead = async (leadId: string) => {
     const leadToDelete = leadsData.find(lead => lead.id === leadId);
     
-    setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
-    
-    if (leadToDelete) {
-      toast({
-        title: "Lead deleted",
-        description: `${leadToDelete.name} has been removed from your leads.`
-      });
+    try {
+      // Delete from database
+      await deleteLead(leadId);
+      
+      // Update the UI
+      setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+      
+      if (leadToDelete) {
+        toast({
+          title: "Lead deleted",
+          description: `${leadToDelete.name} has been removed from your leads.`
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      
+      // Still update the UI for better UX
+      setLeadsData(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+      
+      if (leadToDelete) {
+        toast({
+          title: "Lead deleted from UI",
+          description: `${leadToDelete.name} was removed from UI but database delete failed.`,
+          variant: "destructive"
+        });
+      }
     }
   };
 

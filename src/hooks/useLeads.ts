@@ -1,52 +1,26 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Lead, Note } from '@/components/leads/types';
+import { Lead } from '@/components/leads/types';
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
-import { initialLeadsData, getNextStage } from '@/components/leads/LeadData';
-import { supabase } from '@/utils/supabaseClient';
+import { fetchLeads } from '@/services/leadService';
+import { initialLeadsData } from '@/components/leads/LeadData';
 
 export function useLeads() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [leadsData, setLeadsData] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState('All');
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchLeads() {
+    async function loadLeads() {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('leads')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const leads = await fetchLeads();
         
-        if (error) {
-          console.error('Error fetching leads:', error);
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          const formattedLeads: Lead[] = data.map(lead => ({
-            id: lead.id,
-            name: `${lead.first_name} ${lead.last_name}`,
-            email: lead.email || '',
-            phone: lead.phone || '',
-            status: lead.status as Lead['status'],
-            source: lead.lead_source || 'Unknown',
-            dateAdded: new Date(lead.created_at).toISOString().split('T')[0],
-            lastContact: lead.last_contact_date 
-              ? new Date(lead.last_contact_date).toISOString().split('T')[0] 
-              : new Date(lead.created_at).toISOString().split('T')[0],
-            notes: [],
-            flaggedForNextStage: false,
-            readyToMove: false,
-            doNotContact: false
-          }));
-          
-          setLeadsData(formattedLeads);
+        if (leads && leads.length > 0) {
+          setLeadsData(leads);
         } else {
           console.log('No leads found in database, using sample data');
           
@@ -83,7 +57,7 @@ export function useLeads() {
       }
     }
     
-    fetchLeads();
+    loadLeads();
   }, [toast]);
 
   useEffect(() => {
