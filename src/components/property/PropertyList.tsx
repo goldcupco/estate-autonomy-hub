@@ -7,6 +7,7 @@ import { Property } from '@/pages/Properties';
 import { usePropertyContext } from '@/contexts/PropertyContext';
 import { useNavigate } from 'react-router-dom';
 import { deleteProperty, fetchProperties } from '@/services/propertyService';
+import { toast } from 'sonner';
 
 export function PropertyList() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export function PropertyList() {
       setProperties(refreshedProperties);
     } catch (error) {
       console.error("Error refreshing properties:", error);
+      toast.error("Failed to refresh properties");
     } finally {
       setIsLoading(false);
     }
@@ -37,10 +39,33 @@ export function PropertyList() {
   };
 
   const handleDeleteProperty = async (propertyId: string) => {
-    const success = await deleteProperty(propertyId);
-    if (success) {
+    try {
+      console.log("Attempting to delete property with ID:", propertyId);
+      
+      // First update UI optimistically
       setProperties(properties.filter(property => property.id !== propertyId));
-      // Refresh the properties to ensure we have the latest data
+      
+      // Then perform the actual database operation
+      const success = await deleteProperty(propertyId);
+      
+      if (success) {
+        console.log("Delete operation successful for property ID:", propertyId);
+        toast.success("Property deleted successfully");
+        
+        // Refresh the properties to ensure we have the latest data
+        refreshProperties();
+      } else {
+        console.error("Delete operation failed for property ID:", propertyId);
+        toast.error("Failed to delete property");
+        
+        // Undo the optimistic update if the operation failed
+        refreshProperties();
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteProperty:", error);
+      toast.error("An error occurred while deleting the property");
+      
+      // Refresh to restore correct state
       refreshProperties();
     }
   };

@@ -93,7 +93,20 @@ export function usePropertyData(
         }
       } else {
         console.log("Preparing to create new property with data:", property);
-        const newProperty = await createProperty(property);
+        
+        // Ensure we have all required data formatted correctly
+        const propertyToCreate = {
+          ...property,
+          // Set default values for any missing fields
+          bedrooms: property.bedrooms || 0,
+          bathrooms: property.bathrooms || 0,
+          sqft: property.sqft || 0,
+          price: property.price || 0,
+          status: property.status || 'For Sale',
+          propertyType: property.propertyType || 'House'
+        };
+        
+        const newProperty = await createProperty(propertyToCreate);
         
         if (newProperty && onPropertyAdded) {
           console.log("Creation successful, adding to UI:", newProperty);

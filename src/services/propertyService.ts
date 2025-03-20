@@ -60,6 +60,14 @@ export async function fetchProperties(): Promise<Property[]> {
 export async function deleteProperty(propertyId: string): Promise<boolean> {
   try {
     console.log("Deleting property with ID:", propertyId);
+    
+    // Add extra validation to ensure we have a valid ID
+    if (!propertyId || propertyId.trim() === '') {
+      console.error("Invalid property ID for deletion");
+      toast.error("Cannot delete: Invalid property ID");
+      return false;
+    }
+    
     const { error } = await supabase
       .from('properties')
       .delete()
@@ -67,6 +75,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       
     if (error) {
       console.error("Supabase delete error:", error);
+      toast.error(`Delete failed: ${error.message}`);
       throw error;
     }
     
@@ -83,6 +92,13 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
 export async function updateProperty(updatedProperty: Property): Promise<boolean> {
   try {
     console.log("Updating property:", updatedProperty);
+    
+    // Add validation to ensure we have a valid property
+    if (!updatedProperty || !updatedProperty.id) {
+      console.error("Invalid property for update");
+      toast.error("Update failed: Invalid property data");
+      return false;
+    }
     
     // Convert property format to match the database schema
     const propertyData = {
@@ -109,6 +125,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       
     if (error) {
       console.error("Supabase update error:", error);
+      toast.error(`Update failed: ${error.message}`);
       throw error;
     }
     
@@ -124,6 +141,13 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
 export async function createProperty(newProperty: Partial<Property>): Promise<Property | null> {
   try {
     console.log("Creating new property:", newProperty);
+    
+    // Add validation to ensure we have required fields
+    if (!newProperty.address || !newProperty.city || !newProperty.state || !newProperty.zipCode) {
+      console.error("Missing required fields for property creation");
+      toast.error("Cannot create property: Missing required fields");
+      return null;
+    }
     
     const propertyData = {
       address: newProperty.address,
@@ -152,6 +176,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       
     if (error) {
       console.error("Supabase insert error:", error);
+      toast.error(`Creation failed: ${error.message}`);
       throw error;
     }
     
