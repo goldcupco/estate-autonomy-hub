@@ -1,127 +1,107 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { MLS_PROVIDERS } from './mlsConstants';
 import { simulateMLSApiImport } from './mlsUtils';
+import { Progress } from '@/components/ui/progress';
 
 interface MLSApiImporterProps {
   onImportSuccess?: (properties: any[]) => void;
 }
 
 export function MLSApiImporter({ onImportSuccess }: MLSApiImporterProps) {
-  const [provider, setProvider] = useState('');
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: '',
-    apiUrl: '',
-    apiKey: ''
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const handleCredentialChange = (field: string, value: string) => {
-    setCredentials(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleConnect = async () => {
-    setIsLoading(true);
+  const handleStartImport = async () => {
+    if (!selectedProvider) return;
+    
+    setIsImporting(true);
+    setProgress(0);
+    
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 15) + 5;
+        return newProgress > 90 ? 90 : newProgress;
+      });
+    }, 500);
     
     try {
-      const importedProperties = await simulateMLSApiImport(provider);
+      // Call the MLS API import function
+      const importedProperties = await simulateMLSApiImport(selectedProvider);
       
+      // Set progress to 100% when complete
+      clearInterval(progressInterval);
+      setProgress(100);
+      
+      // Call the success callback
       if (onImportSuccess) {
         onImportSuccess(importedProperties);
       }
-      
-      toast.success(`Successfully connected to ${provider} MLS`);
     } catch (error) {
-      console.error('Error connecting to MLS:', error);
-      toast.error('Failed to connect to MLS. Please check your credentials and try again.');
+      console.error('Error importing from MLS:', error);
+      clearInterval(progressInterval);
     } finally {
-      setIsLoading(false);
+      // Reset after a short delay to show 100% progress
+      setTimeout(() => {
+        setIsImporting(false);
+        setProgress(0);
+      }, 1000);
     }
   };
 
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="mls-provider">MLS Provider</Label>
-        <Select value={provider} onValueChange={setProvider}>
-          <SelectTrigger id="mls-provider">
-            <SelectValue placeholder="Select MLS provider" />
-          </SelectTrigger>
-          <SelectContent>
-            {MLS_PROVIDERS.map(provider => (
-              <SelectItem key={provider.id} value={provider.id}>
-                {provider.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="text-sm text-muted-foreground mb-4">
+        Connect to your MLS system to import property listings directly into your database.
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="mls-username">Username</Label>
-        <Input 
-          id="mls-username"
-          value={credentials.username}
-          onChange={e => handleCredentialChange('username', e.target.value)}
-          placeholder="MLS Username"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="mls-password">Password</Label>
-        <Input 
-          id="mls-password"
-          type="password"
-          value={credentials.password}
-          onChange={e => handleCredentialChange('password', e.target.value)}
-          placeholder="MLS Password"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="mls-url">API URL</Label>
-        <Input 
-          id="mls-url"
-          value={credentials.apiUrl}
-          onChange={e => handleCredentialChange('apiUrl', e.target.value)}
-          placeholder="https://api.mlsprovider.com"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="mls-key">API Key (if required)</Label>
-        <Input 
-          id="mls-key"
-          value={credentials.apiKey}
-          onChange={e => handleCredentialChange('apiKey', e.target.value)}
-          placeholder="Your API key"
-        />
-      </div>
-      
-      <Button 
-        className="w-full mt-4" 
-        onClick={handleConnect}
-        disabled={isLoading || !provider || !credentials.username || !credentials.password}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Connecting...
-          </>
-        ) : (
-          'Connect & Import'
-        )}
-      </Button>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select MLS Provider</label>
+              <Select
+                value={selectedProvider}
+                onValueChange={setSelectedProvider}
+                disabled={isImporting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an MLS provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MLS_PROVIDERS.map(provider => (
+                    <SelectItem key={provider.id} value={provider.id}>
+                      {provider.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {isImporting && (
+              <div className="space-y-2">
+                <Progress value={progress} className="h-2" />
+                <p className="text-sm text-center text-muted-foreground">
+                  Importing properties: {progress}%
+                </p>
+              </div>
+            )}
+            
+            <Button 
+              onClick={handleStartImport} 
+              disabled={!selectedProvider || isImporting}
+              className="w-full"
+            >
+              {isImporting ? 'Importing...' : 'Start Import'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
