@@ -28,13 +28,17 @@ export const fetchCampaigns = async (): Promise<Campaign[]> => {
         startDate: new Date(campaign.start_date).toISOString().split('T')[0],
         endDate: campaign.end_date ? new Date(campaign.end_date).toISOString().split('T')[0] : undefined,
         createdBy: campaign.created_by,
-        assignedUsers: Array.isArray(campaign.assigned_users) ? campaign.assigned_users : [],
+        assignedUsers: Array.isArray(campaign.assigned_users) 
+          ? campaign.assigned_users.map(user => String(user)) 
+          : [],
         budget: campaign.budget,
-        metrics: campaign.metrics || {
-          contacts: 0,
-          responses: 0,
-          conversions: 0
-        },
+        metrics: campaign.metrics 
+          ? ensureMetricsFormat(campaign.metrics) 
+          : {
+              contacts: 0,
+              responses: 0,
+              conversions: 0
+            },
         accessRestricted: campaign.access_restricted || false
       }));
     }
@@ -46,6 +50,19 @@ export const fetchCampaigns = async (): Promise<Campaign[]> => {
     return [];
   }
 };
+
+// Helper function to ensure metrics has the right format
+function ensureMetricsFormat(metrics: any): Campaign['metrics'] {
+  if (typeof metrics !== 'object' || metrics === null) {
+    return { contacts: 0, responses: 0, conversions: 0 };
+  }
+  
+  return {
+    contacts: typeof metrics.contacts === 'number' ? metrics.contacts : 0,
+    responses: typeof metrics.responses === 'number' ? metrics.responses : 0,
+    conversions: typeof metrics.conversions === 'number' ? metrics.conversions : 0
+  };
+}
 
 // Helper function to ensure status is one of the allowed values
 function mapDatabaseStatusToCampaignStatus(status: string): Campaign['status'] {
@@ -115,7 +132,7 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       return null;
     }
     
-    // Cast the data to the correct type
+    // Cast the data to the correct type and parse it
     const campaignRecord = data as any;
     
     toast.success('Campaign created successfully');
@@ -130,13 +147,12 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       startDate: new Date(campaignRecord.start_date).toISOString().split('T')[0],
       endDate: campaignRecord.end_date ? new Date(campaignRecord.end_date).toISOString().split('T')[0] : undefined,
       createdBy: campaignRecord.created_by,
-      assignedUsers: Array.isArray(campaignRecord.assigned_users) ? campaignRecord.assigned_users : [],
+      // Convert all assigned users to strings to match our Campaign type
+      assignedUsers: Array.isArray(campaignRecord.assigned_users) 
+        ? campaignRecord.assigned_users.map((user: any) => String(user)) 
+        : [],
       budget: campaignRecord.budget,
-      metrics: campaignRecord.metrics || {
-        contacts: 0,
-        responses: 0,
-        conversions: 0
-      },
+      metrics: ensureMetricsFormat(campaignRecord.metrics),
       accessRestricted: campaignRecord.access_restricted || false
     };
   } catch (error: any) {
@@ -237,13 +253,11 @@ export const getCampaignById = async (id: string): Promise<Campaign | null> => {
         startDate: new Date(data.start_date).toISOString().split('T')[0],
         endDate: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : undefined,
         createdBy: data.created_by,
-        assignedUsers: Array.isArray(data.assigned_users) ? data.assigned_users : [],
+        assignedUsers: Array.isArray(data.assigned_users) 
+          ? data.assigned_users.map(user => String(user)) 
+          : [],
         budget: data.budget,
-        metrics: data.metrics || {
-          contacts: 0,
-          responses: 0,
-          conversions: 0
-        },
+        metrics: ensureMetricsFormat(data.metrics),
         accessRestricted: data.access_restricted || false
       };
     }
