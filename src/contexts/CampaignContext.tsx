@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Campaign, mockCampaigns } from '../models/Campaign';
 import { useAuth } from './AuthContext';
@@ -9,7 +8,7 @@ import {
   deleteCampaign as deleteCampaignService,
   addLeadToCampaign as addLeadToCampaignService,
   removeLeadFromCampaign as removeLeadFromCampaignService
-} from '../services/campaignService';
+} from '../services/campaign';
 
 interface CampaignContextType {
   campaigns: Campaign[];
@@ -45,7 +44,6 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (err: any) {
       console.error("Failed to fetch campaigns:", err);
       setError(err.message || "Failed to load campaigns");
-      // Fall back to mock data if API fails
       setCampaigns(mockCampaigns);
     } finally {
       setLoading(false);
@@ -175,7 +173,6 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return campaign;
     }));
     
-    // Also update the user's campaigns list
     assignCampaignToUser(userId, campaignId);
   };
   
@@ -187,7 +184,6 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return campaign;
     }));
     
-    // Also update the user's campaigns list
     removeCampaignFromUser(userId, campaignId);
   };
   
