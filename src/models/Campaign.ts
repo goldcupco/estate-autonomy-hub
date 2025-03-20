@@ -17,6 +17,7 @@ export interface Campaign {
     conversions: number;
   };
   accessRestricted?: boolean; // If true, only assigned users can access
+  user_id?: string; // ID of the user for RLS purposes
 }
 
 // Mock data for campaigns
