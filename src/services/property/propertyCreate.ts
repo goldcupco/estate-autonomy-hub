@@ -15,14 +15,13 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     }
     
     // Check authentication state
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     
-    let userId = 'anonymous';
-    if (session && session.user) {
-      userId = session.user.id;
-      console.log("Current authenticated user ID for property creation:", userId);
-    } else {
-      console.log("No authenticated session found, using anonymous user ID");
+    // If not authenticated, inform the user
+    if (!session) {
+      console.log("No authenticated session found - creation may fail due to permissions");
+      toast.error("You need to be logged in to create properties");
+      return null;
     }
     
     // Format the data for the database
@@ -38,7 +37,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      user_id: userId, // Use the user ID from session or default to anonymous
+      user_id: session.user.id, // Use the authenticated user's ID
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

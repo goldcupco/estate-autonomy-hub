@@ -13,8 +13,14 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     }
     
     // Check authentication state
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log("Authentication session check:", session ? "Session exists" : "No session");
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // If not authenticated, inform the user
+    if (!session) {
+      console.log("No authenticated session found - deletion may fail due to permissions");
+      toast.error("You need to be logged in to delete properties");
+      return false;
+    }
     
     // Execute the delete operation directly
     const { error } = await supabase
@@ -29,7 +35,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       // Check if this is an RLS policy violation
       if (error.code === '42501' || error.message?.includes('policy')) {
         console.error("This appears to be a Row Level Security (RLS) policy violation");
-        toast.error("You don't have permission to delete this property. Please log in or try a different property.");
+        toast.error("You don't have permission to delete this property. This may be because you didn't create it.");
       } else {
         toast.error(`Delete failed: ${error.message || error.details || 'Unknown error'}`);
       }

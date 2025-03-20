@@ -7,7 +7,7 @@ export async function fetchProperties(): Promise<Property[]> {
   try {
     console.log("Making Supabase request to fetch properties...");
     
-    // Check authentication state but don't require it
+    // Check authentication state but don't require it for fetching
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
