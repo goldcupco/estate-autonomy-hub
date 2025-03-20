@@ -98,6 +98,7 @@ export function mapProviderData(data: any): DbCommunicationProvider {
 
 // Helper function to handle dynamic table names with type safety
 export function safeFrom(table: string) {
+  // Import directly to avoid circular dependencies
   const { supabase } = require('@/integrations/supabase/client');
   // This is a hack to get around TypeScript's type system
   // by asserting the table name is a valid key in the Database["public"]["Tables"]
@@ -106,6 +107,7 @@ export function safeFrom(table: string) {
 
 // Function to execute SQL directly via Supabase
 export async function executeSql(sql: string) {
+  // Import directly to avoid circular dependencies
   const { supabase } = require('@/integrations/supabase/client');
   try {
     const { data, error } = await supabase.rpc('execute_sql', { query: sql });

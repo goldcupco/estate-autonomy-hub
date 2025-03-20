@@ -1,4 +1,5 @@
-import { supabase, supabaseUrl, supabaseKey, safeFrom } from './supabaseClient';
+
+import { supabaseUrl, supabaseKey, safeFrom } from './supabaseClient';
 import { verifyDatabaseSetup } from './supabaseSetup';
 
 // Function to execute SQL statements directly
@@ -31,6 +32,7 @@ async function executeSQL(sql: string) {
 // Function to insert data into a table
 async function insertData(table: string, data: any) {
   try {
+    // Use the safeFrom function to handle table names safely
     const { error } = await safeFrom(table).insert([data]);
     if (error) {
       console.error(`Failed to insert into ${table}:`, error);
