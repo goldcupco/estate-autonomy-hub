@@ -20,6 +20,8 @@ export function Lists() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [exportType, setExportType] = useState<'all' | 'seller' | 'buyer'>('all');
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [selectedList, setSelectedList] = useState<any | null>(null);
+  const [listDetailDialog, setListDetailDialog] = useState(false);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -187,6 +189,33 @@ export function Lists() {
     });
   };
 
+  const handleViewList = (list: any) => {
+    setSelectedList(list);
+    setListDetailDialog(true);
+  };
+
+  const handleExportList = (list: any) => {
+    const headers = ['title', 'description', 'count', 'lastUpdated', 'type'];
+    const csvContent = [
+      headers.join(','),
+      headers.map(header => `"${(list as any)[header]}"`).join(',')
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${list.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "List Exported",
+      description: `Successfully exported ${list.title} list.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -249,8 +278,8 @@ export function Lists() {
                         </p>
                       </CardContent>
                       <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm">View</Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
                           <Download className="h-4 w-4 mr-1" />
                           Export
                         </Button>
@@ -275,8 +304,8 @@ export function Lists() {
                         </p>
                       </CardContent>
                       <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm">View</Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
                           <Download className="h-4 w-4 mr-1" />
                           Export
                         </Button>
@@ -301,8 +330,8 @@ export function Lists() {
                         </p>
                       </CardContent>
                       <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm">View</Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleViewList(list)}>View</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleExportList(list)}>
                           <Download className="h-4 w-4 mr-1" />
                           Export
                         </Button>
@@ -512,6 +541,57 @@ export function Lists() {
               </CardContent>
             </Card>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={listDetailDialog} onOpenChange={setListDetailDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedList?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedList?.description}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Count</p>
+                  <p className="text-xl font-bold">{selectedList?.count}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Type</p>
+                  <p className="text-xl capitalize">{selectedList?.type}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium">Last Updated</p>
+                <p className="text-muted-foreground">{selectedList?.lastUpdated}</p>
+              </div>
+              
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-2">Sample Data</h3>
+                <div className="bg-muted p-3 rounded-md">
+                  <p>This is a placeholder for list data visualization.</p>
+                  <p className="text-muted-foreground mt-2">In a real application, this would display actual contacts from the list.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setListDetailDialog(false)}>Close</Button>
+            <Button onClick={() => {
+              if (selectedList) {
+                handleExportList(selectedList);
+              }
+            }}>
+              <Download className="mr-2 h-4 w-4" />
+              Export List
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
