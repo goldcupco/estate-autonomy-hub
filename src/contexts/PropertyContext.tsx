@@ -4,13 +4,13 @@ import { Property } from '@/pages/Properties';
 
 interface PropertyContextType {
   properties: Property[];
-  setProperties: (properties: Property[]) => void;
+  setProperties: React.Dispatch<React.SetStateAction<Property[]>>;
   isLoading: boolean;
-  setIsLoading: (isLoading: boolean) => void;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   editingProperty: Property | null;
-  setEditingProperty: (property: Property | null) => void;
+  setEditingProperty: React.Dispatch<React.SetStateAction<Property | null>>;
   addPropertyOpen: boolean;
-  setAddPropertyOpen: (open: boolean) => void;
+  setAddPropertyOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);

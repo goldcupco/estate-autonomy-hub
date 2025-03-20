@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { PropertyList } from '@/components/property/PropertyList';
 import { PropertyActions } from '@/components/property/PropertyActions';
@@ -85,7 +86,8 @@ export function Properties() {
   
   const handlePropertyAdded = (newProperty: Property) => {
     console.log("Property added, updating UI:", newProperty);
-    setProperties((prevProperties: Property[]) => [...prevProperties, newProperty]);
+    // Fix: Direct array update instead of using a callback function
+    setProperties([...properties, newProperty]);
     
     // Refresh properties to ensure we have the latest data
     loadProperties();
@@ -93,11 +95,11 @@ export function Properties() {
   
   const handleUpdateProperty = (updatedProperty: Property) => {
     console.log("Property updated, updating UI:", updatedProperty);
-    setProperties((prevProperties: Property[]) => 
-      prevProperties.map(property => 
-        property.id === updatedProperty.id ? updatedProperty : property
-      )
+    // Fix: Direct array update instead of using a callback function
+    const updatedProperties = properties.map(property => 
+      property.id === updatedProperty.id ? updatedProperty : property
     );
+    setProperties(updatedProperties);
     setEditingProperty(null);
     
     // Refresh properties to ensure we have the latest data
