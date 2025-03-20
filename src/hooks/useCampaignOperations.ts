@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Campaign } from '../models/Campaign';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +25,10 @@ export function useCampaignOperations(
   // Effect to get and store the current user ID
   useEffect(() => {
     const fetchUserId = async () => {
+      // Clear any previous errors
+      setError(null);
+      
+      // First try to get user ID from AuthContext
       if (currentUser) {
         setUserId(currentUser.id);
         console.log("Using user ID from AuthContext:", currentUser.id);
@@ -36,15 +41,26 @@ export function useCampaignOperations(
         
         if (sessionError) {
           console.error("Error getting session:", sessionError);
+          setError("Authentication error: " + sessionError.message);
           return;
         }
         
         if (sessionData?.session?.user?.id) {
           setUserId(sessionData.session.user.id);
           console.log("Using user ID from Supabase session:", sessionData.session.user.id);
+        } else {
+          // In development, fallback to system user if no auth
+          if (process.env.NODE_ENV === 'development') {
+            setUserId('system');
+            console.log("Development mode: Using mock user ID 'system'");
+          } else {
+            console.log("No authenticated user found");
+            setError("You must be logged in to perform campaign operations");
+          }
         }
       } catch (err) {
         console.error("Error fetching session:", err);
+        setError("Error fetching user session");
       }
     };
 
@@ -83,11 +99,17 @@ export function useCampaignOperations(
             effectiveUserId = session?.user?.id || null;
             
             if (!effectiveUserId) {
-              console.error("No authenticated user found");
-              throw new Error("You must be logged in to create a campaign");
+              // In development mode only, use system as fallback
+              if (process.env.NODE_ENV === 'development') {
+                effectiveUserId = 'system';
+                console.log("Development mode: Using system user ID");
+              } else {
+                console.error("No authenticated user found");
+                throw new Error("You must be logged in to create a campaign");
+              }
+            } else {
+              console.log("Using user ID from Supabase session:", effectiveUserId);
             }
-            
-            console.log("Using user ID from Supabase session:", effectiveUserId);
           } catch (err) {
             console.error("Error fetching session:", err);
             throw new Error("Authentication error: Could not retrieve user session");

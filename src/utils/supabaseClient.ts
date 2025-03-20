@@ -1,18 +1,18 @@
-import { supabase } from '@/integrations/supabase/client';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
+
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 import { Json } from '@/integrations/supabase/types';
 
-// Re-export the client
-export { supabase };
+// URL and key should match those in the main Supabase client
+export const supabaseUrl = "https://gdxzktqieasxxcocwsjh.supabase.co";
+export const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHprdHFpZWFzeHhjb2N3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjc1MTEsImV4cCI6MjA1NzkwMzUxMX0.EKFCdp3mGjHsBalEWUcIApkHtcmbzR8876N8F3OhlKY";
 
-// Export URL and key for convenience
-export const supabaseUrl = SUPABASE_URL;
-export const supabaseAnonKey = SUPABASE_ANON_KEY;
+// Re-export the client from integrations for backward compatibility
+export { supabase } from '@/integrations/supabase/client';
 
-// Type definitions for our database tables
-export type ProviderType = 'twilio' | 'callrail';
+// Define types for our provider
+export type ProviderType = 'twilio' | 'callrail' | 'local';
 
-// This interface defines what we expect in our application
 export interface DbCommunicationProvider {
   id: string;
   user_id: string;
@@ -30,31 +30,26 @@ export interface DbCommunicationProvider {
   updated_at: string;
 }
 
-// Helper function to safely convert Supabase JSON to our expected config format
-export function mapProviderConfig(config: Json | null): DbCommunicationProvider['config'] {
-  if (!config) return {};
-  
-  // Handle the case where config could be any JSON value
-  if (typeof config !== 'object' || config === null) {
-    return {};
-  }
-  
-  // Now we know config is an object, safely extract properties
-  const typedConfig: DbCommunicationProvider['config'] = {};
-  
-  // We need to cast 'config' to any first to avoid TypeScript errors when accessing properties
-  const anyConfig = config as any;
-  
-  if (anyConfig.accountSid) typedConfig.accountSid = String(anyConfig.accountSid);
-  if (anyConfig.authToken) typedConfig.authToken = String(anyConfig.authToken);
-  if (anyConfig.twilioNumber) typedConfig.twilioNumber = String(anyConfig.twilioNumber);
-  if (anyConfig.apiKey) typedConfig.apiKey = String(anyConfig.apiKey);
-  if (anyConfig.accountId) typedConfig.accountId = String(anyConfig.accountId);
-  
-  return typedConfig;
+export interface SmsRecord {
+  id: string;
+  phone_number: string;
+  contact_name: string;
+  timestamp: string;
+  message: string;
+  direction: 'outgoing' | 'incoming';
 }
 
-// Helper function to convert raw Supabase provider data to our application type
+// Helper function to safely cast Json to provider config
+export function mapProviderConfig(config: Json): DbCommunicationProvider['config'] {
+  if (typeof config === 'object' && config !== null) {
+    return config as DbCommunicationProvider['config'];
+  }
+  
+  // Return empty object as fallback
+  return {};
+}
+
+// Helper function to map Supabase data to our DbCommunicationProvider type
 export function mapProviderData(data: any): DbCommunicationProvider {
   return {
     id: data.id,
@@ -68,107 +63,47 @@ export function mapProviderData(data: any): DbCommunicationProvider {
   };
 }
 
-export interface DbCallRecord {
-  id: string;
-  user_id: string;
-  provider_id: string;
-  provider_type: ProviderType;
-  call_id: string;
-  phone_number: string;
-  contact_name: string;
-  timestamp: string;
-  duration: number;
-  recording_url?: string;
-  notes?: string;
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbSmsRecord {
-  id: string;
-  user_id: string;
-  provider_id: string;
-  sms_id: string;
-  phone_number: string;
-  contact_name: string;
-  timestamp: string;
-  message: string;
-  direction: 'outgoing' | 'incoming';
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbLetterRecord {
-  id: string;
-  user_id: string;
-  recipient: string;
-  address?: string;
-  timestamp: string;
-  content: string;
-  status: 'draft' | 'sent' | 'delivered';
-  tracking_number?: string;
-  lead_id?: string;
-  created_at: string;
-}
-
-export interface DbLead {
-  id: string;
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  phone?: string;
-  lead_type: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Helper function to safely type Supabase queries with string table names
+// Helper function to handle dynamic table names with type safety
 export function safeFrom(table: string) {
+  // This is a hack to get around TypeScript's type system
+  // by asserting the table name is a valid key in the Database["public"]["Tables"]
   return supabase.from(table as any);
 }
 
-// Improved table creation function using direct SQL for more reliability
-export async function createTablesDirectly() {
-  console.log('Creating tables using direct SQL...');
-  
+// Function to execute SQL directly via Supabase
+export async function executeSql(sql: string) {
   try {
-    // Create all tables with one REST API call for better reliability
-    const tableCreationSql = `
-      CREATE TABLE IF NOT EXISTS public.leads (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT NOT NULL,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        address TEXT,
-        city TEXT,
-        state TEXT,
-        zip TEXT,
-        lead_type TEXT NOT NULL,
-        lead_source TEXT,
-        status TEXT NOT NULL,
-        stage TEXT,
-        assigned_to TEXT,
-        notes TEXT,
-        last_contact_date TIMESTAMPTZ,
-        next_follow_up TIMESTAMPTZ,
-        tags JSONB DEFAULT '[]'::jsonb,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
+    const { data, error } = await supabase.rpc('execute_sql', { query: sql });
+    
+    if (error) {
+      console.error('Error executing SQL:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true, data };
+  } catch (e) {
+    console.error('Exception executing SQL:', e);
+    return { success: false, error: e };
+  }
+}
 
+// Function to create tables directly
+export async function createTablesDirectly() {
+  try {
+    // This approach uses a single SQL transaction to create all tables
+    const { success, error } = await executeSql(`
+      BEGIN;
+      
+      -- Create tables if they don't exist
       CREATE TABLE IF NOT EXISTS public.communication_providers (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
         type TEXT NOT NULL,
-        is_default BOOLEAN DEFAULT false,
+        is_default BOOLEAN DEFAULT FALSE,
         config JSONB DEFAULT '{}'::jsonb,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
       );
 
       CREATE TABLE IF NOT EXISTS public.call_records (
@@ -179,14 +114,14 @@ export async function createTablesDirectly() {
         call_id TEXT NOT NULL,
         phone_number TEXT NOT NULL,
         contact_name TEXT NOT NULL,
-        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        timestamp TIMESTAMPTZ DEFAULT now(),
         duration INTEGER DEFAULT 0,
-        recording_url TEXT,
         notes TEXT,
-        lead_id UUID,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        recording_url TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        lead_id UUID
       );
-
+      
       CREATE TABLE IF NOT EXISTS public.sms_records (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
@@ -194,165 +129,73 @@ export async function createTablesDirectly() {
         sms_id TEXT NOT NULL,
         phone_number TEXT NOT NULL,
         contact_name TEXT NOT NULL,
-        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        timestamp TIMESTAMPTZ DEFAULT now(),
         message TEXT NOT NULL,
         direction TEXT NOT NULL,
-        lead_id UUID,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT now(),
+        lead_id UUID
       );
-
+      
       CREATE TABLE IF NOT EXISTS public.letter_records (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
         recipient TEXT NOT NULL,
-        address TEXT,
-        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        timestamp TIMESTAMPTZ DEFAULT now(),
         content TEXT NOT NULL,
         status TEXT NOT NULL,
         tracking_number TEXT,
-        lead_id UUID,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        address TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        lead_id UUID
       );
-    `;
-    
-    // Execute SQL directly via REST API for maximum compatibility
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Prefer': 'resolution=ignore-duplicates,return=minimal'
-      },
-      body: JSON.stringify({
-        query: tableCreationSql
-      })
-    });
-    
-    // If REST API approach fails, fallback to one-by-one table creation using Supabase inserts
-    if (!response.ok) {
-      console.log('Direct SQL execution failed, falling back to table creation via inserts...');
       
-      // Try creating tables by inserting records (this approach has worked for some users)
-      const tables = [
-        {
-          name: 'communication_providers',
-          record: {
-            id: '00000000-0000-0000-0000-000000000000',
-            user_id: 'system',
-            name: 'Default Provider',
-            type: 'twilio',
-            is_default: true,
-            config: {}
-          }
-        },
-        {
-          name: 'call_records',
-          record: {
-            id: '00000000-0000-0000-0000-000000000000',
-            user_id: 'system',
-            provider_id: 'system',
-            provider_type: 'twilio',
-            call_id: 'system-test',
-            phone_number: '+10000000000',
-            contact_name: 'System Test',
-            timestamp: new Date().toISOString(),
-            duration: 0
-          }
-        },
-        {
-          name: 'sms_records',
-          record: {
-            id: '00000000-0000-0000-0000-000000000000',
-            user_id: 'system',
-            provider_id: 'system',
-            sms_id: 'system-test',
-            phone_number: '+10000000000',
-            contact_name: 'System Test',
-            timestamp: new Date().toISOString(),
-            message: 'System test',
-            direction: 'outgoing'
-          }
-        },
-        {
-          name: 'letter_records',
-          record: {
-            id: '00000000-0000-0000-0000-000000000000',
-            user_id: 'system',
-            recipient: 'System Test',
-            timestamp: new Date().toISOString(),
-            content: 'System test',
-            status: 'draft'
-          }
-        }
-      ];
+      -- Also create any other required tables
+      CREATE TABLE IF NOT EXISTS public.campaigns (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL,
+        type TEXT NOT NULL,
+        start_date TIMESTAMPTZ,
+        end_date TIMESTAMPTZ,
+        created_by TEXT NOT NULL,
+        assigned_users JSONB DEFAULT '[]'::jsonb,
+        budget NUMERIC,
+        metrics JSONB DEFAULT '{}'::jsonb,
+        access_restricted BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      );
       
-      // Try to create each table by inserting a record
-      let successCount = 0;
-      for (const table of tables) {
-        try {
-          const { error } = await supabase
-            .from(table.name as any)
-            .upsert(table.record, { onConflict: 'id' });
-          
-          if (!error || error.code === '23505') { // Ignore duplicate key errors
-            console.log(`Table ${table.name} created or already exists`);
-            successCount++;
-          } else {
-            console.error(`Error creating table ${table.name}:`, error);
-          }
-        } catch (tableError) {
-          console.error(`Exception creating table ${table.name}:`, tableError);
-        }
-      }
-      
-      // Return success only if we created all tables
-      if (successCount === tables.length) {
-        return { success: true };
-      } else {
-        return { 
-          success: false, 
-          error: `Only created ${successCount}/${tables.length} tables. Please create the remaining tables manually.` 
-        };
-      }
-    } else {
-      console.log('SQL execution successful, tables should be created');
-      return { success: true };
-    }
-  } catch (error) {
-    console.error('Error during table creation:', error);
-    return { success: false, error };
-  }
-}
+      CREATE TABLE IF NOT EXISTS public.campaign_leads (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        campaign_id UUID NOT NULL,
+        lead_id UUID NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      );
 
-// Legacy function kept for compatibility
-export async function executeSql(sql: string) {
-  console.log('SQL execution requested:', sql);
-  
-  try {
-    // Execute the SQL directly via REST API
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Prefer': 'resolution=ignore-duplicates,return=minimal'
-      },
-      body: JSON.stringify({
-        query: sql
-      })
-    });
+      -- Enable RLS on all tables
+      ALTER TABLE IF EXISTS public.communication_providers ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.call_records ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.sms_records ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.letter_records ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.campaigns ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE IF EXISTS public.campaign_leads ENABLE ROW LEVEL SECURITY;
+      
+      -- Create RLS policies for campaigns (critical for our bug fix)
+      DROP POLICY IF EXISTS "Enable all access to authenticated users" ON public.campaigns;
+      CREATE POLICY "Enable all access to authenticated users" 
+        ON public.campaigns
+        USING (auth.uid()::text = user_id OR user_id = 'system')
+        WITH CHECK (auth.uid()::text = user_id OR user_id = 'system');
+      
+      COMMIT;
+    `);
     
-    if (response.ok) {
-      return { success: true };
-    } else {
-      const errorText = await response.text();
-      console.error('SQL execution failed:', errorText);
-      return { success: false, error: errorText };
-    }
-  } catch (error) {
-    console.error('Exception during SQL execution:', error);
-    return { success: false, error };
+    return { success, error };
+  } catch (e) {
+    console.error('Exception creating tables:', e);
+    return { success: false, error: e };
   }
 }

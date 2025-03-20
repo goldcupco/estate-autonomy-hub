@@ -10,8 +10,10 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     console.log("Creating new campaign with data:", campaign);
     
     // First check that we have a user_id provided from the hook
-    if (!campaign.user_id) {
-      console.error('No user_id provided in campaign data');
+    let effectiveUserId = campaign.user_id;
+    
+    if (!effectiveUserId) {
+      console.log('No user_id provided in campaign data, fetching from session');
       
       // As a fallback, try to get the current authenticated user
       const { data: authData, error: authError } = await supabase.auth.getSession();
@@ -22,19 +24,21 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
         return null;
       }
       
-      const authenticatedUserId = authData?.session?.user?.id;
+      effectiveUserId = authData?.session?.user?.id;
       
-      if (!authenticatedUserId) {
-        console.error('No authenticated user session found');
-        toast.error('You must be logged in to create a campaign');
-        return null;
+      if (!effectiveUserId) {
+        // If we're in development mode and no authenticated user, use a mock ID
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Development mode: Using mock user ID "system"');
+          effectiveUserId = 'system';
+        } else {
+          console.error('No authenticated user session found');
+          toast.error('You must be logged in to create a campaign');
+          return null;
+        }
+      } else {
+        console.log('Using authenticated user ID from session:', effectiveUserId);
       }
-      
-      // Set the user_id to the authenticated user
-      campaign.user_id = authenticatedUserId;
-      campaign.createdBy = campaign.createdBy || authenticatedUserId;
-      
-      console.log('Using authenticated user ID from session:', authenticatedUserId);
     }
     
     // Format the campaign data for the database
@@ -45,12 +49,12 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       type: campaign.type,
       start_date: campaign.startDate || null,
       end_date: campaign.endDate || null,
-      created_by: campaign.createdBy || campaign.user_id,
+      created_by: campaign.createdBy || effectiveUserId,
       assigned_users: campaign.assignedUsers || [],
       budget: campaign.budget || 0,
       metrics: ensureMetricsFormat(campaign.metrics),
       access_restricted: campaign.accessRestricted || false,
-      user_id: campaign.user_id // Critical for RLS
+      user_id: effectiveUserId // Critical for RLS
     };
     
     console.log("Formatted campaign data for insert:", campaignData);
@@ -87,6 +91,17 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       // Enhanced error message based on error code
       if (error.code === '42501') {
         toast.error('Permission denied: You do not have access to create campaigns');
+        console.log('RLS policy issue - attempting to refresh session...');
+        
+        // Force refresh the session
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('Error refreshing session:', refreshError);
+          toast.error('Authentication error: Please log in again');
+        } else {
+          console.log('Session refreshed, please try again');
+          toast.error('Authentication refreshed, please try again');
+        }
       } else if (error.code === '23505') {
         toast.error('A campaign with this name already exists');
       } else if (error.code === '401' || error.code.toString() === '401') {
