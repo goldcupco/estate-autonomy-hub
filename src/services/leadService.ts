@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Lead, Note } from '@/components/leads/types';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from '@/hooks/use-toast';
 
 // Fetch all leads from the database
 export const fetchLeads = async (): Promise<Lead[]> => {
@@ -90,12 +91,28 @@ export const addLead = async (lead: Omit<Lead, 'id' | 'dateAdded' | 'lastContact
     
     if (error) {
       console.error('Error adding lead:', error);
+      toast({
+        title: 'Error adding lead',
+        description: error.message,
+        variant: 'destructive'
+      });
       throw error;
     }
     
     if (!data || data.length === 0) {
-      throw new Error('No data returned from insert');
+      const errorMsg = 'No data returned from insert';
+      toast({
+        title: 'Error adding lead',
+        description: errorMsg,
+        variant: 'destructive'
+      });
+      throw new Error(errorMsg);
     }
+    
+    toast({
+      title: 'Lead added successfully',
+      description: `${lead.name} has been added as a new lead`,
+    });
     
     return {
       id: data[0].id,
@@ -139,8 +156,18 @@ export const updateLead = async (lead: Lead): Promise<void> => {
     
     if (error) {
       console.error('Error updating lead:', error);
+      toast({
+        title: 'Error updating lead',
+        description: error.message,
+        variant: 'destructive'
+      });
       throw error;
     }
+    
+    toast({
+      title: 'Lead updated',
+      description: `${lead.name}'s information has been updated`,
+    });
   } catch (error) {
     console.error('Error updating lead:', error);
     throw error;
@@ -159,6 +186,11 @@ export const addNote = async (leadId: string, note: Omit<Note, 'id'>): Promise<N
     
     if (leadError) {
       console.error('Error fetching lead notes:', leadError);
+      toast({
+        title: 'Error adding note',
+        description: leadError.message,
+        variant: 'destructive'
+      });
       throw leadError;
     }
     
@@ -183,8 +215,18 @@ export const addNote = async (leadId: string, note: Omit<Note, 'id'>): Promise<N
     
     if (error) {
       console.error('Error adding note to lead:', error);
+      toast({
+        title: 'Error adding note',
+        description: error.message,
+        variant: 'destructive'
+      });
       throw error;
     }
+    
+    toast({
+      title: 'Note added',
+      description: 'Your note has been saved successfully',
+    });
     
     return newNote;
   } catch (error) {
@@ -203,8 +245,18 @@ export const deleteLead = async (leadId: string): Promise<void> => {
     
     if (error) {
       console.error('Error deleting lead:', error);
+      toast({
+        title: 'Error deleting lead',
+        description: error.message,
+        variant: 'destructive'
+      });
       throw error;
     }
+    
+    toast({
+      title: 'Lead deleted',
+      description: 'The lead has been permanently removed',
+    });
   } catch (error) {
     console.error('Error deleting lead:', error);
     throw error;
@@ -222,6 +274,11 @@ export const getLeadById = async (leadId: string): Promise<Lead | null> => {
     
     if (error) {
       console.error('Error fetching lead:', error);
+      toast({
+        title: 'Error fetching lead',
+        description: error.message,
+        variant: 'destructive'
+      });
       return null;
     }
     
@@ -231,7 +288,7 @@ export const getLeadById = async (leadId: string): Promise<Lead | null> => {
         name: `${data.first_name} ${data.last_name}`,
         email: data.email || '',
         phone: data.phone || '',
-        status: data.status as Lead['status'],
+        status: mapDatabaseStatusToLeadStatus(data.status),
         source: data.lead_source || 'Unknown',
         dateAdded: new Date(data.created_at).toISOString().split('T')[0],
         lastContact: data.last_contact_date 

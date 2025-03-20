@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -26,7 +27,7 @@ export const getLists = async (): Promise<List[]> => {
   try {
     const { data, error } = await supabase
       .from('lists')
-      .select('*');
+      .select('*, list_items(count)');
       
     if (error) {
       console.error('Error fetching lists:', error);
@@ -42,15 +43,19 @@ export const getLists = async (): Promise<List[]> => {
     
     // Format the data from database to match our List interface
     if (data && data.length > 0) {
-      return data.map(item => ({
-        id: item.id,
-        title: item.name,
-        description: item.description || '',
-        // Use count property if it exists, otherwise default to 0
-        count: typeof item.count !== 'undefined' ? item.count : 0,
-        lastUpdated: new Date(item.updated_at).toISOString().split('T')[0],
-        type: mapDatabaseTypeToListType(item.type)
-      }));
+      return data.map(item => {
+        // Calculate count from list_items if available
+        const itemCount = Array.isArray(item.list_items) ? item.list_items.length : 0;
+        
+        return {
+          id: item.id,
+          title: item.name,
+          description: item.description || '',
+          count: itemCount,
+          lastUpdated: new Date(item.updated_at).toISOString().split('T')[0],
+          type: mapDatabaseTypeToListType(item.type)
+        };
+      });
     }
     
     // If no data, return mock data
@@ -64,7 +69,7 @@ export const getLists = async (): Promise<List[]> => {
 // Helper function to ensure type is one of the allowed values
 function mapDatabaseTypeToListType(type: string): 'seller' | 'buyer' {
   if (type === 'seller' || type === 'buyer') {
-    return type;
+    return type as 'seller' | 'buyer';
   }
   
   // Default to 'buyer' if the type is not valid
@@ -77,7 +82,7 @@ export const getListById = async (id: string): Promise<List | null> => {
   try {
     const { data, error } = await supabase
       .from('lists')
-      .select('*')
+      .select('*, list_items(count)')
       .eq('id', id)
       .single();
       
@@ -87,12 +92,15 @@ export const getListById = async (id: string): Promise<List | null> => {
     }
     
     if (data) {
+      // Calculate count from list_items if available
+      const itemCount = data.list_items ? 
+        (Array.isArray(data.list_items) ? data.list_items.length : 0) : 0;
+      
       return {
         id: data.id,
         title: data.name,
         description: data.description || '',
-        // Use count property if it exists, otherwise default to 0
-        count: typeof data.count !== 'undefined' ? data.count : 0,
+        count: itemCount,
         lastUpdated: new Date(data.updated_at).toISOString().split('T')[0],
         type: mapDatabaseTypeToListType(data.type)
       };
@@ -111,7 +119,6 @@ export const createList = async (list: Omit<List, 'id' | 'lastUpdated'>): Promis
     const newList = {
       name: list.title,
       description: list.description,
-      count: list.count,
       type: list.type,
       user_id: 'system', // In a real app, this would be the authenticated user's ID
       created_at: new Date().toISOString(),
@@ -138,8 +145,7 @@ export const createList = async (list: Omit<List, 'id' | 'lastUpdated'>): Promis
         id: data[0].id,
         title: data[0].name,
         description: data[0].description || '',
-        // Use count property if it exists, otherwise default to 0
-        count: typeof data[0].count !== 'undefined' ? data[0].count : 0,
+        count: 0, // New list has no items yet
         lastUpdated: new Date(data[0].updated_at).toISOString().split('T')[0],
         type: mapDatabaseTypeToListType(data[0].type)
       };
@@ -159,7 +165,6 @@ export const updateList = async (id: string, updates: Partial<Omit<List, 'id' | 
     
     if (updates.title) listUpdates.name = updates.title;
     if (updates.description) listUpdates.description = updates.description;
-    if (updates.count !== undefined) listUpdates.count = updates.count;
     if (updates.type) listUpdates.type = updates.type;
     
     listUpdates.updated_at = new Date().toISOString();
@@ -178,6 +183,11 @@ export const updateList = async (id: string, updates: Partial<Omit<List, 'id' | 
       });
       return false;
     }
+    
+    toast({
+      title: 'List updated',
+      description: 'The list has been successfully updated.',
+    });
     
     return true;
   } catch (err) {
@@ -204,6 +214,11 @@ export const deleteList = async (id: string): Promise<boolean> => {
       return false;
     }
     
+    toast({
+      title: 'List deleted',
+      description: 'The list has been successfully deleted.',
+    });
+    
     return true;
   } catch (err) {
     console.error('Error in deleteList:', err);
@@ -227,8 +242,19 @@ export const getCampaigns = async (): Promise<Campaign[]> => {
       return data.map(item => {
         // Safely extract metrics values or default to 0
         const metrics = item.metrics || {};
-        const contacts = typeof metrics === 'object' && metrics !== null ? (metrics.contacts || 0) : 0;
-        const responses = typeof metrics === 'object' && metrics !== null ? (metrics.responses || 0) : 0;
+        let contacts = 0;
+        let responses = 0;
+        
+        // Process metrics differently based on its type
+        if (typeof metrics === 'object' && metrics !== null) {
+          if ('contacts' in metrics) {
+            contacts = Number(metrics.contacts) || 0;
+          }
+          
+          if ('responses' in metrics) {
+            responses = Number(metrics.responses) || 0;
+          }
+        }
         
         return {
           id: item.id,
