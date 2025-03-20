@@ -72,7 +72,7 @@ export function usePropertyData(
     setIsSubmitting(true);
 
     try {
-      if (isEditMode && propertyToEdit && onPropertyUpdated) {
+      if (isEditMode && propertyToEdit) {
         const updatedProperty = {
           ...propertyToEdit,
           ...property
@@ -83,8 +83,13 @@ export function usePropertyData(
         const success = await updateProperty(updatedProperty);
         
         if (success) {
-          console.log("Update successful, updating UI with:", updatedProperty);
-          onPropertyUpdated(updatedProperty);
+          console.log("Update successful in database");
+          
+          if (onPropertyUpdated) {
+            console.log("Updating UI with:", updatedProperty);
+            onPropertyUpdated(updatedProperty);
+          }
+          
           toast.success('Property updated successfully');
           onOpenChange(false);
         } else {
@@ -109,12 +114,12 @@ export function usePropertyData(
         const newProperty = await createProperty(propertyToCreate);
         
         if (newProperty && onPropertyAdded) {
-          console.log("Creation successful, adding to UI:", newProperty);
+          console.log("Creation successful in database, adding to UI:", newProperty);
           onPropertyAdded(newProperty);
           toast.success('Property added successfully');
           onOpenChange(false);
         } else {
-          console.error("Failed to add property - no property returned");
+          console.error("Failed to add property - no property returned from database");
           toast.error('Failed to add property');
         }
       }

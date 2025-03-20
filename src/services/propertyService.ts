@@ -76,11 +76,10 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
     if (error) {
       console.error("Supabase delete error:", error);
       toast.error(`Delete failed: ${error.message}`);
-      throw error;
+      return false;
     }
     
     console.log("Property deleted successfully");
-    toast.success("Property deleted successfully");
     return true;
   } catch (error) {
     console.error('Error deleting property:', error);
@@ -111,7 +110,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       bathrooms: updatedProperty.bathrooms || 0,
       square_feet: updatedProperty.sqft || 0,
       status: updatedProperty.status,
-      images: [updatedProperty.imageUrl],
+      images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : null,
       property_type: updatedProperty.propertyType,
       updated_at: new Date().toISOString()
     };
@@ -126,7 +125,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     if (error) {
       console.error("Supabase update error:", error);
       toast.error(`Update failed: ${error.message}`);
-      throw error;
+      return false;
     }
     
     console.log("Property updated successfully");
@@ -171,16 +170,17 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     const { data, error } = await supabase
       .from('properties')
       .insert(propertyData)
-      .select('*')
+      .select()
       .single();
       
     if (error) {
       console.error("Supabase insert error:", error);
       toast.error(`Creation failed: ${error.message}`);
-      throw error;
+      return null;
     }
     
     if (data) {
+      console.log("Raw data returned from insert:", data);
       const createdProperty: Property = {
         id: data.id,
         address: data.address || '',
@@ -200,7 +200,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return createdProperty;
     }
     
-    console.log("Property created but no data returned");
+    console.error("Property created but no data returned");
     return null;
   } catch (error) {
     console.error('Error creating property:', error);

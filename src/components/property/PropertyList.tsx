@@ -42,31 +42,23 @@ export function PropertyList() {
     try {
       console.log("Attempting to delete property with ID:", propertyId);
       
-      // First update UI optimistically
-      setProperties(properties.filter(property => property.id !== propertyId));
-      
-      // Then perform the actual database operation
+      // Perform the actual database operation first
       const success = await deleteProperty(propertyId);
       
       if (success) {
         console.log("Delete operation successful for property ID:", propertyId);
-        toast.success("Property deleted successfully");
         
-        // Refresh the properties to ensure we have the latest data
-        refreshProperties();
+        // Then update UI after successful database operation
+        setProperties(properties.filter(property => property.id !== propertyId));
+        
+        toast.success("Property deleted successfully");
       } else {
         console.error("Delete operation failed for property ID:", propertyId);
         toast.error("Failed to delete property");
-        
-        // Undo the optimistic update if the operation failed
-        refreshProperties();
       }
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);
       toast.error("An error occurred while deleting the property");
-      
-      // Refresh to restore correct state
-      refreshProperties();
     }
   };
 
