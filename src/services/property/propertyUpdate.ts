@@ -13,7 +13,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // Get the current authentication state
+    // Check authentication state
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     console.log("Authentication session check:", session ? "Session exists" : "No session");
     

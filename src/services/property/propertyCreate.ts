@@ -14,23 +14,16 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    // Get the current authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Check authentication state
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (authError) {
-      console.error("Authentication error:", authError);
-      toast.error("Creation failed: Authentication error");
-      return null;
+    let userId = 'anonymous';
+    if (session && session.user) {
+      userId = session.user.id;
+      console.log("Current authenticated user ID for property creation:", userId);
+    } else {
+      console.log("No authenticated session found, using anonymous user ID");
     }
-    
-    if (!user) {
-      console.error("No authenticated user found");
-      toast.error("Creation failed: You must be logged in");
-      return null;
-    }
-    
-    // Use the authenticated user ID
-    console.log("Current authenticated user ID for property creation:", user.id);
     
     // Format the data for the database
     const propertyData = {
@@ -45,7 +38,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       status: newProperty.status || 'For Sale',
       images: newProperty.imageUrl ? [newProperty.imageUrl] : ['https://images.unsplash.com/photo-1568605114967-8130f3a36994'],
       property_type: newProperty.propertyType || 'House',
-      user_id: user.id, // Use the authenticated user's ID
+      user_id: userId, // Use the user ID from session or default to anonymous
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -67,7 +60,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       // Check if this is an RLS policy violation
       if (error.code === '42501' || error.message?.includes('policy')) {
         console.error("This appears to be a Row Level Security (RLS) policy violation");
-        toast.error("You don't have permission to create properties");
+        toast.error("You don't have permission to create properties. Please log in and try again.");
       } else {
         toast.error(`Creation failed: ${error.message || error.details || 'Unknown error'}`);
       }
