@@ -67,53 +67,20 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // First, verify the property exists
-    const { data: existingProperty, error: getError } = await supabase
-      .from('properties')
-      .select('id')
-      .eq('id', propertyId)
-      .single();
-    
-    if (getError || !existingProperty) {
-      console.error("Error verifying property before delete:", getError);
-      toast.error("Cannot delete: Property not found");
-      return false;
-    }
-    
-    console.log("Property verified, proceeding with deletion");
-    
-    // Make the database request and await the response
-    const { error, status } = await supabase
+    // Execute the delete operation
+    const { error } = await supabase
       .from('properties')
       .delete()
       .eq('id', propertyId);
       
-    // Log the response status for debugging
-    console.log(`Delete operation status: ${status}`);
-    
+    // Check for errors during deletion
     if (error) {
       console.error("Supabase delete error:", error);
       toast.error(`Delete failed: ${error.message}`);
       return false;
     }
     
-    // Verify the property was actually deleted
-    const { data: checkDeleted, error: checkError } = await supabase
-      .from('properties')
-      .select('id')
-      .eq('id', propertyId);
-      
-    if (checkError) {
-      console.error("Error verifying deletion:", checkError);
-      return false;
-    }
-    
-    if (checkDeleted && checkDeleted.length > 0) {
-      console.error("Property still exists after delete operation");
-      toast.error("Delete operation failed: Property still exists");
-      return false;
-    }
-    
+    // If we got here, the delete was successful
     console.log("Property deleted successfully from database");
     return true;
   } catch (error) {
@@ -144,7 +111,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       bathrooms: updatedProperty.bathrooms || 0,
       square_feet: updatedProperty.sqft || 0,
       status: updatedProperty.status,
-      images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : null,
+      images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
       updated_at: new Date().toISOString()
     };
@@ -152,13 +119,10 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     console.log("Sending to Supabase:", propertyData);
 
     // Perform the update and await the response
-    const { error, status } = await supabase
+    const { error } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
-      
-    // Log the response status for debugging
-    console.log(`Update operation status: ${status}`);
       
     if (error) {
       console.error("Supabase update error:", error);
@@ -166,20 +130,6 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // Verify the update was successful
-    const { data: updatedData, error: verifyError } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', updatedProperty.id)
-      .single();
-      
-    if (verifyError || !updatedData) {
-      console.error("Error verifying update:", verifyError);
-      toast.error("Update verification failed");
-      return false;
-    }
-    
-    console.log("Verification successful, updated data:", updatedData);
     console.log("Property updated successfully in database");
     return true;
   } catch (error) {
@@ -200,7 +150,7 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
       return null;
     }
     
-    // Validate that the data types are correct
+    // Format the data for the database
     const propertyData = {
       address: String(newProperty.address),
       city: String(newProperty.city),
@@ -221,13 +171,10 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
     console.log("Sending to Supabase:", propertyData);
 
     // Execute insert and await the response
-    const { data, error, status } = await supabase
+    const { data, error } = await supabase
       .from('properties')
       .insert(propertyData)
       .select();
-      
-    // Log the response status for debugging
-    console.log(`Create operation status: ${status}`);
       
     if (error) {
       console.error("Supabase insert error:", error);

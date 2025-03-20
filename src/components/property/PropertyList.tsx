@@ -26,6 +26,7 @@ export function PropertyList() {
       console.log("Refreshing properties from PropertyList component");
       const refreshedProperties = await fetchProperties();
       setProperties(refreshedProperties);
+      toast.success("Properties refreshed");
     } catch (error) {
       console.error("Error refreshing properties:", error);
       toast.error("Failed to refresh properties");
@@ -39,33 +40,39 @@ export function PropertyList() {
   };
 
   const handleDeleteProperty = async (propertyId: string) => {
+    if (!propertyId) {
+      toast.error("Invalid property ID");
+      return;
+    }
+    
     try {
       console.log("Attempting to delete property with ID:", propertyId);
       setIsLoading(true);
       
-      // Wait for the delete operation to complete before updating UI
+      // First attempt the database deletion
       const success = await deleteProperty(propertyId);
       
       if (success) {
-        console.log("Delete operation successful for property ID:", propertyId);
+        console.log("Deletion successful, updating UI");
         
-        // Refresh properties from database to ensure data consistency
-        await refreshProperties();
+        // Update local state to remove the deleted property
+        const updatedProperties = properties.filter(p => p.id !== propertyId);
+        setProperties(updatedProperties);
         
-        // Show success toast after confirmation of database update
+        // Show success message
         toast.success("Property deleted successfully");
       } else {
-        console.error("Delete operation failed for property ID:", propertyId);
+        console.error("Delete operation returned false");
         toast.error("Failed to delete property");
         
-        // Refresh anyway to ensure UI is in sync with database
+        // Refresh properties to ensure UI matches database
         await refreshProperties();
       }
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);
       toast.error("An error occurred while deleting the property");
       
-      // Refresh properties to ensure UI state matches database
+      // Refresh to ensure UI is in sync
       await refreshProperties();
     } finally {
       setIsLoading(false);
