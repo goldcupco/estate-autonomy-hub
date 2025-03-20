@@ -1,4 +1,3 @@
-
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -50,34 +49,22 @@ export function PropertyList() {
       console.log("Attempting to delete property with ID:", propertyId);
       setIsLoading(true);
       
-      // First attempt the database deletion
+      // Attempt the database deletion
       const success = await deleteProperty(propertyId);
       
       if (success) {
-        console.log("Deletion successful, updating UI");
-        
-        // Remove the deleted property from state immediately
+        // Remove the deleted property from state
         setProperties(prev => prev.filter(p => p.id !== propertyId));
-        
-        // Force a complete refresh from the database after a short delay
-        // This ensures the server has time to process the deletion
-        setTimeout(async () => {
-          await refreshProperties();
-        }, 500);
-        
         toast.success("Property deleted successfully");
       } else {
-        console.error("Delete operation returned false");
         toast.error("Failed to delete property");
-        
-        // Refresh properties to ensure UI matches database
-        await refreshProperties();
       }
+      
+      // Force a complete refresh to ensure UI is in sync with database
+      await refreshProperties();
     } catch (error) {
       console.error("Error in handleDeleteProperty:", error);
       toast.error("An error occurred while deleting the property");
-      
-      // Refresh to ensure UI is in sync
       await refreshProperties();
     } finally {
       setIsLoading(false);
