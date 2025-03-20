@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DataUploader } from '@/components/ui/DataUploader';
 import { ClipboardList, Download, Upload, Users, BarChart, Calendar, Phone, Mail, MessageSquare } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import CampaignTracker from '@/components/campaigns/CampaignTracker';
 import { Badge } from '@/components/ui/badge';
 import Sidebar from '@/components/layout/Sidebar';
