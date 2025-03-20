@@ -55,6 +55,11 @@ describe('usePropertyData Hook', () => {
       zipCode: '78701',
       status: 'For Sale' as const,
       propertyType: 'House' as const,
+      price: 450000,
+      bedrooms: 3,
+      bathrooms: 2,
+      sqft: 1800,
+      imageUrl: 'https://example.com/image.jpg'
     };
 
     const { result } = renderHook(() => 

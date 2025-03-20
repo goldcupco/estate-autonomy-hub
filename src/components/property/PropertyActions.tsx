@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Building, Database } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MLSImporter } from '@/components/property/MLSImporter';
+import { MLSImporter } from '@/components/property/mls';
 import { toast } from 'sonner';
 import { usePropertyContext } from '@/contexts/PropertyContext';
 import { fetchProperties } from '@/services/propertyService';
