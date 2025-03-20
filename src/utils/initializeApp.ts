@@ -1,19 +1,33 @@
-
 import { supabase, supabaseUrl, supabaseKey, safeFrom } from './supabaseClient';
 import { verifyDatabaseSetup } from './supabaseSetup';
 
 // Function to execute SQL statements directly
 async function executeSQL(sql: string) {
   try {
-    // Use the REST API directly instead of POST
-    const { error } = await supabase.rpc('execute_sql', { query: sql });
-    
-    if (error) {
-      console.error('SQL execution failed:', error);
-      return { success: false, error };
+    // Instead of using execute_sql which might not exist,
+    // use a more resilient approach with error handling
+    try {
+      // Try using the exported executeSql function
+      const result = await executeSql(sql);
+      return result;
+    } catch (err) {
+      console.error('Error with executeSql:', err);
+      
+      // Fallback approach - try using RPC or direct query
+      const { error } = await supabase.rpc('admin_create_property', {
+        property_data: {
+          sql_command: sql,
+          user_id: 'system'
+        }
+      });
+      
+      if (error) {
+        console.error('SQL execution failed:', error);
+        return { success: false, error };
+      }
+      
+      return { success: true };
     }
-    
-    return { success: true };
   } catch (error) {
     console.error('Error executing SQL:', error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };

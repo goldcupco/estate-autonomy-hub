@@ -1,4 +1,5 @@
 
+// Import the supabase client properly
 import { supabase, safeFrom, executeSql, createTablesDirectly } from './supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { CREATE_TABLES_SQL } from './initializeApp';
