@@ -12,7 +12,7 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // First verify if the property exists and is accessible
+    // First verify if the property exists (using a select query without RLS restriction)
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
       .select('id')
@@ -25,12 +25,11 @@ export async function deleteProperty(propertyId: string): Promise<boolean> {
       return false;
     }
     
-    // Execute the delete operation with RLS override
+    // Execute the delete operation
     const { error } = await supabase
       .from('properties')
       .delete()
-      .eq('id', propertyId)
-      .eq('user_id', 'system'); // Override RLS policy by targeting system properties
+      .eq('id', propertyId);
     
     // Log the delete response
     console.log("Delete response:", { error });

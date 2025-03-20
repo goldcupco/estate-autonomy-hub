@@ -13,7 +13,7 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // First verify if the property exists and is accessible
+    // First verify if the property exists (using a select query)
     const { data: existingProperty, error: fetchError } = await supabase
       .from('properties')
       .select('id')
@@ -39,19 +39,17 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       status: updatedProperty.status,
       images: updatedProperty.imageUrl ? [updatedProperty.imageUrl] : [],
       property_type: updatedProperty.propertyType,
-      updated_at: new Date().toISOString(),
-      user_id: 'system' // Ensure we're updating with the correct user_id for RLS
+      updated_at: new Date().toISOString()
     };
 
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Execute the update operation with RLS override
+    // Execute the update operation
     const { error } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id)
-      .eq('user_id', 'system'); // Override RLS policy by targeting system properties
+      .eq('id', updatedProperty.id);
       
     if (error) {
       console.error("Supabase update error:", error);
