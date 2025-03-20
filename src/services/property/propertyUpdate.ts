@@ -13,21 +13,6 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
       return false;
     }
     
-    // First verify if the property exists
-    const { data: existingProperty, error: fetchError } = await supabase
-      .from('properties')
-      .select('id, user_id')
-      .eq('id', updatedProperty.id)
-      .single();
-    
-    if (fetchError || !existingProperty) {
-      console.error("Property fetch error or property not found:", fetchError);
-      toast.error(`Cannot update: Property not found or not accessible`);
-      return false;
-    }
-    
-    console.log("Found property to update:", existingProperty);
-    
     // Format property data for database update
     const propertyData = {
       address: updatedProperty.address,
@@ -47,14 +32,11 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
     console.log("Sending to Supabase for update:", propertyData);
     console.log("Property ID for update:", updatedProperty.id);
 
-    // Create the update query based on the property's user_id
-    let updateQuery = supabase
+    // Direct update approach
+    const { error } = await supabase
       .from('properties')
       .update(propertyData)
       .eq('id', updatedProperty.id);
-    
-    // Execute the update operation
-    const { error } = await updateQuery;
       
     if (error) {
       console.error("Supabase update error:", error);

@@ -50,7 +50,7 @@ export function PropertyList() {
       console.log("Attempting to delete property with ID:", propertyId);
       setIsLoading(true);
       
-      // Attempt the database deletion
+      // Attempt the database deletion with simplified approach
       const success = await deleteProperty(propertyId);
       
       if (success) {
