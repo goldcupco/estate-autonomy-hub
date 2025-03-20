@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Pencil, MessageCircle, Phone, Mail } from 'lucide-react';
+import { ActionButton } from '../action-buttons/ActionButton';
 
 interface ActionButtonsProps {
   onOpenEditDialog: () => void;
@@ -10,34 +11,30 @@ interface ActionButtonsProps {
 
 export function ActionButtons({ onOpenEditDialog, onOpenNoteDialog }: ActionButtonsProps) {
   return (
-    <div className="space-y-2">
-      <Button 
-        className="w-full justify-start" 
-        variant="outline"
+    <div className="flex items-center gap-1">
+      <ActionButton 
+        icon={Pencil} 
+        label="Edit Lead"
         onClick={onOpenEditDialog}
-      >
-        <Pencil className="mr-2 h-4 w-4" />
-        Edit Lead
-      </Button>
+      />
       
-      <Button 
-        className="w-full justify-start" 
-        variant="outline"
+      <ActionButton 
+        icon={MessageCircle} 
+        label="Add Note"
         onClick={onOpenNoteDialog}
-      >
-        <MessageCircle className="mr-2 h-4 w-4" />
-        Add Note
-      </Button>
+      />
       
-      <Button className="w-full justify-start" variant="outline">
-        <Phone className="mr-2 h-4 w-4" />
-        Call Lead
-      </Button>
+      <ActionButton 
+        icon={Phone} 
+        label="Call Lead"
+        onClick={() => {}}
+      />
       
-      <Button className="w-full justify-start" variant="outline">
-        <Mail className="mr-2 h-4 w-4" />
-        Email Lead
-      </Button>
+      <ActionButton 
+        icon={Mail} 
+        label="Email Lead"
+        onClick={() => {}}
+      />
     </div>
   );
 }
