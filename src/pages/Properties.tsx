@@ -68,15 +68,15 @@ export function Properties() {
   }, []);
   
   const handlePropertyAdded = (newProperty: Property) => {
-    setProperties(prev => [newProperty, ...prev]);
+    setProperties([newProperty, ...properties]);
     toast.success("Property added successfully");
   };
   
   const handleUpdateProperty = async (updatedProperty: Property) => {
     const success = await updateProperty(updatedProperty);
     if (success) {
-      setProperties(prev => 
-        prev.map(property => 
+      setProperties(
+        properties.map(property => 
           property.id === updatedProperty.id ? updatedProperty : property
         )
       );

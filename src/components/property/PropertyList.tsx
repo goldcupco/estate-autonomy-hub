@@ -25,7 +25,7 @@ export function PropertyList() {
   const handleDeleteProperty = async (propertyId: string) => {
     const success = await deleteProperty(propertyId);
     if (success) {
-      setProperties(prev => prev.filter(property => property.id !== propertyId));
+      setProperties(properties.filter(property => property.id !== propertyId));
     }
   };
 

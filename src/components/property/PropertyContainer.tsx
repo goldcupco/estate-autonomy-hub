@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { PropertyProvider } from '@/contexts/PropertyContext';
 import { Properties } from '@/pages/Properties';
 
@@ -10,3 +9,5 @@ export function PropertyContainer() {
     </PropertyProvider>
   );
 }
+
+export default PropertyContainer;
