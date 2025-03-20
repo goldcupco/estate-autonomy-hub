@@ -10,6 +10,7 @@ import {
   addLeadToCampaign as addLeadToCampaignService,
   removeLeadFromCampaign as removeLeadFromCampaignService
 } from '../services/campaign';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CampaignContextType {
   campaigns: Campaign[];
@@ -68,7 +69,22 @@ export const CampaignProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLoading(true);
     try {
       console.log("Adding campaign with data:", campaignData);
-      const newCampaign = await createCampaignService(campaignData);
+      
+      // Explicitly ensure we have current user auth before creating a campaign
+      const { data: authData } = await supabase.auth.getUser();
+      
+      if (!authData.user?.id && !campaignData.createdBy) {
+        console.error("No authenticated user found and no createdBy provided");
+        throw new Error("You must be logged in to create a campaign");
+      }
+      
+      // Use authenticated user ID for createdBy if not provided
+      const campaignWithAuthUser = {
+        ...campaignData,
+        createdBy: campaignData.createdBy || authData.user?.id
+      };
+      
+      const newCampaign = await createCampaignService(campaignWithAuthUser);
       if (newCampaign) {
         console.log("Campaign added successfully:", newCampaign);
         await refreshCampaigns(); // Refresh all campaigns to ensure we have the latest data
