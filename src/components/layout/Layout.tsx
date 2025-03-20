@@ -32,12 +32,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
   
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col w-full overflow-x-hidden">
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex flex-1 relative">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className={`pt-16 flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
-          <div className="container px-4 py-4 mx-auto">
+        <main className={`pt-16 flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'} max-w-full`}>
+          <div className="px-4 py-4 mx-auto w-full">
             {children}
           </div>
         </main>
