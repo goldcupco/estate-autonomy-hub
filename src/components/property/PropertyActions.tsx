@@ -7,17 +7,27 @@ import { toast } from 'sonner';
 import { usePropertyContext } from '@/contexts/PropertyContext';
 import { fetchProperties } from '@/services/propertyService';
 
-export function PropertyActions() {
+interface PropertyActionsProps {
+  onRefresh?: () => Promise<void>;
+}
+
+export function PropertyActions({ onRefresh }: PropertyActionsProps) {
   const { setProperties, setIsLoading, setEditingProperty, setAddPropertyOpen } = usePropertyContext();
 
   const refreshProperties = async () => {
     try {
       setIsLoading(true);
-      console.log("Fetching properties from database...");
-      const properties = await fetchProperties();
-      console.log("Properties fetched:", properties);
-      setProperties(properties);
-      toast.success("Properties refreshed successfully");
+      console.log("Manually refreshing properties from database...");
+      
+      if (onRefresh) {
+        await onRefresh();
+        toast.success("Properties refreshed successfully");
+      } else {
+        const properties = await fetchProperties();
+        console.log("Properties fetched:", properties);
+        setProperties(properties);
+        toast.success("Properties refreshed successfully");
+      }
     } catch (error) {
       console.error("Error refreshing properties:", error);
       toast.error("Failed to refresh properties");

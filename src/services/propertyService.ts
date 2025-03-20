@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/pages/Properties';
 import { toast } from 'sonner';
@@ -103,23 +102,28 @@ export async function updateProperty(updatedProperty: Property): Promise<boolean
 
     console.log("Sending to Supabase:", propertyData);
 
-    // Fixed PATCH request by removing .select() which was causing issues
-    const { error } = await supabase
+    // Remove .select() which was causing issues with the response
+    const { error, data } = await supabase
       .from('properties')
       .update(propertyData)
-      .eq('id', updatedProperty.id);
+      .eq('id', updatedProperty.id)
+      .select('*');
       
     if (error) {
       console.error("Supabase update error:", error);
       throw error;
     }
     
+    console.log("Update response from Supabase:", data);
+    
+    if (!data || data.length === 0) {
+      console.warn("Property updated but no data returned");
+    }
+    
     console.log("Property updated successfully");
-    toast.success("Property updated successfully");
     return true;
   } catch (error) {
     console.error('Error updating property:', error);
-    toast.error("Failed to update property");
     return false;
   }
 }
@@ -147,58 +151,43 @@ export async function createProperty(newProperty: Partial<Property>): Promise<Pr
 
     console.log("Sending to Supabase:", propertyData);
 
-    // Fixed INSERT request by separating insertion and selection
-    const { error } = await supabase
+    // Include select() to get the returned data
+    const { data, error } = await supabase
       .from('properties')
-      .insert(propertyData);
+      .insert(propertyData)
+      .select('*');
       
     if (error) {
       console.error("Supabase insert error:", error);
       throw error;
     }
     
-    // Fetch the newly created property
-    const { data: newData, error: fetchError } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('address', newProperty.address)
-      .eq('city', newProperty.city)
-      .eq('state', newProperty.state)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    console.log("Create response from Supabase:", data);
     
-    if (fetchError) {
-      console.error("Error fetching new property:", fetchError);
-    }
-    
-    if (newData) {
+    if (data && data.length > 0) {
       const createdProperty: Property = {
-        id: newData.id,
-        address: newData.address || '',
-        city: newData.city || '',
-        state: newData.state || '',
-        zipCode: newData.zip || '',
-        price: newData.price || 0,
-        bedrooms: newData.bedrooms || 0,
-        bathrooms: newData.bathrooms || 0,
-        sqft: newData.square_feet || 0,
-        status: (newData.status as Property['status']) || 'For Sale',
-        imageUrl: newData.images && newData.images[0] ? newData.images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
-        propertyType: (newData.property_type as Property['propertyType']) || 'House'
+        id: data[0].id,
+        address: data[0].address || '',
+        city: data[0].city || '',
+        state: data[0].state || '',
+        zipCode: data[0].zip || '',
+        price: data[0].price || 0,
+        bedrooms: data[0].bedrooms || 0,
+        bathrooms: data[0].bathrooms || 0,
+        sqft: data[0].square_feet || 0,
+        status: (data[0].status as Property['status']) || 'For Sale',
+        imageUrl: data[0].images && data[0].images[0] ? data[0].images[0] : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994',
+        propertyType: (data[0].property_type as Property['propertyType']) || 'House'
       };
       
       console.log("Property created successfully:", createdProperty);
-      toast.success("Property created successfully");
       return createdProperty;
     }
     
-    console.log("Property created but not retrieved");
-    toast.success("Property created successfully");
+    console.log("Property created but no data returned");
     return null;
   } catch (error) {
     console.error('Error creating property:', error);
-    toast.error("Failed to create property");
     return null;
   }
 }

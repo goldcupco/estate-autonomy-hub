@@ -35,15 +35,18 @@ export function usePropertyData(
     
     try {
       if (properties.length > 0) {
+        console.log("Importing property:", properties[0]);
         const newProperty = await createProperty(properties[0]);
         
         if (newProperty && onPropertyAdded) {
+          console.log("Import successful, adding to UI:", newProperty);
           onPropertyAdded(newProperty);
           toast.success(`Imported ${properties.length} properties successfully`);
+          onOpenChange(false);
         } else {
+          console.error("Failed to import property - no property returned");
           toast.error('Failed to import property');
         }
-        onOpenChange(false);
       }
     } catch (error) {
       console.error('Error importing property:', error);
@@ -78,20 +81,25 @@ export function usePropertyData(
         const success = await updateProperty(updatedProperty);
         
         if (success) {
+          console.log("Update successful, updating UI with:", updatedProperty);
           onPropertyUpdated(updatedProperty);
           toast.success('Property updated successfully');
           onOpenChange(false);
         } else {
+          console.error("Failed to update property - database update failed");
           toast.error('Failed to update property');
         }
       } else {
+        console.log("Preparing to create new property with data:", property);
         const newProperty = await createProperty(property);
         
         if (newProperty && onPropertyAdded) {
+          console.log("Creation successful, adding to UI:", newProperty);
           onPropertyAdded(newProperty);
           toast.success('Property added successfully');
           onOpenChange(false);
         } else {
+          console.error("Failed to add property - no property returned");
           toast.error('Failed to add property');
         }
       }

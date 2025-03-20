@@ -41,7 +41,7 @@ export function Properties() {
   const loadProperties = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log("Initial loading of properties from database...");
+      console.log("Loading properties from database...");
       const fetchedProperties = await fetchProperties();
       console.log("Properties loaded:", fetchedProperties);
       setProperties(fetchedProperties);
@@ -57,11 +57,11 @@ export function Properties() {
     console.log("Properties component mounted, loading properties...");
     loadProperties();
     
-    // Set up a periodic refresh every 15 seconds (reduced from 30)
+    // Set up a periodic refresh every 10 seconds
     const refreshInterval = setInterval(() => {
       console.log("Automatic refresh of properties...");
       loadProperties();
-    }, 15000);
+    }, 10000);
     
     return () => {
       clearInterval(refreshInterval);
@@ -87,25 +87,27 @@ export function Properties() {
   }, []);
   
   const handlePropertyAdded = (newProperty: Property) => {
-    console.log("Property added:", newProperty);
-    setProperties([newProperty, ...properties]);
+    console.log("Property added, updating UI:", newProperty);
+    setProperties(prevProperties => [newProperty, ...prevProperties]);
     
     // Refresh all properties to ensure we have the latest data
-    loadProperties();
+    setTimeout(() => {
+      loadProperties();
+    }, 500);
   };
   
-  const handleUpdateProperty = async (updatedProperty: Property) => {
-    console.log("Handling updated property:", updatedProperty);
+  const handleUpdateProperty = (updatedProperty: Property) => {
+    console.log("Property updated, updating UI:", updatedProperty);
     
-    // Update the UI immediately (optimistic update)
-    setProperties(
-      properties.map(property => 
+    // Optimistic update
+    setProperties(prevProperties => 
+      prevProperties.map(property => 
         property.id === updatedProperty.id ? updatedProperty : property
       )
     );
     setEditingProperty(null);
     
-    // Refresh all properties to ensure we have the latest data from the DB
+    // Refresh all properties to ensure we have the latest data
     setTimeout(() => {
       loadProperties();
     }, 500);
@@ -122,7 +124,7 @@ export function Properties() {
           <div className="space-y-6 py-8 animate-fade-in">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-              <PropertyActions />
+              <PropertyActions onRefresh={loadProperties} />
             </div>
             
             <PropertyList />
