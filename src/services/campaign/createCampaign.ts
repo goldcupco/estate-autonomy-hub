@@ -89,6 +89,17 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
         toast.error('Permission denied: You do not have access to create campaigns');
       } else if (error.code === '23505') {
         toast.error('A campaign with this name already exists');
+      } else if (error.code === '401' || error.status === 401) {
+        console.log('Authentication error - attempting to refresh session');
+        
+        // Force refresh the session
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('Error refreshing session:', refreshError);
+          toast.error('Authentication error: Please log in again');
+        } else {
+          toast.error('Authentication refreshed, please try again');
+        }
       } else {
         toast.error(`Failed to create campaign: ${error.message}`);
       }
