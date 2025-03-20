@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Campaign } from '../models/Campaign';
 import { supabase } from '@/integrations/supabase/client';

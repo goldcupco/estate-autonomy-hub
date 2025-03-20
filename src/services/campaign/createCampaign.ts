@@ -14,14 +14,14 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
     const authenticatedUserId = authData?.user?.id;
     
     // Make sure we have a valid user ID for RLS
-    if (!authenticatedUserId && !campaign.createdBy) {
-      console.error('No authenticated user or createdBy found');
+    if (!authenticatedUserId && !campaign.user_id) {
+      console.error('No authenticated user or user_id found');
       toast.error('You must be logged in to create a campaign');
       return null;
     }
     
-    // Use authenticated user ID if createdBy is not provided
-    const userIdToUse = campaign.createdBy || authenticatedUserId;
+    // Use provided user_id or fall back to authenticated user ID
+    const userIdToUse = campaign.user_id || authenticatedUserId;
     
     // Format the campaign data for the database
     const campaignData = {
@@ -31,7 +31,7 @@ export const createCampaign = async (campaign: Omit<Campaign, 'id'>): Promise<Ca
       type: campaign.type,
       start_date: campaign.startDate || null,
       end_date: campaign.endDate || null,
-      created_by: userIdToUse,
+      created_by: campaign.createdBy || userIdToUse,
       assigned_users: campaign.assignedUsers || [],
       budget: campaign.budget || 0,
       metrics: ensureMetricsFormat(campaign.metrics),
