@@ -33,22 +33,26 @@ export function usePropertyData(
   };
 
   const handleImportSuccess = async (properties: any[]) => {
+    if (properties.length === 0) {
+      console.error("No properties to import");
+      toast.error("No properties to import");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      if (properties.length > 0) {
-        console.log("Importing property:", properties[0]);
-        const newProperty = await createProperty(properties[0]);
-        
-        if (newProperty && onPropertyAdded) {
-          console.log("Import successful, adding to UI:", newProperty);
-          onPropertyAdded(newProperty);
-          toast.success(`Imported ${properties.length} properties successfully`);
-          onOpenChange(false);
-        } else {
-          console.error("Failed to import property - no property returned");
-          toast.error('Failed to import property');
-        }
+      console.log("Importing property:", properties[0]);
+      const newProperty = await createProperty(properties[0]);
+      
+      if (newProperty && onPropertyAdded) {
+        console.log("Import successful, database updated:", newProperty);
+        onPropertyAdded(newProperty);
+        toast.success(`Imported ${properties.length} properties successfully`);
+        onOpenChange(false);
+      } else {
+        console.error("Failed to import property - database update failed");
+        toast.error('Failed to import property');
       }
     } catch (error) {
       console.error('Error importing property:', error);
@@ -80,6 +84,7 @@ export function usePropertyData(
         
         console.log("Preparing to update property with data:", updatedProperty);
         
+        // Wait for the database update to complete
         const success = await updateProperty(updatedProperty);
         
         if (success) {
@@ -111,6 +116,7 @@ export function usePropertyData(
           propertyType: property.propertyType || 'House'
         };
         
+        // Wait for the database create operation to complete
         const newProperty = await createProperty(propertyToCreate);
         
         if (newProperty && onPropertyAdded) {
@@ -119,7 +125,7 @@ export function usePropertyData(
           toast.success('Property added successfully');
           onOpenChange(false);
         } else {
-          console.error("Failed to add property - no property returned from database");
+          console.error("Failed to add property - database create failed");
           toast.error('Failed to add property');
         }
       }

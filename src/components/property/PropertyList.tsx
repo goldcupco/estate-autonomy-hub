@@ -42,15 +42,16 @@ export function PropertyList() {
     try {
       console.log("Attempting to delete property with ID:", propertyId);
       
-      // Perform the actual database operation first
+      // Wait for the delete operation to complete before updating UI
       const success = await deleteProperty(propertyId);
       
       if (success) {
         console.log("Delete operation successful for property ID:", propertyId);
         
-        // Then update UI after successful database operation
+        // Update UI after successful database operation
         setProperties(properties.filter(property => property.id !== propertyId));
         
+        // Show success toast after confirmation of database update
         toast.success("Property deleted successfully");
       } else {
         console.error("Delete operation failed for property ID:", propertyId);
