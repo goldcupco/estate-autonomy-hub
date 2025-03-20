@@ -73,6 +73,12 @@ export interface SmsRecord {
   direction: 'outgoing' | 'incoming';
 }
 
+// Helper type for valid table names
+export type ValidTableName = 
+  "call_records" | "leads" | "campaign_leads" | "campaigns" | "communication_providers" | 
+  "contracts" | "documents" | "properties" | "letter_records" | "list_items" | 
+  "lists" | "phone_numbers" | "sms_records";
+
 // Helper function to safely cast Json to provider config
 export function mapProviderConfig(config: Json): DbCommunicationProvider['config'] {
   if (typeof config === 'object' && config !== null) {
@@ -97,9 +103,25 @@ export function mapProviderData(data: any): DbCommunicationProvider {
   };
 }
 
+// Helper function to check if a string is a valid table name
+export function isValidTableName(tableName: string): tableName is ValidTableName {
+  const validTables = [
+    "call_records", "leads", "campaign_leads", "campaigns", "communication_providers",
+    "contracts", "documents", "properties", "letter_records", "list_items",
+    "lists", "phone_numbers", "sms_records"
+  ];
+  
+  return validTables.includes(tableName);
+}
+
 // Helper function to handle dynamic table names with type safety
 export function safeFrom(table: string) {
   // Use the exported supabase client directly
+  if (isValidTableName(table)) {
+    return supabase.from(table);
+  }
+  
+  // Fallback for tables not in our type system
   return supabase.from(table as any);
 }
 

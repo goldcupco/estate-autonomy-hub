@@ -4,6 +4,21 @@ import { supabase, safeFrom, executeSql, createTablesDirectly } from './supabase
 import { toast } from '@/hooks/use-toast';
 import { CREATE_TABLES_SQL } from './initializeApp';
 
+// Helper function to type-check table names
+function isValidTableName(tableName: string): tableName is 
+  "call_records" | "leads" | "campaign_leads" | "campaigns" | "communication_providers" | 
+  "contracts" | "documents" | "properties" | "letter_records" | "list_items" | 
+  "lists" | "phone_numbers" | "sms_records" {
+  
+  const validTables = [
+    "call_records", "leads", "campaign_leads", "campaigns", "communication_providers",
+    "contracts", "documents", "properties", "letter_records", "list_items",
+    "lists", "phone_numbers", "sms_records"
+  ];
+  
+  return validTables.includes(tableName);
+}
+
 // This function verifies database setup by checking if tables exist
 export async function verifyDatabaseSetup() {
   console.log('Verifying database setup...');
@@ -31,15 +46,22 @@ export async function verifyDatabaseSetup() {
     for (const table of tables) {
       try {
         console.log(`Checking if ${table} exists...`);
-        // Use the Supabase client directly
-        const { data, error } = await supabase.from(table).select('*').limit(1);
-        
-        if (error && (error.code === '42P01' || error.message?.includes('does not exist'))) {
-          console.log(`Table ${table} does not exist`);
-          missingTables.push(table);
+        // First check if it's a valid table name
+        if (isValidTableName(table)) {
+          // Use the Supabase client directly with properly typed table names
+          const { data, error } = await supabase.from(table).select('*').limit(1);
+          
+          if (error && (error.code === '42P01' || error.message?.includes('does not exist'))) {
+            console.log(`Table ${table} does not exist`);
+            missingTables.push(table);
+          } else {
+            console.log(`Table ${table} exists`);
+            existingTables.push(table);
+          }
         } else {
-          console.log(`Table ${table} exists`);
-          existingTables.push(table);
+          // For tables not in the type system yet, use a more generic approach
+          console.warn(`Table ${table} is not in the type system, using fallback check`);
+          missingTables.push(table);
         }
       } catch (tableError) {
         console.error(`Error checking table ${table}:`, tableError);

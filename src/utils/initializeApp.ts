@@ -1,4 +1,4 @@
-import { supabase, supabaseUrl, supabaseKey, safeFrom } from './supabaseClient';
+import { supabase, supabaseUrl, supabaseKey, safeFrom, executeSql } from './supabaseClient';
 import { verifyDatabaseSetup } from './supabaseSetup';
 
 // Function to execute SQL statements directly
@@ -7,13 +7,13 @@ async function executeSQL(sql: string) {
     // Instead of using execute_sql which might not exist,
     // use a more resilient approach with error handling
     try {
-      // Try using the exported executeSql function
+      // Use the imported executeSql function (lowercase) from supabaseClient
       const result = await executeSql(sql);
       return result;
     } catch (err) {
       console.error('Error with executeSql:', err);
       
-      // Fallback approach - try using RPC or direct query
+      // Fallback approach - try using RPC 
       const { error } = await supabase.rpc('admin_create_property', {
         property_data: {
           sql_command: sql,
@@ -37,32 +37,70 @@ async function executeSQL(sql: string) {
 // Function to insert data into a table
 async function insertData(table: string, data: any) {
   try {
-    // Use the safeFrom function to handle table names safely
-    const { error } = await safeFrom(table).insert([data]);
-    if (error) {
-      console.error(`Failed to insert into ${table}:`, error);
-      return { success: false, error: error.message };
+    // To fix the type error, we need to ensure the table is a valid table name
+    // We'll use a type guard to check if the table name is valid
+    if (isValidTableName(table)) {
+      const { error } = await supabase.from(table).insert([data]);
+      if (error) {
+        console.error(`Failed to insert into ${table}:`, error);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } else {
+      return { success: false, error: `Invalid table name: ${table}` };
     }
-    return { success: true };
   } catch (error) {
     console.error(`Error inserting into ${table}:`, error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
+// Type guard for valid table names
+function isValidTableName(tableName: string): tableName is 
+  "call_records" | "leads" | "campaign_leads" | "campaigns" | "communication_providers" | 
+  "contracts" | "documents" | "properties" | "letter_records" | "list_items" | 
+  "lists" | "phone_numbers" | "sms_records" {
+  
+  const validTables = [
+    "call_records", "leads", "campaign_leads", "campaigns", "communication_providers",
+    "contracts", "documents", "properties", "letter_records", "list_items",
+    "lists", "phone_numbers", "sms_records"
+  ];
+  
+  return validTables.includes(tableName);
+}
+
 // Function to check if a table exists
 async function tableExists(table: string): Promise<boolean> {
   try {
-    // Use direct function to avoid require statements
-    const { error } = await supabase.from(table).select('*', { head: true, count: 'exact' });
-    if (error) {
-      if (error.message.includes('does not exist')) {
+    // Use type guard before making the query
+    if (isValidTableName(table)) {
+      const { error } = await supabase.from(table).select('*', { head: true, count: 'exact' });
+      if (error) {
+        if (error.message.includes('does not exist')) {
+          return false;
+        }
+        console.error(`Error checking if table ${table} exists:`, error);
         return false;
       }
-      console.error(`Error checking if table ${table} exists:`, error);
-      return false;
+      return true;
+    } else {
+      console.warn(`Attempting to check existence of invalid table name: ${table}`);
+      // For non-valid table names, try a safer approach
+      try {
+        // Using raw query through RPC (this is a fallback and may not work)
+        const { data } = await supabase.rpc('admin_create_property', {
+          property_data: {
+            special_command: 'check_table_exists',
+            table_name: table,
+            user_id: 'system'
+          }
+        });
+        return !!data;
+      } catch {
+        return false;
+      }
     }
-    return true;
   } catch (error) {
     console.error(`Error checking table ${table}:`, error);
     return false;
@@ -299,36 +337,35 @@ export async function initializeDatabase() {
 
     console.log('Missing tables found, creating tables...');
 
-    // Modified approach - use Supabase's stored procedure for table creation
+    // Modified approach - try direct table creation via SQL
     try {
-      // Instead of direct SQL execution which might be blocked, 
-      // use Supabase's RPC functionality or create a stored procedure
-      const result = await supabase.rpc('create_missing_tables');
-      if (result.error) {
-        console.error('Failed to create tables via RPC:', result.error);
-        
-        // Fallback approach - create essential tables directly with insert
-        for (const [tableName, _] of Object.entries(CREATE_TABLES_SQL)) {
-          if (!await tableExists(tableName)) {
-            try {
-              // Try to create minimal records for core functionality
-              if (tableName === 'campaigns') {
-                await supabase.from('campaigns').insert({
-                  name: 'Default Campaign',
-                  status: 'active',
-                  type: 'general',
-                  created_by: 'system',
-                  user_id: 'system'
-                }).select();
-              }
-            } catch (err) {
-              console.warn(`Failed to create ${tableName} with fallback approach:`, err);
+      // Use createTablesDirectly from supabaseClient instead
+      const result = await createTablesDirectly();
+      if (!result.success) {
+        console.error('Failed to create tables directly:', result.error);
+      }
+    } catch (err) {
+      console.error('Error creating tables directly:', err);
+      
+      // Fallback approach - create essential tables directly with insert
+      for (const [tableName, _] of Object.entries(CREATE_TABLES_SQL)) {
+        if (!await tableExists(tableName)) {
+          try {
+            // Try to create minimal records for core functionality
+            if (tableName === 'campaigns' && isValidTableName(tableName)) {
+              await supabase.from('campaigns').insert({
+                name: 'Default Campaign',
+                status: 'active',
+                type: 'general',
+                created_by: 'system',
+                user_id: 'system'
+              }).select();
             }
+          } catch (err) {
+            console.warn(`Failed to create ${tableName} with fallback approach:`, err);
           }
         }
       }
-    } catch (err) {
-      console.error('Error initializing database with RPC:', err);
     }
 
     return { success: true };
