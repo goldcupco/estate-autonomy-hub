@@ -28,7 +28,8 @@ export function Leads() {
     handleAddLead,
     handleFlagLead,
     handleToggleDoNotContact,
-    handleMoveToNextStage
+    handleMoveToNextStage,
+    handleDeleteLead
   } = useLeadOperations(leadsData, setLeadsData);
 
   return (
@@ -60,6 +61,7 @@ export function Leads() {
         onFlagLead={handleFlagLead}
         onMoveToNextStage={handleMoveToNextStage}
         onToggleDoNotContact={handleToggleDoNotContact}
+        onDeleteLead={handleDeleteLead}
         isLoading={isLoading}
       />
     </div>

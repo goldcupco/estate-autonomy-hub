@@ -4,7 +4,7 @@ import { Lead, Note } from './types';
 import { EditLeadDialog } from './actions/EditLeadDialog';
 import { AddNoteDialog } from './actions/AddNoteDialog';
 import { DeleteLeadDialog } from './actions/DeleteLeadDialog';
-import { MoreActionsPopover } from './actions/MoreActionsPopover';
+import { DeleteAction } from './actions/MoreActionsPopover';
 import { ActionButtons } from './actions/ActionButtons';
 
 interface LeadActionsProps {
@@ -24,26 +24,23 @@ export const LeadActions: React.FC<LeadActionsProps> = ({
   onFlagForNextStage,
   onToggleDoNotContact
 }) => {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   return (
     <>
-      <ActionButtons 
-        onOpenEditDialog={() => setIsEditDialogOpen(true)}
-        onOpenNoteDialog={() => setIsNoteDialogOpen(true)}
-      />
-      
-      <MoreActionsPopover 
-        lead={lead}
-        isOpen={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
-        onOpenDeleteDialog={() => setIsDeleteDialogOpen(true)}
-        onFlagForNextStage={onFlagForNextStage}
-        onToggleDoNotContact={onToggleDoNotContact}
-      />
+      <div className="flex items-center">
+        <ActionButtons 
+          onOpenEditDialog={() => setIsEditDialogOpen(true)}
+          onOpenNoteDialog={() => setIsNoteDialogOpen(true)}
+        />
+        
+        <DeleteAction 
+          lead={lead}
+          onOpenDeleteDialog={() => setIsDeleteDialogOpen(true)}
+        />
+      </div>
       
       <EditLeadDialog 
         lead={lead}

@@ -14,6 +14,7 @@ interface CreateLeadColumnsProps {
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
   onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void;
+  onDeleteLead?: (leadId: string) => void;
 }
 
 export const createLeadColumns = ({
@@ -21,7 +22,8 @@ export const createLeadColumns = ({
   onAddNote,
   onMoveToNextStage,
   onFlagLead,
-  onToggleDoNotContact
+  onToggleDoNotContact,
+  onDeleteLead
 }: CreateLeadColumnsProps): ColumnDef<Lead>[] => [
   {
     accessorKey: "name",
@@ -132,8 +134,9 @@ export const createLeadColumns = ({
         <div className="flex items-center justify-end gap-1 h-7">
           <LeadActions 
             lead={lead} 
-            onEdit={onEditLead || (() => {})}
-            onAddNote={onAddNote || (() => {})}
+            onEdit={onEditLead}
+            onAddNote={onAddNote}
+            onDelete={onDeleteLead}
           />
         </div>
       );
