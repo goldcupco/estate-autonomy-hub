@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   useReactTable,
@@ -26,7 +25,8 @@ interface LeadTableProps {
   onAddNote?: (leadId: string, note: Omit<Note, 'id'>) => void;
   onMoveToNextStage?: (lead: Lead) => void;
   onFlagLead?: (leadId: string, flagged: boolean) => void;
-  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void; 
+  onToggleDoNotContact?: (leadId: string, doNotContact: boolean) => void;
+  onDeleteLead?: (leadId: string) => void;
 }
 
 export function LeadTable({ 
@@ -35,7 +35,8 @@ export function LeadTable({
   onAddNote, 
   onMoveToNextStage,
   onFlagLead,
-  onToggleDoNotContact 
+  onToggleDoNotContact,
+  onDeleteLead
 }: LeadTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -121,7 +122,8 @@ export function LeadTable({
     onAddNote,
     onMoveToNextStage,
     onFlagLead,
-    onToggleDoNotContact
+    onToggleDoNotContact,
+    onDeleteLead
   });
 
   // Initialize table

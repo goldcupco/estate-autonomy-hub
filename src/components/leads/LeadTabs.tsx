@@ -15,6 +15,7 @@ interface LeadTabsProps {
   onFlagLead: (leadId: string, flagged: boolean) => void;
   onMoveToNextStage: (lead: Lead) => void;
   onToggleDoNotContact: (leadId: string, doNotContact: boolean) => void;
+  onDeleteLead: (leadId: string) => void; // Added this prop
   isLoading?: boolean;
   onAddLead?: () => void;
 }
@@ -28,6 +29,7 @@ export function LeadTabs({
   onFlagLead,
   onMoveToNextStage,
   onToggleDoNotContact,
+  onDeleteLead, // Added this prop to the destructuring
   isLoading = false,
   onAddLead
 }: LeadTabsProps) {
@@ -86,6 +88,7 @@ export function LeadTabs({
             onMoveToNextStage={onMoveToNextStage}
             onFlagLead={onFlagLead}
             onToggleDoNotContact={onToggleDoNotContact}
+            onDeleteLead={onDeleteLead} // Pass the prop to LeadTable
           />
         )}
       </TabsContent>
