@@ -2,32 +2,36 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Campaign } from '@/models/Campaign';
 import { toast } from 'sonner';
+import { ensureMetricsFormat } from './types';
 
 // Update an existing campaign
-export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign, 'id'>>): Promise<boolean> => {
+export const updateCampaign = async (id: string, campaign: Partial<Campaign>): Promise<boolean> => {
   try {
-    // Format the data for the database
-    const campaignData: any = {};
+    console.log("Updating campaign with ID:", id);
+    console.log("Update data:", campaign);
     
-    if (updates.name) campaignData.name = updates.name;
-    if (updates.description !== undefined) campaignData.description = updates.description;
-    if (updates.status) campaignData.status = updates.status;
-    if (updates.type) campaignData.type = updates.type;
-    if (updates.startDate) campaignData.start_date = updates.startDate;
-    if (updates.endDate) campaignData.end_date = updates.endDate;
-    if (updates.createdBy) campaignData.created_by = updates.createdBy;
-    if (updates.assignedUsers) campaignData.assigned_users = updates.assignedUsers;
-    if (updates.budget !== undefined) campaignData.budget = updates.budget;
-    if (updates.metrics) campaignData.metrics = updates.metrics;
-    if (updates.accessRestricted !== undefined) campaignData.access_restricted = updates.accessRestricted;
+    // Format the campaign data for the database
+    const updateData: any = {};
     
-    console.log("Updating campaign with ID:", id, "Data:", campaignData);
+    if (campaign.name !== undefined) updateData.name = campaign.name;
+    if (campaign.description !== undefined) updateData.description = campaign.description;
+    if (campaign.status !== undefined) updateData.status = campaign.status;
+    if (campaign.type !== undefined) updateData.type = campaign.type;
+    if (campaign.startDate !== undefined) updateData.start_date = campaign.startDate;
+    if (campaign.endDate !== undefined) updateData.end_date = campaign.endDate;
+    if (campaign.assignedUsers !== undefined) updateData.assigned_users = campaign.assignedUsers;
+    if (campaign.budget !== undefined) updateData.budget = campaign.budget;
+    if (campaign.metrics !== undefined) updateData.metrics = ensureMetricsFormat(campaign.metrics);
+    if (campaign.accessRestricted !== undefined) updateData.access_restricted = campaign.accessRestricted;
     
-    // Use the admin RPC function to update a campaign
-    const { error } = await supabase.rpc('admin_update_campaign', {
-      campaign_id: id,
-      campaign_data: campaignData
-    });
+    // Add updated_at timestamp
+    updateData.updated_at = new Date().toISOString();
+    
+    // Update the campaign
+    const { error } = await supabase
+      .from('campaigns')
+      .update(updateData)
+      .eq('id', id);
     
     if (error) {
       console.error('Error updating campaign:', error);

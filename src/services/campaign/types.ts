@@ -1,82 +1,63 @@
 
 import { Campaign } from '@/models/Campaign';
+import { Json } from '@/integrations/supabase/types';
 
-// Define any campaign-specific types and interfaces here
-export type CampaignData = {
-  name: string;
-  description?: string;
-  status: Campaign['status'];
-  type: Campaign['type'];
-  start_date: string;
-  end_date?: string;
-  created_by: string;
-  assigned_users: string[];
-  budget?: number;
-  metrics?: {
-    contacts: number;
-    responses: number;
-    conversions: number;
+// Helper function to ensure metrics are in the correct format
+export const ensureMetricsFormat = (metrics: any): { contacts: number; responses: number; conversions: number; } => {
+  const defaultMetrics = { contacts: 0, responses: 0, conversions: 0 };
+  
+  if (!metrics) return defaultMetrics;
+  
+  // If metrics is a string, try to parse it
+  if (typeof metrics === 'string') {
+    try {
+      metrics = JSON.parse(metrics);
+    } catch (e) {
+      return defaultMetrics;
+    }
+  }
+  
+  // If metrics is not an object, return default
+  if (typeof metrics !== 'object') return defaultMetrics;
+  
+  // Ensure all required properties exist
+  return {
+    contacts: Number(metrics.contacts || 0),
+    responses: Number(metrics.responses || 0),
+    conversions: Number(metrics.conversions || 0)
   };
-  access_restricted?: boolean;
-  user_id?: string;
 };
 
-// Helper function to ensure metrics has the right format
-export function ensureMetricsFormat(metrics: any): Campaign['metrics'] {
-  if (typeof metrics !== 'object' || metrics === null) {
-    return { contacts: 0, responses: 0, conversions: 0 };
-  }
+// Helper function to map JSON array to string array
+export const mapJsonArrayToStringArray = (jsonArray: Json[] | null): string[] => {
+  if (!jsonArray) return [];
   
+  return jsonArray.map(item => {
+    if (typeof item === 'string') return item;
+    if (typeof item === 'number') return String(item);
+    if (typeof item === 'boolean') return String(item);
+    if (item === null) return '';
+    
+    // If it's an object or array, stringify it
+    return JSON.stringify(item);
+  });
+};
+
+// Map a database row to a Campaign model
+export const mapDbRowToCampaign = (data: any): Campaign => {
   return {
-    contacts: typeof metrics.contacts === 'number' ? metrics.contacts : 0,
-    responses: typeof metrics.responses === 'number' ? metrics.responses : 0,
-    conversions: typeof metrics.conversions === 'number' ? metrics.conversions : 0
+    id: data.id,
+    name: data.name,
+    description: data.description || '',
+    status: data.status,
+    type: data.type,
+    leads: data.campaign_leads || [],
+    startDate: data.start_date ? new Date(data.start_date).toISOString() : '',
+    endDate: data.end_date ? new Date(data.end_date).toISOString() : '',
+    createdBy: data.created_by,
+    assignedUsers: mapJsonArrayToStringArray(data.assigned_users as Json[]),
+    budget: Number(data.budget || 0),
+    metrics: ensureMetricsFormat(data.metrics),
+    accessRestricted: Boolean(data.access_restricted)
   };
-}
-
-// Helper function to ensure status is one of the allowed values
-export function mapDatabaseStatusToCampaignStatus(status: string): Campaign['status'] {
-  const validStatuses: Campaign['status'][] = ['draft', 'active', 'paused', 'completed'];
-  
-  if (validStatuses.includes(status as Campaign['status'])) {
-    return status as Campaign['status'];
-  }
-  
-  // Default to 'draft' if the status is not valid
-  console.warn(`Invalid campaign status: ${status}, defaulting to 'draft'`);
-  return 'draft';
-}
-
-// Helper function to ensure type is one of the allowed values
-export function mapDatabaseTypeToCampaignType(type: string): Campaign['type'] {
-  const validTypes: Campaign['type'][] = ['seller', 'buyer', 'both'];
-  
-  if (validTypes.includes(type as Campaign['type'])) {
-    return type as Campaign['type'];
-  }
-  
-  // Default to 'both' if the type is not valid
-  console.warn(`Invalid campaign type: ${type}, defaulting to 'both'`);
-  return 'both';
-}
-
-// Helper to convert DB row to Campaign object
-export function mapDbRowToCampaign(campaign: any): Campaign {
-  return {
-    id: campaign.id,
-    name: campaign.name,
-    description: campaign.description || '',
-    status: mapDatabaseStatusToCampaignStatus(campaign.status),
-    type: mapDatabaseTypeToCampaignType(campaign.type),
-    leads: [], // We'll fetch leads separately if needed
-    startDate: new Date(campaign.start_date).toISOString().split('T')[0],
-    endDate: campaign.end_date ? new Date(campaign.end_date).toISOString().split('T')[0] : undefined,
-    createdBy: campaign.created_by,
-    assignedUsers: Array.isArray(campaign.assigned_users) 
-      ? campaign.assigned_users.map((user: any) => String(user)) 
-      : [],
-    budget: campaign.budget,
-    metrics: ensureMetricsFormat(campaign.metrics),
-    accessRestricted: campaign.access_restricted || false
-  };
-}
+};

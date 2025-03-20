@@ -9,7 +9,7 @@ export const fetchCampaigns = async (): Promise<Campaign[]> => {
   try {
     const { data, error } = await supabase
       .from('campaigns')
-      .select('*')
+      .select('*, campaign_leads(lead_id)')
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -35,7 +35,7 @@ export const getCampaignById = async (id: string): Promise<Campaign | null> => {
   try {
     const { data, error } = await supabase
       .from('campaigns')
-      .select('*')
+      .select('*, campaign_leads(lead_id)')
       .eq('id', id)
       .single();
     

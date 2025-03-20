@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 // Add a lead to a campaign
 export const addLeadToCampaign = async (campaignId: string, leadId: string): Promise<boolean> => {
   try {
+    console.log(`Adding lead ${leadId} to campaign ${campaignId}`);
+    
     const { error } = await supabase
       .from('campaign_leads')
       .insert({
@@ -30,6 +32,8 @@ export const addLeadToCampaign = async (campaignId: string, leadId: string): Pro
 // Remove a lead from a campaign
 export const removeLeadFromCampaign = async (campaignId: string, leadId: string): Promise<boolean> => {
   try {
+    console.log(`Removing lead ${leadId} from campaign ${campaignId}`);
+    
     const { error } = await supabase
       .from('campaign_leads')
       .delete()
@@ -50,5 +54,25 @@ export const removeLeadFromCampaign = async (campaignId: string, leadId: string)
     console.error('Error in removeLeadFromCampaign:', error);
     toast.error(`Failed to remove lead from campaign: ${error.message}`);
     return false;
+  }
+};
+
+// Get all leads for a campaign
+export const getCampaignLeads = async (campaignId: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaign_leads')
+      .select('lead_id')
+      .eq('campaign_id', campaignId);
+    
+    if (error) {
+      console.error('Error fetching campaign leads:', error);
+      return [];
+    }
+    
+    return data.map(item => item.lead_id);
+  } catch (error: any) {
+    console.error('Error in getCampaignLeads:', error);
+    return [];
   }
 };
