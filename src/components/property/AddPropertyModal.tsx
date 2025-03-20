@@ -3,11 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { MLSImporter } from './MLSImporter';
 import { Property } from '@/pages/Properties';
 import { PropertyForm } from './forms/PropertyForm';
 import { usePropertyData } from './hooks/usePropertyData';
+import { MLSImporter } from './mls';
 
 interface AddPropertyModalProps {
   open: boolean;
