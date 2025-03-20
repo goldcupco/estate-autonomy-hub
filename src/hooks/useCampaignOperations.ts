@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Campaign } from '../models/Campaign';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,7 @@ import {
   addLeadToCampaign as addLeadToCampaignService,
   removeLeadFromCampaign as removeLeadFromCampaignService
 } from '../services/campaign';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useCampaignOperations(
   campaigns: Campaign[], 
@@ -18,6 +18,7 @@ export function useCampaignOperations(
 ) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser, isAuthenticated } = useAuth();
 
   const getCampaign = (id: string) => {
     return campaigns.find(campaign => campaign.id === id);
@@ -28,38 +29,61 @@ export function useCampaignOperations(
     try {
       console.log("Adding campaign with data:", campaignData);
       
-      // Get current authenticated user session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw new Error("Authentication error: " + sessionError.message);
-      }
-      
-      const session = sessionData?.session;
-      const userId = session?.user?.id;
-      
-      if (!userId) {
-        console.error("No authenticated user found");
-        throw new Error("You must be logged in to create a campaign");
-      }
-      
-      // Use authenticated user ID for both createdBy and user_id if not provided
-      const campaignWithAuthUser = {
-        ...campaignData,
-        createdBy: campaignData.createdBy || userId,
-        user_id: userId // This is crucial for Supabase RLS!
-      };
-      
-      console.log("Sending campaign with auth data:", campaignWithAuthUser);
-      
-      const newCampaign = await createCampaignService(campaignWithAuthUser);
-      if (newCampaign) {
-        console.log("Campaign added successfully:", newCampaign);
-        await refreshCampaigns(); // Refresh all campaigns to ensure we have the latest data
-        return newCampaign.id;
+      // First check if we have a currentUser from our AuthContext
+      if (currentUser) {
+        console.log("Using AuthContext user:", currentUser.id);
+        
+        // Use authenticated user ID for both createdBy and user_id if not provided
+        const campaignWithAuthUser = {
+          ...campaignData,
+          createdBy: campaignData.createdBy || currentUser.id,
+          user_id: currentUser.id // This is crucial for Supabase RLS!
+        };
+        
+        console.log("Sending campaign with auth data:", campaignWithAuthUser);
+        
+        const newCampaign = await createCampaignService(campaignWithAuthUser);
+        if (newCampaign) {
+          console.log("Campaign added successfully:", newCampaign);
+          await refreshCampaigns(); // Refresh all campaigns to ensure we have the latest data
+          return newCampaign.id;
+        } else {
+          throw new Error("Failed to create campaign");
+        }
       } else {
-        throw new Error("Failed to create campaign");
+        // If no currentUser from AuthContext, try getting the session directly
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw new Error("Authentication error: " + sessionError.message);
+        }
+        
+        const session = sessionData?.session;
+        const userId = session?.user?.id;
+        
+        if (!userId) {
+          console.error("No authenticated user found");
+          throw new Error("You must be logged in to create a campaign");
+        }
+        
+        // Use the userId from session
+        const campaignWithSessionUser = {
+          ...campaignData,
+          createdBy: campaignData.createdBy || userId,
+          user_id: userId
+        };
+        
+        console.log("Sending campaign with session user:", campaignWithSessionUser);
+        
+        const newCampaign = await createCampaignService(campaignWithSessionUser);
+        if (newCampaign) {
+          console.log("Campaign added successfully:", newCampaign);
+          await refreshCampaigns();
+          return newCampaign.id;
+        } else {
+          throw new Error("Failed to create campaign");
+        }
       }
     } catch (err: any) {
       console.error("Error in addCampaign:", err);
