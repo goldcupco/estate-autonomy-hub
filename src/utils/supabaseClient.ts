@@ -1,21 +1,12 @@
-
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
 
-// Initialize the Supabase client with environment variable credentials
+// Re-export the client
+export { supabase };
+
+// Export URL and key for convenience
 export const supabaseUrl = SUPABASE_URL;
 export const supabaseAnonKey = SUPABASE_ANON_KEY;
-
-// Create the client with additional options
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true
-  },
-  db: {
-    schema: 'public'
-  }
-});
 
 // Improved table creation function using direct SQL for more reliability
 export async function createTablesDirectly() {

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Campaign } from '../models/Campaign';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,28 +31,33 @@ export function useCampaignOperations(
       }
 
       // If no currentUser from context, try to get from Supabase session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Error getting session:", sessionError);
-        return;
-      }
-      
-      if (sessionData?.session?.user?.id) {
-        setUserId(sessionData.session.user.id);
-        console.log("Using user ID from Supabase session:", sessionData.session.user.id);
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          return;
+        }
+        
+        if (sessionData?.session?.user?.id) {
+          setUserId(sessionData.session.user.id);
+          console.log("Using user ID from Supabase session:", sessionData.session.user.id);
+        }
+      } catch (err) {
+        console.error("Error fetching session:", err);
       }
     };
 
     fetchUserId();
-  }, [currentUser]);
+  }, [currentUser, isAuthenticated]);
 
-  const getCampaign = (id: string) => {
+  const getCampaign = useCallback((id: string) => {
     return campaigns.find(campaign => campaign.id === id);
-  };
+  }, [campaigns]);
 
   const addCampaign = async (campaignData: Omit<Campaign, 'id'>): Promise<string> => {
     setLoading(true);
+    setError(null);
     try {
       console.log("Adding campaign with data:", campaignData);
       
@@ -67,22 +71,27 @@ export function useCampaignOperations(
           effectiveUserId = currentUser.id;
         } else {
           // Try getting the session directly
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-          
-          if (sessionError) {
-            console.error("Session error:", sessionError);
-            throw new Error("Authentication error: " + sessionError.message);
+          try {
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            
+            if (sessionError) {
+              console.error("Session error:", sessionError);
+              throw new Error("Authentication error: " + sessionError.message);
+            }
+            
+            const session = sessionData?.session;
+            effectiveUserId = session?.user?.id || null;
+            
+            if (!effectiveUserId) {
+              console.error("No authenticated user found");
+              throw new Error("You must be logged in to create a campaign");
+            }
+            
+            console.log("Using user ID from Supabase session:", effectiveUserId);
+          } catch (err) {
+            console.error("Error fetching session:", err);
+            throw new Error("Authentication error: Could not retrieve user session");
           }
-          
-          const session = sessionData?.session;
-          effectiveUserId = session?.user?.id || null;
-          
-          if (!effectiveUserId) {
-            console.error("No authenticated user found");
-            throw new Error("You must be logged in to create a campaign");
-          }
-          
-          console.log("Using user ID from Supabase session:", effectiveUserId);
         }
       }
       
@@ -154,8 +163,18 @@ export function useCampaignOperations(
   return {
     getCampaign,
     addCampaign,
-    updateCampaign,
-    deleteCampaign,
+    updateCampaign: (id: string, updates: Partial<Omit<Campaign, 'id'>>) => {
+      setLoading(true);
+      updateCampaign(id, updates);
+      setLoading(false);
+      return Promise.resolve();
+    },
+    deleteCampaign: (id: string) => {
+      setLoading(true);
+      deleteCampaign(id);
+      setLoading(false);
+      return Promise.resolve();
+    },
     loading,
     error
   };

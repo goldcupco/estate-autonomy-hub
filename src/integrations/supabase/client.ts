@@ -9,10 +9,15 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Create a single, persistent client instance
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storage: localStorage
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
+    detectSessionInUrl: true,
+    flowType: 'implicit'
   }
 });
+
+// Export singleton instance to be used across the application
